@@ -1,103 +1,94 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import GridItem from './GridItem'; // Import the GridItem component
 
-const Profile = () => {
-    const user = {
-        name: "John Doe",
-        email: "johndoe@example.com",
-        bio: "A passionate developer who loves coding and exploring new technologies.",
-        avatar: "https://via.placeholder.com/150",
-        social: {
-            twitter: "https://twitter.com/johndoe",
-            linkedin: "https://linkedin.com/in/johndoe",
-            github: "https://github.com/johndoe"
-        }
-    };
+const ProfilePage = () => {
+  const navigation = useNavigation();
 
-    const openLink = (url) => {
-        Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
-    };
+  // Dummy data for the profile
+  const [profile] = useState({
+    name: 'John Doe',
+    age: 25,
+    about: 'I am a passionate gamer and developer.',
+    education: 'Undergrad degree in Computer Science',
+    lookingFor: 'Looking for gaming partners and developers.',
+    bestAt: 'Best at coding, problem-solving, and multiplayer games.',
+    plan: 'Working on my own game development project.',
+  });
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.banner}></View>
-            <Image source={{ uri: user.avatar }} style={styles.avatar} />
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
-            <Text style={styles.bio}>{user.bio}</Text>
-            <View style={styles.socialLinks}>
-                <TouchableOpacity onPress={() => openLink(user.social.twitter)}>
-                    <Text style={styles.link}>Twitter</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => openLink(user.social.linkedin)}>
-                    <Text style={styles.link}>LinkedIn</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => openLink(user.social.github)}>
-                    <Text style={styles.link}>GitHub</Text>
-                </TouchableOpacity>
-            </View>
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Profile Header */}
+      <View style={styles.profileHeader}>
+        <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.coverImage} />
+        <View style={styles.profileInfo}>
+          <Image source={{ uri: 'https://via.placeholder.com/50' }} style={styles.profileImage} />
+          <Text style={styles.displayName}>{profile.name}, {profile.age}</Text>
+          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
         </View>
-    );
+      </View>
+
+      {/* About Me Section */}
+      <GridItem title="About Me" icon="user" description={profile.about} />
+
+      {/* Looking For Section */}
+      <GridItem title="Looking For" icon="search" description={profile.lookingFor} />
+
+      {/* Best At Section */}
+      <GridItem title="Best At" icon="trophy" description={profile.bestAt} />
+
+      {/* My Plan Section */}
+      <GridItem title="My Plan" icon="clipboard" description={profile.plan} />
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        alignItems: 'center',
-        padding: 20,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        maxWidth: 400,
-        margin: 20,
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        elevation: 3
-    },
-    banner: {
-        height: 100,
-        backgroundColor: '#4CAF50',
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
-        width: '100%'
-    },
-    avatar: {
-        width: 150,
-        height: 150,
-        borderRadius: 75,
-        marginTop: -75,
-        borderWidth: 5,
-        borderColor: '#fff'
-    },
-    name: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginVertical: 10
-    },
-    email: {
-        fontSize: 16,
-        color: '#555',
-        marginVertical: 5
-    },
-    bio: {
-        fontSize: 14,
-        color: '#777',
-        marginVertical: 10,
-        textAlign: 'center'
-    },
-    socialLinks: {
-        marginTop: 15,
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: '100%'
-    },
-    link: {
-        fontSize: 14,
-        color: '#4CAF50',
-        textDecorationLine: 'underline'
-    }
+  container: {
+    flex: 1,
+    backgroundColor: '#f1f1f1',
+  },
+  profileHeader: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  coverImage: {
+    width: '100%',
+    height: 200,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+  },
+  profileInfo: {
+    position: 'absolute',
+    bottom: 10,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  displayName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  editButton: {
+    marginTop: 10,
+    backgroundColor: '#00bcd4',
+    padding: 8,
+    borderRadius: 5,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
 
-export default Profile;
+export default ProfilePage;
