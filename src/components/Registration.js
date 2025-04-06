@@ -1,21 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, DatePickerIOS } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-import Svg, { Path } from 'react-native-svg';
+import EmptyField from './common/Emptyfield'; // Import the EmptyField component
 
-// Custom icons for social media
-const GoogleIcon = () => (
-    <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
-        <Path fill="#fff" d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z"/>
-    </Svg>
-);
-
-const FacebookIcon = () => (
-    <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
-        <Path fill="#fff" d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
-    </Svg>
-);
 
 const Registration = () => {
     const [name, setName] = useState('');
@@ -34,14 +22,12 @@ const Registration = () => {
                 return;
             }
 
-            // Email format validation (basic check)
             const emailRegex = /\S+@\S+\.\S+/;
             if (!emailRegex.test(email)) {
                 Alert.alert('Error', 'Please enter a valid email!');
                 return;
             }
 
-            // Password validation
             if (password.length < 6) {
                 Alert.alert('Error', 'Password should be at least 6 characters long!');
                 return;
@@ -81,134 +67,146 @@ const Registration = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Sign Up</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Full name"
-                value={name}
-                onChangeText={setName}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Gaming name"
-                value={gamingName}
-                onChangeText={setGamingName}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Date of birth"
-                value={dob}
-                onChangeText={setDob}
-                keyboardType="numeric"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-            />
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+        >
+            <ScrollView contentContainerStyle={styles.formContainer}>
+                <Text style={styles.title}>Sign Up</Text>
 
-            <TouchableOpacity 
-                style={[styles.button, isLoading && styles.buttonDisabled]} 
-                onPress={handleSignUp} 
-                disabled={isLoading}
-            >
-                {isLoading ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                    <Text style={styles.buttonText}>Let's Roll</Text>
-                )}
-            </TouchableOpacity>
+                <EmptyField
+                    placeholder="Full name"
+                    value={name}
+                    onChangeText={setName}
+                />
+                <EmptyField
+                    placeholder="Gaming name"
+                    value={gamingName}
+                    onChangeText={setGamingName}
+                />
+                <EmptyField
+                    placeholder="Date of birth"
+                    value={dob}
+                    onChangeText={setDob}
+                    keyboardType="numeric"
+                />
+                <EmptyField
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                />
+                <EmptyField
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
+                <EmptyField
+                    placeholder="Confirm password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry
+                />
 
-            <Text style={styles.socialText}>Or sign up with</Text>
-
-            <View style={styles.socialContainer}>
-                <TouchableOpacity>
-                    <GoogleIcon />
+                <TouchableOpacity 
+                    style={[styles.button, isLoading && styles.buttonDisabled]} 
+                    onPress={handleSignUp} 
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>Let's Roll</Text>
+                    )}
                 </TouchableOpacity>
-                <TouchableOpacity>
-                    <FacebookIcon />
-                </TouchableOpacity>
-            </View>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.signInText}>Already have an Account?</Text>
-            </TouchableOpacity>
-        </View>
+                <Text style={styles.socialText}>Or sign up with</Text>
+
+                <View style={styles.socialContainer}>
+                    <TouchableOpacity>
+                        {/* Add Social Icons here */}
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                        {/* Add Social Icons here */}
+                    </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <Text style={styles.signInText}>Already have an Account?</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+      flex: 1,
+      backgroundColor: 'rgba(5, 18, 59, 1)',
+      justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#fff',
+    },
+    formContainer: {
+        flexGrow: 1,
+      width: '100%',
+      backgroundColor: 'rgba(184, 184, 184, 0.06)',
+      padding: 20,
+      justifyContent: 'center',
+      borderRadius: 10,
     },
     title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    input: {
-        width: '100%',
-        height: 50,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 25,
-        paddingHorizontal: 15,
-        marginBottom: 15,
-        backgroundColor: '#f4f4f4',
-    },
-    button: {
-        width: '100%',
-        height: 50,
-        backgroundColor: '#007BFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 25,
-    },
-    buttonDisabled: {
-        backgroundColor: '#cccccc',
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+      color: '#fff',
+      fontSize: 28,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginBottom: 20,
     },
     socialText: {
-        marginTop: 15,
-        fontSize: 16,
-        color: '#333',
+      color: '#999',
+      textAlign: 'center',
+      marginTop: 20,
+    },
+
+    button: {
+      backgroundColor: '#e50914',
+      padding: 15,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginBottom: 15,
+    },
+    buttonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+    },
+    socialButton: {
+      backgroundColor: 'transparent',
+      padding: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    socialButtonText: {
+      color: '#00bcd4',
+      fontWeight: 'bold',
     },
     socialContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 10,
+      flexDirection: 'row',
+      justifyContent: 'space-evenly', // or 'space-evenly' or 'center' based on your preference
+      overflow: 'hidden',
+      marginTop: 10,
     },
+    icon: {
+      width: 40,
+      height: 40,
+      marginHorizontal: 3, // Adjust this value to change the distance between icons
+    },
+    
     signInText: {
-        color: '#007BFF',
-        marginTop: 15,
+      color: '#999',
+      textAlign: 'center',
+      marginTop: 20,
     },
-});
-
-
+  });
+  
 
 export default Registration;
