@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert, ActivityIndicator, Animated, Easing, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Animated, Easing, StyleSheet } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import Svg, { Path } from 'react-native-svg';
+//import GoogleIcon from '../../assets/google.svg'; 
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -49,6 +51,22 @@ const LoginPage = () => {
     outputRange: [0, 100], // Adjust height based on content
   });
 
+  // Replace with SVG component
+  const GoogleIcon = () => (
+    <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
+      <Path
+        fill="#00bcd4" // Change this to your preferred color
+        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"
+      />
+    </Svg>
+  );
+
+  const FacebookIcon = () => (
+    <svg width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
+    <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
+  </svg>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.formContainer}>
@@ -91,10 +109,11 @@ const LoginPage = () => {
           {showSocial && (
             <>
               <TouchableOpacity onPress={() => console.log('Google Login')}>
-                <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Google.png' }} style={styles.icon} />
+                <GoogleIcon/>
               </TouchableOpacity>
+
               <TouchableOpacity onPress={() => console.log('Facebook Login')}>
-                <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg' }} style={styles.icon} />
+                <FacebookIcon /> 
               </TouchableOpacity>
             </>
           )}
@@ -153,26 +172,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   socialButton: {
-    backgroundColor: '#444',
+    backgroundColor: 'transparent',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   socialButtonText: {
-    color: '#fff',
+    color: '#00bcd4',
     fontWeight: 'bold',
   },
   socialContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between', // or 'space-evenly' or 'center' based on your preference
     overflow: 'hidden',
     marginTop: 10,
   },
   icon: {
     width: 40,
     height: 40,
-    marginHorizontal: 10,
+    marginHorizontal: 3, // Adjust this value to change the distance between icons
   },
+  
   signUpText: {
     color: '#999',
     textAlign: 'center',
