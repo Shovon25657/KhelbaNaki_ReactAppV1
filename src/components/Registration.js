@@ -33,7 +33,7 @@ const Registration = () => {
         // Set loading state to true
         setIsLoading(true);
 
-            const { data } = await axios.post('http://192.168.0.118:8080/api/v1/auth/register', {
+            const { data } = await axios.post('http://192.168.0.106:8080/api/v1/auth/register', {
                 name,
                 email,
                 password,

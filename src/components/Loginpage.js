@@ -16,7 +16,7 @@ const LoginPage = () => {
       Alert.alert('Error', 'Please fill in both fields');
     } else {
       try {
-        const { data } = await axios.post('http://192.168.0.118:8080/api/v1/auth/login', {
+        const { data } = await axios.post('http://192.168.0.106:8080/api/v1/auth/login', {
           email,
           password,
         });
