@@ -1,136 +1,94 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import axios from 'axios';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import GridItem from './GridItem'; // Import the GridItem component
 
-const Registration = () => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // Loading state
+const ProfilePage = () => {
+  const navigation = useNavigation();
 
-    const handleSignUp = async () => {
+  // Dummy data for the profile
+  const [profile] = useState({
+    name: 'John Doe',
+    age: 25,
+    about: 'I am a passionate gamer and developer.',
+    education: 'Undergrad degree in Computer Science',
+    lookingFor: 'Looking for gaming partners and developers.',
+    bestAt: 'Best at coding, problem-solving, and multiplayer games.',
+    plan: 'Working on my own game development project.',
+  });
 
-        try {
-        // Basic validation
-        if (!name || !email || !password) {
-            Alert.alert('Error', 'All fields are required!');
-            return;
-        }
-
-        // Email format validation (basic check)
-        const emailRegex = /\S+@\S+\.\S+/;
-        if (!emailRegex.test(email)) {
-            Alert.alert('Error', 'Please enter a valid email!');
-            return;
-        }
-
-        // Password strength validation (at least 6 characters)
-        if (password.length < 6) {
-            Alert.alert('Error', 'Password should be at least 6 characters long!');
-            return;
-        }
-
-        // Set loading state to true
-        setIsLoading(true);
-
-            const { data } = await axios.post('http://192.168.0.106:8080/api/v1/auth/register', {
-                name,
-                email,
-                password,
-            });
-
-            console.log('Registration successful:', data);
-
-            // If there is a message in the response, alert it
-            if (data && data.message) {
-                Alert.alert('Success', data.message);
-            }
-
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Registration failed. Please try again later.');
-        } finally {
-            setIsLoading(false); // Set loading to false after API call
-        }
-    };
-
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Sign Up</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Name"
-                value={name}
-                onChangeText={(value) => setName(value)}  // Directly setting state for each field
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={(value) => setEmail(value)}  // Directly setting state for each field
-                keyboardType="email-address"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={(value) => setPassword(value)}  // Directly setting state for each field
-                secureTextEntry
-            />
-            
-            <TouchableOpacity 
-                style={[styles.button, isLoading && styles.buttonDisabled]} 
-                onPress={handleSignUp} 
-                disabled={isLoading}
-            >
-                {isLoading ? (
-                    <ActivityIndicator size="small" color="#fff" />  // Show loading spinner
-                ) : (
-                    <Text style={styles.buttonText}>Sign Up</Text>
-                )}
-            </TouchableOpacity>
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Profile Header */}
+      <View style={styles.profileHeader}>
+        <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.coverImage} />
+        <View style={styles.profileInfo}>
+          <Image source={{ uri: 'https://via.placeholder.com/50' }} style={styles.profileImage} />
+          <Text style={styles.displayName}>{profile.name}, {profile.age}</Text>
+          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
         </View>
-    );
+      </View>
+
+      {/* About Me Section */}
+      <GridItem title="About Me" icon="user" description={profile.about} />
+
+      {/* Looking For Section */}
+      <GridItem title="Looking For" icon="search" description={profile.lookingFor} />
+
+      {/* Best At Section */}
+      <GridItem title="Best At" icon="trophy" description={profile.bestAt} />
+
+      {/* My Plan Section */}
+      <GridItem title="My Plan" icon="clipboard" description={profile.plan} />
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    input: {
-        width: '100%',
-        height: 50,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        marginBottom: 15,
-    },
-    button: {
-        width: '100%',
-        height: 50,
-        backgroundColor: '#007BFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 5,
-    },
-    buttonDisabled: {
-        backgroundColor: '#cccccc', // Disabled button color
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#f1f1f1',
+  },
+  profileHeader: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  coverImage: {
+    width: '100%',
+    height: 200,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+  },
+  profileInfo: {
+    position: 'absolute',
+    bottom: 10,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  displayName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  editButton: {
+    marginTop: 10,
+    backgroundColor: '#00bcd4',
+    padding: 8,
+    borderRadius: 5,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
 
-export default Registration;
+export default ProfilePage;
