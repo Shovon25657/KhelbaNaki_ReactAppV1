@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import LoginPage from './Loginpage';
-import HomeScreen from './HomeScreen'; 
-import Registration from './Registration'; 
-import ProfilePage from './Profile';  
-import EditProfile from './EditProfile'; 
+import LoginPage from './Screens/Loginpage';
+import HomeScreen from './Screens/HomeScreen'; 
+import Registration from './Screens/Registration'; 
+import ProfilePage from './Screens/Profile';  
+import EditProfile from './Screens/EditProfile'; 
 
 
 

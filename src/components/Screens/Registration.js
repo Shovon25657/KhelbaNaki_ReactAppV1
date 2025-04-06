@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-import EmptyField from './common/Emptyfield'; // Import the EmptyField component
+import EmptyField from '../common/Emptyfield'; // Import the EmptyField component
 
 
 const Registration = () => {

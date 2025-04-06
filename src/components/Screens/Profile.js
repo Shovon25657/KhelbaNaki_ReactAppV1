@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import GridItem from './common/Profile_grid'; // Import the GridItem component
+import GridItem from '../common/Profile_grid'; // Import the GridItem component
 
 const ProfilePage = () => {
   const navigation = useNavigation();
