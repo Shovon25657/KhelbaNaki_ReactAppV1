@@ -54,17 +54,22 @@ const LoginPage = () => {
   // Replace with SVG component
   const GoogleIcon = () => (
     <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
-      <Path
-        fill="#00bcd4" // Change this to your preferred color
-        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"
-      />
+
+      <Path 
+       fill="#fff" // Change this to your preferred color
+      d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z"/>
+
     </Svg>
   );
 
   const FacebookIcon = () => (
-    <svg width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
-    <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
-  </svg>
+
+    <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
+  <Path 
+   fill="#fff" // Change this to your preferred color
+  d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
+</Svg>
+    
   );
 
   return (
@@ -138,6 +143,7 @@ const styles = StyleSheet.create({
     width: '85%',
     backgroundColor: '#1a1a1a',
     padding: 20,
+    justifyContent: 'center',
     borderRadius: 10,
   },
   title: {
@@ -183,7 +189,7 @@ const styles = StyleSheet.create({
   },
   socialContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // or 'space-evenly' or 'center' based on your preference
+    justifyContent: 'space-evenly', // or 'space-evenly' or 'center' based on your preference
     overflow: 'hidden',
     marginTop: 10,
   },
