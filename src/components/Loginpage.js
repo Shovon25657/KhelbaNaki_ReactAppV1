@@ -1,33 +1,59 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, Text, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, Text, Alert, TouchableOpacity } from 'react-native';
 import axios from 'axios';
-import styles from '../styles/styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import styles from '../styles/styles'; // Assuming this contains your custom styles
 import { useNavigation } from '@react-navigation/native';
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
 
+  // Handle Login Logic
   const handleLogin = async () => {
-    if (username === '' || password === '') {
+    if (email === '' || password === '') {
       Alert.alert('Error', 'Please fill in both fields');
     } else {
       try {
-        const response = await axios.post('http://192.168.0.118:5000/login', { username, password });
+        const { data } = await axios.post('http://192.168.0.118:8080/api/v1/auth/login', {
+          email,
+          password,
+        });
 
-        const { token, user } = response.data;
+        // Store the token and user data in AsyncStorage after stringifying
+        if (data && data.token) {
+         // await AsyncStorage.setItem('@auth_token', data.token); // Store the token
+          await AsyncStorage.setItem('@auth', JSON.stringify(data)); // Store the user data
+          Alert.alert('Success', 'Login successful!');
+        }
 
-        // Store the token if needed (using AsyncStorage or Context API)
-        console.log('Login Successful:', user.fullName);
-
-        // Navigate to Home on successful login
-        navigation.navigate('Home');
+        console.log("Login Data==> ", data); // Parse the user data
+        
       } catch (error) {
-        Alert.alert('Error', 'Invalid username or password');
+        console.error(error);
+        Alert.alert('Error', 'Invalid email or password');
       }
     }
   };
+  // Fetch Local Storage Data (Token and User Data)
+  const getLocalStorage = async () => {
+    try {
+      //let token = await AsyncStorage.getItem('@auth_token');
+      let data = await AsyncStorage.getItem('@auth');
+      
+      if (data) {
+        console.log("Local storage user data:", data); // Parse the user data
+      }
+    } catch (error) {
+      console.error('Error fetching data from local storage:', error);
+    }
+  };
+
+  // Use useEffect to fetch local storage when the component mounts
+  useEffect(() => {
+    getLocalStorage();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -35,9 +61,9 @@ const LoginPage = () => {
         <Text style={styles.title}>Login</Text>
         <TextInput
           style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChangeText={setUsername}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           style={styles.input}
@@ -46,7 +72,10 @@ const LoginPage = () => {
           value={password}
           onChangeText={setPassword}
         />
-        <Button style={styles.buttontext} title="Login" onPress={handleLogin} />
+
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
 
         <Text
           style={styles.text}

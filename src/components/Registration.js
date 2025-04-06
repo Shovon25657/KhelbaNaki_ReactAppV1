@@ -3,20 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import axios from 'axios';
 
 const Registration = () => {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-    });
-    const [isLoading, setIsLoading] = useState(false);  // For loading state
-
-    const handleInputChange = (field, value) => {
-        setFormData({ ...formData, [field]: value });
-    };
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false); // Loading state
 
     const handleSignUp = async () => {
-        const { name, email, password } = formData;
 
+        try {
         // Basic validation
         if (!name || !email || !password) {
             Alert.alert('Error', 'All fields are required!');
@@ -39,20 +33,24 @@ const Registration = () => {
         // Set loading state to true
         setIsLoading(true);
 
-        try {
-            // Send sign-up request to the backend (replace the URL with your backend)
-            const response = await axios.post('http://192.168.0.118:5000/register', { username, password });
-            const { token, user } = response.data;
+            const { data } = await axios.post('http://192.168.0.118:8080/api/v1/auth/register', {
+                name,
+                email,
+                password,
+            });
 
-            Alert.alert('Success', 'You have signed up successfully!');
-            
-            // Optionally navigate to the login page or home page after successful registration
-             navigation.navigate('profile', { user }); // Pass user data to the Profile screen
+            console.log('Registration successful:', data);
+
+            // If there is a message in the response, alert it
+            if (data && data.message) {
+                Alert.alert('Success', data.message);
+            }
+
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Registration failed. Please try again later.');
         } finally {
-            setIsLoading(false);  // Set loading to false after API call
+            setIsLoading(false); // Set loading to false after API call
         }
     };
 
@@ -62,25 +60,29 @@ const Registration = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Name"
-                value={formData.name}
-                onChangeText={(value) => handleInputChange('name', value)}
+                value={name}
+                onChangeText={(value) => setName(value)}  // Directly setting state for each field
             />
             <TextInput
                 style={styles.input}
                 placeholder="Email"
-                value={formData.email}
-                onChangeText={(value) => handleInputChange('email', value)}
+                value={email}
+                onChangeText={(value) => setEmail(value)}  // Directly setting state for each field
                 keyboardType="email-address"
             />
             <TextInput
                 style={styles.input}
                 placeholder="Password"
-                value={formData.password}
-                onChangeText={(value) => handleInputChange('password', value)}
+                value={password}
+                onChangeText={(value) => setPassword(value)}  // Directly setting state for each field
                 secureTextEntry
             />
             
-            <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading}>
+            <TouchableOpacity 
+                style={[styles.button, isLoading && styles.buttonDisabled]} 
+                onPress={handleSignUp} 
+                disabled={isLoading}
+            >
                 {isLoading ? (
                     <ActivityIndicator size="small" color="#fff" />  // Show loading spinner
                 ) : (
@@ -120,6 +122,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 5,
+    },
+    buttonDisabled: {
+        backgroundColor: '#cccccc', // Disabled button color
     },
     buttonText: {
         color: '#fff',
