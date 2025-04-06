@@ -1,101 +1,105 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Text, Alert, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, Alert, ActivityIndicator, Animated, Easing, StyleSheet } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../styles/styles'; // Assuming this contains your custom styles
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showSocial, setShowSocial] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const animation = useState(new Animated.Value(0))[0];
   const navigation = useNavigation();
 
-  // Handle Login Logic
   const handleLogin = async () => {
     if (email === '' || password === '') {
       Alert.alert('Error', 'Please fill in both fields');
     } else {
+      setLoading(true);
       try {
         const { data } = await axios.post('http://192.168.0.106:8080/api/v1/auth/login', {
           email,
           password,
         });
 
-        // Store the token and user data in AsyncStorage
-        if (data && data.token) {
-          await AsyncStorage.setItem('@auth', JSON.stringify(data)); // Store user data
+        if (data?.token) {
+          await AsyncStorage.setItem('@auth', JSON.stringify(data));
           Alert.alert('Success', 'Login successful!');
         }
-
-        console.log("Login Data==> ", data);
-        
       } catch (error) {
-        console.error(error);
         Alert.alert('Error', 'Invalid email or password');
+      } finally {
+        setLoading(false);
       }
     }
   };
 
-  // Fetch Local Storage Data (Token and User Data)
-  const getLocalStorage = async () => {
-    try {
-      let data = await AsyncStorage.getItem('@auth');
-      if (data) {
-        console.log("Local storage user data:", data);
-      }
-    } catch (error) {
-      console.error('Error fetching data from local storage:', error);
-    }
+  const toggleSocialLogin = () => {
+    Animated.timing(animation, {
+      toValue: showSocial ? 0 : 1,
+      duration: 400,
+      easing: Easing.ease,
+      useNativeDriver: false,
+    }).start(() => setShowSocial(!showSocial));
   };
 
-  // Use useEffect to fetch local storage when the component mounts
-  useEffect(() => {
-    getLocalStorage();
-  }, []);
+  const socialHeight = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 100], // Adjust height based on content
+  });
 
   return (
     <View style={styles.container}>
       <View style={styles.formContainer}>
         <Text style={styles.title}>Sign In</Text>
 
-        {/* Email Input */}
         <TextInput
           style={styles.input}
           placeholder="Username/Email"
+          placeholderTextColor="#ccc"
           value={email}
           onChangeText={setEmail}
         />
 
-        {/* Password Input */}
         <TextInput
           style={styles.input}
           placeholder="Password"
+          placeholderTextColor="#ccc"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
-        {/* Forgot Password Link */}
         <TouchableOpacity>
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
 
-        {/* Login Button */}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Let's Play</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Let's Play</Text>
+          )}
         </TouchableOpacity>
 
-        {/* Social Media Login Buttons */}
-        <View style={styles.socialContainer}>
-          <TouchableOpacity onPress={() => console.log('Sign in with Google')}>
-            <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Google.png' }} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => console.log('Sign in with Facebook')}>
-            <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg' }} style={styles.icon} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.socialButton} onPress={toggleSocialLogin}>
+          <Text style={styles.socialButtonText}>Sign in with</Text>
+        </TouchableOpacity>
 
-        {/* Sign Up Link */}
+        <Animated.View style={[styles.socialContainer, { height: socialHeight }]}>
+          {showSocial && (
+            <>
+              <TouchableOpacity onPress={() => console.log('Google Login')}>
+                <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Google.png' }} style={styles.icon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => console.log('Facebook Login')}>
+                <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg' }} style={styles.icon} />
+              </TouchableOpacity>
+            </>
+          )}
+        </Animated.View>
+
         <TouchableOpacity onPress={() => navigation.navigate('Registration')}>
           <Text style={styles.signUpText}>Don't have an Account?</Text>
         </TouchableOpacity>
@@ -103,5 +107,77 @@ const LoginPage = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0d0d0d',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  formContainer: {
+    width: '85%',
+    backgroundColor: '#1a1a1a',
+    padding: 20,
+    borderRadius: 10,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: '#333',
+    color: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginBottom: 15,
+  },
+  forgotText: {
+    color: '#999',
+    textAlign: 'right',
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: '#e50914',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  socialButton: {
+    backgroundColor: '#444',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  socialButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    overflow: 'hidden',
+    marginTop: 10,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    marginHorizontal: 10,
+  },
+  signUpText: {
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+});
 
 export default LoginPage;
