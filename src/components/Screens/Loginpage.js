@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { AuthContext } from '../context/authContext'; // Uncomment if using AuthContext
 import { useContext } from 'react';
+import EmptyField from '../common/Emptyfield'; // Import the EmptyField component
 //import GoogleIcon from '../../assets/google.svg'; 
 
 const LoginPage = () => {
@@ -57,7 +58,7 @@ const LoginPage = () => {
 
   const socialHeight = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 100], // Adjust height based on content
+    outputRange: [0, 50], // Adjust height based on content
   });
 
   // Replace with SVG component
@@ -86,22 +87,19 @@ const LoginPage = () => {
       <View style={styles.formContainer}>
         <Text style={styles.title}>Sign In</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Username/Email"
-          placeholderTextColor="#ccc"
-          value={email}
-          onChangeText={setEmail}
-        />
+        <EmptyField
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#ccc"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <EmptyField
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
 
         <TouchableOpacity>
           <Text style={styles.forgotText}>Forgot password?</Text>
@@ -144,13 +142,13 @@ const LoginPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d0d0d',
+    backgroundColor: 'rgb(11, 2, 31)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   formContainer: {
     width: '85%',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(184, 184, 184, 0.06)',
     padding: 20,
     justifyContent: 'center',
     borderRadius: 10,
@@ -176,8 +174,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#e50914',
-    padding: 15,
+    backgroundColor: 'rgba(88, 235, 240, 0.87)',
+    padding: 10,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 15,

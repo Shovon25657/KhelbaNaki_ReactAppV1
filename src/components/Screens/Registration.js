@@ -143,15 +143,18 @@ const Registration = () => {
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: 'rgba(5, 18, 59, 1)',
+      backgroundColor: 'rgb(11, 2, 31)',
       justifyContent: 'center',
+      paddingVertical: 50,
         padding: 20,
     },
     formContainer: {
         flexGrow: 1,
       width: '100%',
+      height: 'fit-content',
       backgroundColor: 'rgba(184, 184, 184, 0.06)',
-      padding: 20,
+      paddingInline: 20,
+       
       justifyContent: 'center',
       borderRadius: 10,
     },
