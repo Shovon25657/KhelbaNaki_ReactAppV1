@@ -48,11 +48,16 @@ function App() {
     <NavigationContainer>
       <AuthProvider>
       <Stack.Navigator initialRouteName={isLoggedIn ? 'Home' : 'Login'}>
-        <Stack.Screen name="Login" component={LoginPage} />
-        <Stack.Screen name="Registration" component={Registration} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Profile" component={ProfilePage} />
-        <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="Login" component={LoginPage}
+        options={{ headerShown:false}} />
+        <Stack.Screen name="Registration" component={Registration}
+        options={{ headerShown:false}} />
+        <Stack.Screen name="Home" component={HomeScreen} 
+        options={{ headerShown:false}}/>
+        <Stack.Screen name="Profile" component={ProfilePage} 
+        options={{ headerShown:false}}/>
+        <Stack.Screen name="EditProfile" component={EditProfile}
+        options={{ headerShown:false}} />
       </Stack.Navigator>
       </AuthProvider>
     </NavigationContainer>

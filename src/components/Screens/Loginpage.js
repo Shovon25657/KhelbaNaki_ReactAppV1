@@ -152,6 +152,8 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     borderRadius: 10,
+    borderColor: 'rgba(47, 91, 214, 0.49)',
+    borderWidth: 0.5,
   },
   title: {
     color: '#fff',
