@@ -128,9 +128,9 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#5500FF',
+    color: 'rgb(87, 60, 238)',
   },
   signUpButton: {
     width: '80%',
