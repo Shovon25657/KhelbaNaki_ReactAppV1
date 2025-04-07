@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
-const EditProfile = ({ route }) => {
+const EditProfile = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const { profile: initialProfile } = route.params || {};
 
   const [profile, setProfile] = useState(initialProfile || {
@@ -27,11 +29,41 @@ const EditProfile = ({ route }) => {
       { icon: 'rocket', text: 'Game Project' },
       { icon: 'lightbulb-o', text: 'New Ideas' },
     ],
+    coverImage: 'https://via.placeholder.com/400x200',
+    profileImage: 'https://via.placeholder.com/100',
   });
 
   const [editingSection, setEditingSection] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editText, setEditText] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [editingAge, setEditingAge] = useState(false);
+
+  const pickProfileImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setProfile({...profile, profileImage: result.assets[0].uri});
+    }
+  };
+
+  const pickCoverImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 2],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setProfile({...profile, coverImage: result.assets[0].uri});
+    }
+  };
 
   const handleEdit = (section, index) => {
     setEditingSection(section);
@@ -56,16 +88,6 @@ const EditProfile = ({ route }) => {
     setEditingIndex(null);
   };
 
-  const handleAddItem = (section) => {
-    const newItem = { icon: 'plus', text: 'New Item' };
-    setProfile({
-      ...profile,
-      [section]: [...profile[section], newItem]
-    });
-    // Automatically open edit mode for the new item
-    handleEdit(section, profile[section].length);
-  };
-
   const handleRemoveItem = (section, index) => {
     const updatedSection = [...profile[section]];
     updatedSection.splice(index, 1);
@@ -75,21 +97,30 @@ const EditProfile = ({ route }) => {
     });
   };
 
+  const handleEditName = () => {
+    setEditingName(true);
+  };
+
+  const handleEditAge = () => {
+    setEditingAge(true);
+  };
+
+  const saveName = () => {
+    setEditingName(false);
+  };
+
+  const saveAge = () => {
+    setEditingAge(false);
+  };
+
   const saveProfile = () => {
-    // Here you would typically save to your backend or state management
-    navigation.goBack();
+    navigation.navigate('Profile', { profile });
   };
 
   const renderEditableSection = (title, sectionName) => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <TouchableOpacity 
-          style={styles.addButton} 
-          onPress={() => handleAddItem(sectionName)}
-        >
-          <Ionicons name="add" size={24} color="#00bcd4" />
-        </TouchableOpacity>
       </View>
       
       {profile[sectionName].map((item, index) => (
@@ -142,37 +173,97 @@ const EditProfile = ({ route }) => {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#00bcd4" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
-          <TouchableOpacity onPress={saveProfile} style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>Save</Text>
+        {/* Cover Image */}
+        <View style={styles.coverContainer}>
+          <TouchableOpacity onPress={pickCoverImage} style={styles.coverImageWrapper}>
+            <Image 
+              source={{ uri: profile.coverImage }} 
+              style={styles.coverImage} 
+              resizeMode="cover"
+            />
+            <View style={styles.cameraIconCover}>
+              <Ionicons name="camera" size={28} color="#fff" />
+            </View>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.mainInfoContainer}>
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.textInput}
-            value={profile.name}
-            onChangeText={(text) => setProfile({...profile, name: text})}
-          />
-
-          <Text style={styles.label}>Age</Text>
-          <TextInput
-            style={styles.textInput}
-            value={profile.age.toString()}
-            onChangeText={(text) => setProfile({...profile, age: parseInt(text) || 0})}
-            keyboardType="numeric"
-          />
+        {/* Profile Image */}
+        <View style={styles.profileImageContainer}>
+          <TouchableOpacity onPress={pickProfileImage} style={styles.profileImageWrapper}>
+            <Image 
+              source={{ uri: profile.profileImage }} 
+              style={styles.profileImage}
+              resizeMode="cover"
+            />
+            <View style={styles.cameraIconProfile}>
+              <Ionicons name="camera" size={24} color="#fff" />
+            </View>
+          </TouchableOpacity>
         </View>
 
+        {/* Editable Name and Age Section */}
+        <View style={styles.nameGrid}>
+          <View style={styles.nameAgeContainer}>
+            {editingName ? (
+              <View style={styles.editFieldContainer}>
+                <TextInput
+                  style={styles.editFieldInput}
+                  value={profile.name}
+                  onChangeText={(text) => setProfile({...profile, name: text})}
+                  autoFocus
+                />
+                <TouchableOpacity onPress={saveName} style={styles.editFieldSave}>
+                  <Ionicons name="checkmark" size={20} color="#4CAF50" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.editableTextContainer}
+                onPress={handleEditName}
+              >
+                <Text style={styles.displayName}>{profile.name}</Text>
+                <Ionicons name="pencil" size={16} color="#00bcd4" style={styles.editIcon} />
+              </TouchableOpacity>
+            )}
+            
+            {editingAge ? (
+              <View style={[styles.editFieldContainer, { marginLeft: 10 }]}>
+                <Text>, </Text>
+                <TextInput
+                  style={styles.editFieldInput}
+                  value={profile.age.toString()}
+                  onChangeText={(text) => setProfile({...profile, age: parseInt(text) || 0})}
+                  keyboardType="numeric"
+                  autoFocus
+                />
+                <TouchableOpacity onPress={saveAge} style={styles.editFieldSave}>
+                  <Ionicons name="checkmark" size={20} color="#4CAF50" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.editableTextContainer}
+                onPress={handleEditAge}
+              >
+                <Text style={styles.displayAge}>, {profile.age}</Text>
+                <Ionicons name="pencil" size={16} color="#00bcd4" style={styles.editIcon} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.sectionSpacing} />
+
+        {/* Profile Sections */}
         {renderEditableSection("About Me", "about")}
         {renderEditableSection("Looking For", "lookingFor")}
         {renderEditableSection("Best At", "bestAt")}
         {renderEditableSection("My Plan", "plan")}
+
+        {/* Save Button */}
+        <TouchableOpacity onPress={saveProfile} style={styles.bottomSaveButton}>
+          <Text style={styles.bottomSaveButtonText}>Save Profile</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -180,64 +271,121 @@ const EditProfile = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+    flexGrow: 1,
+    backgroundColor: '#f1f1f1',
   },
   scrollContainer: {
     paddingBottom: 20,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  coverContainer: {
+    position: 'relative',
+    marginBottom: 60,
   },
-  backButton: {
+  coverImageWrapper: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+    borderColor: '#000',
+    borderWidth: 2,
+  },
+  cameraIconCover: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 20,
+    padding: 6,
+  },
+  profileImageContainer: {
+    position: 'absolute',
+    top: 120,
+    left: 20,
+    borderRadius: 55,
+    padding: 2,
+    backgroundColor: '#fff',
+  },
+  profileImageWrapper: {
+    borderRadius: 55,
+    padding: 2,
+    backgroundColor: '#fff',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  cameraIconProfile: {
+    position: 'absolute',
+    bottom: 0,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 20,
     padding: 5,
   },
-  headerTitle: {
-    fontSize: 18,
+  nameGrid: {
+    marginHorizontal: 20,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    elevation: 2,
+    marginTop: 10,
+  },
+  nameAgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editableTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  displayName: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  saveButton: {
-    padding: 5,
-  },
-  saveButtonText: {
-    color: '#00bcd4',
+  displayAge: {
+    fontSize: 20,
     fontWeight: 'bold',
-    fontSize: 16,
+    color: '#333',
   },
-  mainInfoContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    marginBottom: 10,
-    borderRadius: 10,
-    margin: 10,
-    elevation: 2,
+  editIcon: {
+    marginLeft: 8,
   },
-  label: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 5,
+  editFieldContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-    fontSize: 16,
+  editFieldInput: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    borderBottomWidth: 1,
+    borderBottomColor: '#00bcd4',
+    paddingVertical: 2,
+    minWidth: 50,
+  },
+  editFieldSave: {
+    marginLeft: 8,
+  },
+  sectionSpacing: {
+    height: 20,
   },
   sectionContainer: {
     backgroundColor: '#fff',
     padding: 15,
     marginBottom: 10,
     borderRadius: 10,
-    margin: 10,
+    marginHorizontal: 20,
     elevation: 2,
   },
   sectionHeader: {
@@ -250,9 +398,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-  },
-  addButton: {
-    padding: 5,
   },
   itemContainer: {
     marginBottom: 10,
@@ -307,6 +452,19 @@ const styles = StyleSheet.create({
   saveButton: {
     marginLeft: 10,
     padding: 5,
+  },
+  bottomSaveButton: {
+    backgroundColor: '#00bcd4',
+    padding: 15,
+    borderRadius: 10,
+    marginHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  bottomSaveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
