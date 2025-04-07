@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import GridItem from '../common/Profile_grid';
@@ -30,57 +29,23 @@ const ProfilePage = () => {
     ],
   });
 
-  const [coverImage, setCoverImage] = useState('https://via.placeholder.com/400x200');
-  const [profileImage, setProfileImage] = useState('https://via.placeholder.com/100');
-
-  // Function to pick the profile image
-  const pickProfileImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-    }
-  };
-
-  // Function to pick the cover image
-  const pickCoverImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 2],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setCoverImage(result.assets[0].uri);
-    }
-  };
+  const [coverImage] = useState('https://via.placeholder.com/400x200');
+  const [profileImage] = useState('https://via.placeholder.com/100');
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Cover Image */}
       <View style={styles.coverContainer}>
-        <TouchableOpacity onPress={pickCoverImage} style={styles.coverImageWrapper}>
+        <View style={styles.coverImageWrapper}>
           <Image source={{ uri: coverImage }} style={styles.coverImage} />
-          <View style={styles.cameraIconCover}>
-            <Ionicons name="camera" size={28} color="#fff" />
-          </View>
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Profile Image overlapping on the left side of the cover image */}
       <View style={styles.profileImageContainer}>
-        <TouchableOpacity onPress={pickProfileImage} style={styles.profileImageWrapper}>
+        <View style={styles.profileImageWrapper}>
           <Image source={{ uri: profileImage }} style={styles.profileImage} />
-          <View style={styles.cameraIconProfile}>
-            <Ionicons name="camera" size={24} color="#fff" />
-          </View>
-        </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.nameGrid}>
@@ -127,18 +92,10 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     borderWidth: 2,
   },
-  cameraIconCover: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 20,
-    padding: 6,
-  },
   profileImageContainer: {
     position: 'absolute',
-    top: 120,  // Adjusted to place the profile image below the cover image
-    left: 20,   // Left-aligned
+    top: 120,
+    left: 20,
     borderRadius: 55,
     padding: 2,
     backgroundColor: '#fff',
@@ -152,16 +109,8 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 2, // Single border around the profile image
-    borderColor: '#000', // Color for the border
-  },
-  cameraIconProfile: {
-    position: 'absolute',
-    bottom: 0,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 20,
-    padding: 5,
+    borderWidth: 2,
+    borderColor: '#000',
   },
   nameGrid: {
     marginHorizontal: 20,
