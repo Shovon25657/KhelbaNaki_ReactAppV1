@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { AuthContext } from '../context/authContext'; // Uncomment if using AuthContext
 import { useContext } from 'react';
 import EmptyField from '../common/Emptyfield'; // Import the EmptyField component
+import Logo from '../common/Logo'; // Import the Logo component
 //import GoogleIcon from '../../assets/google.svg'; 
 
 const LoginPage = () => {
@@ -84,6 +85,7 @@ const LoginPage = () => {
 
   return (
     <View style={styles.container}>
+      <Logo/> {/* Logo component */}
       <View style={styles.formContainer}>
         <Text style={styles.title}>Sign In</Text>
 
@@ -146,6 +148,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
+  logoContainer: {
+    marginBottom: 40,
+  },
+  logoText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
+  },
+  
   formContainer: {
     width: '85%',
     backgroundColor: 'rgba(184, 184, 184, 0.06)',
