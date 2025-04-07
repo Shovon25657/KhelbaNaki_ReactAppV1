@@ -6,10 +6,7 @@ import HomeScreen from './Screens/HomeScreen';
 import Registration from './Screens/Registration'; 
 import ProfilePage from './Screens/Profile';  
 import EditProfile from './Screens/EditProfile'; 
-<<<<<<< Updated upstream
-=======
 import { AuthProvider } from './context/authContext';
->>>>>>> Stashed changes
 
 
 
