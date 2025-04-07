@@ -1,16 +1,24 @@
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons'; // Or any other icon library you prefer
+import { FontAwesome } from '@expo/vector-icons';
 
-const GridItem = ({ title, icon, description }) => {
+const GridItem = ({ title, description, titleRightComponent }) => {
   return (
     <View style={styles.gridItem}>
-      <View style={styles.gridItemHeader}>
-        {icon && <FontAwesome name={icon} size={24} color="#00bcd4" />}
+      <View style={styles.headerContainer}>
         <Text style={styles.gridItemTitle}>{title}</Text>
+        {titleRightComponent}
       </View>
-      <Text style={styles.gridItemDescription}>{description}</Text>
+
+      <View style={styles.descriptionContainer}>
+        {Array.isArray(description) ? 
+          description.map((item, index) => (
+            <View key={index} style={styles.tagBox}>
+              <FontAwesome name={item.icon} size={14} color="#00bcd4" />
+              <Text style={styles.tagText}>{item.text}</Text>
+            </View>
+          )) : description}
+      </View>
     </View>
   );
 };
@@ -24,19 +32,36 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     elevation: 2,
   },
-  gridItemHeader: {
+  headerContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
   gridItemTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 10,
   },
-  gridItemDescription: {
-    fontSize: 14,
-    color: '#555',
+  descriptionContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  tagBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#00bcd4',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    fontSize: 13,
+    marginLeft: 5,
+    color: '#333',
   },
 });
 
