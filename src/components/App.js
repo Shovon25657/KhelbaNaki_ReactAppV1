@@ -6,6 +6,10 @@ import HomeScreen from './Screens/HomeScreen';
 import Registration from './Screens/Registration'; 
 import ProfilePage from './Screens/Profile';  
 import EditProfile from './Screens/EditProfile'; 
+<<<<<<< Updated upstream
+=======
+import { AuthProvider } from './context/authContext';
+>>>>>>> Stashed changes
 
 
 
@@ -15,6 +19,7 @@ const Stack = createStackNavigator();
 function App() {
   return (
     <NavigationContainer>
+      <AuthProvider>
       <Stack.Navigator initialRouteName="Profile">
         <Stack.Screen name="Login" component={LoginPage} />
         <Stack.Screen name="Home" component={HomeScreen} /> 
@@ -22,6 +27,7 @@ function App() {
         <Stack.Screen name="EditProfile" component={EditProfile} />
         <Stack.Screen name="Registration" component={Registration} />
       </Stack.Navigator>
+      </AuthProvider>
     </NavigationContainer>
   );
 }
