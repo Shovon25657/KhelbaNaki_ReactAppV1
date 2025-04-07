@@ -11,57 +11,81 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState({
     name: 'John Doe',
     age: 25,
-    about: 'I am a passionate gamer and developer.',
-    education: 'Undergrad degree in Computer Science',
-    lookingFor: 'Looking for gaming partners and developers.',
-    bestAt: 'Best at coding, problem-solving, and multiplayer games.',
-    plan: 'Working on my own game development project.',
+    about: [
+      { icon: 'graduation-cap', text: 'Undergrad Degree' },
+      { icon: 'gamepad', text: 'Gamer & Dev' },
+    ],
+    lookingFor: [
+      { icon: 'users', text: 'Gaming Partners' },
+      { icon: 'code', text: 'Developers' },
+    ],
+    bestAt: [
+      { icon: 'laptop', text: 'Coding' },
+      { icon: 'puzzle-piece', text: 'Problem Solving' },
+      { icon: 'trophy', text: 'Multiplayer Games' },
+    ],
+    plan: [
+      { icon: 'rocket', text: 'Game Project' },
+      { icon: 'lightbulb-o', text: 'New Ideas' },
+    ],
   });
 
   const [coverImage, setCoverImage] = useState('https://via.placeholder.com/400x200');
   const [profileImage, setProfileImage] = useState('https://via.placeholder.com/100');
 
-  const pickImage = async (type) => {
+  // Function to pick the profile image
+  const pickProfileImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: type === 'cover' ? [4, 2] : [1, 1],
+      aspect: [1, 1],
       quality: 1,
     });
 
     if (!result.canceled) {
-      type === 'cover'
-        ? setCoverImage(result.assets[0].uri)
-        : setProfileImage(result.assets[0].uri);
+      setProfileImage(result.assets[0].uri);
+    }
+  };
+
+  // Function to pick the cover image
+  const pickCoverImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 2],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setCoverImage(result.assets[0].uri);
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-
-      {/* Cover Section */}
+      {/* Cover Image */}
       <View style={styles.coverContainer}>
-        <Image source={{ uri: coverImage }} style={styles.coverImage} />
-
-        <TouchableOpacity style={styles.coverCameraIcon} onPress={() => pickImage('cover')}>
-          <Ionicons name="camera" size={24} color="#fff" />
+        <TouchableOpacity onPress={pickCoverImage} style={styles.coverImageWrapper}>
+          <Image source={{ uri: coverImage }} style={styles.coverImage} />
+          <View style={styles.cameraIconCover}>
+            <Ionicons name="camera" size={28} color="#fff" />
+          </View>
         </TouchableOpacity>
-
-        {/* Profile Image */}
-        <View style={styles.profileImageContainer}>
-          <Image source={{ uri: profileImage }} style={styles.profileImage} />
-
-          <TouchableOpacity style={styles.profileCameraIcon} onPress={() => pickImage('profile')}>
-            <Ionicons name="camera" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
       </View>
 
-      {/* Name, Age, Edit Section */}
+      {/* Profile Image overlapping on the left side of the cover image */}
+      <View style={styles.profileImageContainer}>
+        <TouchableOpacity onPress={pickProfileImage} style={styles.profileImageWrapper}>
+          <Image source={{ uri: profileImage }} style={styles.profileImage} />
+          <View style={styles.cameraIconProfile}>
+            <Ionicons name="camera" size={24} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.nameGrid}>
         <View style={styles.nameAgeContainer}>
           <Text style={styles.displayName}>{profile.name}, {profile.age}</Text>
-
           <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
             <Ionicons name="settings-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
             <Text style={styles.editButtonText}>Edit</Text>
@@ -70,10 +94,11 @@ const ProfilePage = () => {
       </View>
 
       <View style={styles.sectionSpacing} />
-      <GridItem title="About Me" icon="user" description={profile.about} />
-      <GridItem title="Looking For" icon="search" description={profile.lookingFor} />
-      <GridItem title="Best At" icon="trophy" description={profile.bestAt} />
-      <GridItem title="My Plan" icon="clipboard" description={profile.plan} />
+
+      <GridItem title="About Me" description={profile.about} />
+      <GridItem title="Looking For" description={profile.lookingFor} />
+      <GridItem title="Best At" description={profile.bestAt} />
+      <GridItem title="My Plan" description={profile.plan} />
     </ScrollView>
   );
 };
@@ -87,27 +112,39 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 60,
   },
-  coverImage: {
+  coverImageWrapper: {
     width: '100%',
     height: 200,
-    borderWidth: 2,
-    borderColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
-  coverCameraIcon: {
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+    borderColor: '#000',
+    borderWidth: 2,
+  },
+  cameraIconCover: {
     position: 'absolute',
     bottom: 10,
     right: 10,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 6,
     borderRadius: 20,
+    padding: 6,
   },
   profileImageContainer: {
     position: 'absolute',
-    bottom: -50,
-    left: 20,
+    top: 120,  // Adjusted to place the profile image below the cover image
+    left: 20,   // Left-aligned
     borderRadius: 55,
-    borderWidth: 2,
-    borderColor: '#000',
+    padding: 2,
+    backgroundColor: '#fff',
+  },
+  profileImageWrapper: {
+    borderRadius: 55,
     padding: 2,
     backgroundColor: '#fff',
   },
@@ -115,14 +152,16 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+    borderWidth: 2, // Single border around the profile image
+    borderColor: '#000', // Color for the border
   },
-  profileCameraIcon: {
+  cameraIconProfile: {
     position: 'absolute',
     bottom: 0,
-    right: 0,
+    right: 10,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 4,
     borderRadius: 20,
+    padding: 5,
   },
   nameGrid: {
     marginHorizontal: 20,
@@ -148,11 +187,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#00bcd4',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 5,
   },
   editButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontWeight: 'bold',
   },
   sectionSpacing: {
     height: 20,
