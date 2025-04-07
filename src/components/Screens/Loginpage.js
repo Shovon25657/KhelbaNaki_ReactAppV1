@@ -4,9 +4,16 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
+import { AuthContext } from '../context/authContext'; // Uncomment if using AuthContext
+import { useContext } from 'react';
 //import GoogleIcon from '../../assets/google.svg'; 
 
 const LoginPage = () => {
+  
+  //global state
+  const [state, setState] = useContext(AuthContext); // Uncomment if using AuthContext
+
+  //local state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showSocial, setShowSocial] = useState(false);
@@ -20,14 +27,16 @@ const LoginPage = () => {
     } else {
       setLoading(true);
       try {
-        const { data } = await axios.post('http://192.168.0.106:8080/api/v1/auth/login', {
+        const { data } = await axios.post('/auth/login', {
           email,
           password,
         });
 
         if (data?.token) {
+          setState({ ...state, user: data?.user, token: data?.token }); // Uncomment if using AuthContext
           await AsyncStorage.setItem('@auth', JSON.stringify(data));
           Alert.alert('Success', 'Login successful!');
+          navigation.navigate('Home'); // Navigate to Home screen
         }
       } catch (error) {
         Alert.alert('Error', 'Invalid email or password');

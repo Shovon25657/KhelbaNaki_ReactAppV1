@@ -26,9 +26,9 @@ const AuthProvider = ({ children }) => {
   let token = state && state.token;
 
   //default axios setting
-  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+ axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   axios.defaults.baseURL =
-    "https://react-native-server-4tfd.onrender.com/api/v1";
+    "http://192.168.0.102:8080/api/v1";
 
   return (
     <AuthContext.Provider value={[state, setState]}>

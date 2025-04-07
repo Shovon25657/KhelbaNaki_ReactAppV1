@@ -6,8 +6,8 @@ import EmptyField from '../common/Emptyfield'; // Import the EmptyField componen
 
 
 const Registration = () => {
-    const [name, setName] = useState('');
-    const [gamingName, setGamingName] = useState('');
+    const [username, setName] = useState('');
+    const [gamingname, setGamingName] = useState('');
     const [dob, setDob] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,7 +17,7 @@ const Registration = () => {
 
     const handleSignUp = async () => {
         try {
-            if (!name || !gamingName || !dob || !email || !password || !confirmPassword) {
+            if (!username || !gamingname || !dob || !email || !password || !confirmPassword) {
                 Alert.alert('Error', 'All fields are required!');
                 return;
             }
@@ -40,9 +40,9 @@ const Registration = () => {
 
             setIsLoading(true);
 
-            const { data } = await axios.post('http://192.168.0.106:8080/api/v1/auth/register', {
-                name,
-                gamingName,
+            const { data } = await axios.post('http://192.168.0.102:8080/api/v1/auth/register', {
+                username,
+                gamingname,
                 dob,
                 email,
                 password,
@@ -76,12 +76,12 @@ const Registration = () => {
 
                 <EmptyField
                     placeholder="Full name"
-                    value={name}
+                    value={username}
                     onChangeText={setName}
                 />
                 <EmptyField
                     placeholder="Gaming name"
-                    value={gamingName}
+                    value={gamingname}
                     onChangeText={setGamingName}
                 />
                 <EmptyField
