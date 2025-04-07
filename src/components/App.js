@@ -1,21 +1,25 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import WelcomePage from './screens/WelcomePage'; // Add this import
 import LoginPage from './screens/Loginpage';
 import HomeScreen from './screens/HomeScreen'; 
 import Registration from './screens/Registration'; 
 import ProfilePage from './screens/Profile';  
 import EditProfile from './screens/EditProfile'; 
 
-
-
 const Stack = createStackNavigator();
-
 
 function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Profile">
+      <Stack.Navigator initialRouteName="Welcome">
+        {/* Welcome screen added as the first screen */}
+        <Stack.Screen 
+          name="Welcome" 
+          component={WelcomePage} 
+          options={{ headerShown: false }} // Hides header for welcome screen
+        />
         <Stack.Screen name="Login" component={LoginPage} />
         <Stack.Screen name="Home" component={HomeScreen} /> 
         <Stack.Screen name="Profile" component={ProfilePage} /> 
@@ -27,4 +31,3 @@ function App() {
 }
 
 export default App;
-
