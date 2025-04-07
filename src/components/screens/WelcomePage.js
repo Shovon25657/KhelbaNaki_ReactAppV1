@@ -17,12 +17,12 @@ const WelcomeScreen = () => {
       <View style={styles.content}>
         {/* Logo Placeholder */}
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>GameLink</Text>
+          <Text style={styles.logoText}>KhelbaNaki</Text>
         </View>
         
         {/* Gaming Motto */}
         <View style={styles.mottoContainer}>
-          <Text style={styles.mottoLine1}>"Gaming is not just a hobby..."</Text>
+          <Text style={styles.mottoLine1}>Gaming is not just a hobby...</Text>
           <Text style={styles.mottoLine2}>It's a lifestyle. Let's connect & play.</Text>
         </View>
         
@@ -61,21 +61,21 @@ const styles = StyleSheet.create({
   },
   gradientTop: {
     flex: 1,
-    backgroundColor: '#5500FF',
+    backgroundColor: 'rgb(87, 60, 238)',
     borderBottomStartRadius: 20,
     borderBottomEndRadius: 20,
     opacity: 0.7,
   },
   gradientBottom: {
     flex: 1,
-    backgroundColor: '#222433',
+    backgroundColor: 'rgb(26, 25, 25)',
     opacity: 0.5,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 25,
   },
   logoContainer: {
     marginBottom: 40,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   mottoContainer: {
-    marginBottom: 60,
+    marginBottom: 70,
     alignItems: 'center',
   },
   mottoLine1: {
