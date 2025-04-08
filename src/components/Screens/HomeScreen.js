@@ -18,7 +18,8 @@ const HomeScreen = () => {
       setState({ ...state, user: null, token: '' });
 
       // Navigate to Login screen after logout
-      navigation.navigate('Login'); 
+      navigation.navigate('Welcome'); // Adjust the screen name as per your navigation setup
+      console.log('Logged out successfully');
     } catch (error) {
       console.error('Error logging out:', error);
     }
