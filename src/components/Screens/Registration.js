@@ -40,7 +40,7 @@ const Registration = () => {
 
             setIsLoading(true);
 
-            const { data } = await axios.post('http://192.168.0.102:8080/api/v1/auth/register', {
+            const { data } = await axios.post('/auth/register', {
                 username,
                 gamingname,
                 dob,
@@ -145,18 +145,18 @@ const styles = StyleSheet.create({
       flex: 1,
       backgroundColor: 'rgb(11, 2, 31)',
       justifyContent: 'center',
-      paddingVertical: 50,
-        padding: 20,
+    padding: 20,
     },
     formContainer: {
         flexGrow: 1,
       width: '100%',
-      height: 'fit-content',
       backgroundColor: 'rgba(184, 184, 184, 0.06)',
       paddingInline: 20,
-       
-      justifyContent: 'center',
-      borderRadius: 10,
+      height: '30%',
+        justifyContent: 'center',
+        borderRadius: 10,
+        borderColor: 'rgba(47, 91, 214, 0.49)',
+        borderWidth: 0.5,
     },
     title: {
       color: '#fff',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     },
 
     button: {
-      backgroundColor: '#e50914',
+      backgroundColor: 'rgb(111, 77, 236)',
       padding: 15,
       borderRadius: 8,
       alignItems: 'center',
