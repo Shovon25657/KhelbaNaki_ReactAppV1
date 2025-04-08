@@ -40,7 +40,7 @@ const Registration = () => {
 
             setIsLoading(true);
 
-            const { data } = await axios.post('http://192.168.0.102:8080/api/v1/auth/register', {
+            const { data } = await axios.post('http://192.168.0.106:8080/api/v1/auth/register', {
                 username,
                 gamingname,
                 dob,
