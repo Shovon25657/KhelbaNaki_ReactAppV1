@@ -11,13 +11,12 @@ import {
   StatusBar,
   SafeAreaView
 } from 'react-native';
-import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import profile1 from '../../../assets/profile1.jpg';
-import profile2 from '../../../assets/profile2.jpg';
-import profile3 from '../../../assets/profile3.jpg';
-import profile4 from '../../../assets/profile4.jpg';
-import profile5 from '../../../assets/profile5.jpg';
-import profile6 from '../../../assets/profile6.jpg';
+import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import profilePhoto from '../../../assets/profile1.jpg';
+import coverPhoto from '../../../assets/profile2.jpg';
+import game1 from '../../../assets/game1.png';
+import game2 from '../../../assets/game2.png';
+import game3 from '../../../assets/game3.png';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,20 +29,32 @@ const Profile = ({ navigation }) => {
   const [user, setUser] = useState({
     name: 'Jessica',
     age: 28,
-    location: 'New York, NY',
-    about: 'Coffee enthusiast. Dog lover. Adventure seeker. Looking for someone who enjoys weekend hikes and trying new restaurants.',
-    jobTitle: 'Marketing Manager',
-    company: 'Creative Solutions',
-    school: 'University of California',
-    photos: [
-      profile1,
-      profile2,
-      profile3,
-      profile4,
-      profile5,
-      profile6,
+    bio: 'Professional gamer and streamer. Love playing FPS and strategy games. Looking for teammates who communicate well!',
+    about: [
+      { icon: 'graduation-cap', label: 'Education', value: 'Undergrad Degree' },
+      { icon: 'map-marker-alt', label: 'Location', value: 'New York, NY' },
+      { icon: 'briefcase', label: 'Occupation', value: 'Streamer' },
     ],
-    interests: ['Travel', 'Hiking', 'Photography', 'Dogs', 'Coffee', 'Reading'],
+    lookingFor: [
+      { icon: 'moon', label: 'Availability', value: 'Night' },
+      { icon: 'gamepad', label: 'Play Style', value: 'Competitive' },
+      { icon: 'users', label: 'Team Size', value: 'Squad (4)' },
+    ],
+    bestAt: [
+      { image: game1, name: 'Valorant', level: 'Diamond' },
+      { image: game2, name: 'Apex Legends', level: 'Platinum' },
+      { image: game3, name: 'League of Legends', level: 'Gold' },
+    ],
+    plan: {
+      name: 'Gold Package',
+      features: [
+        'Unlimited likes',
+        'Send direct requests',
+        'Premium avatars',
+        'Priority visibility',
+        'Custom cover photos'
+      ]
+    }
   });
 
   const handleEditProfile = () => {
@@ -52,105 +63,103 @@ const Profile = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with settings and edit button */}
+      {/* Header with title only */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton}>
-          <Feather name="settings" size={responsiveFont(24)} color="#999" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity onPress={handleEditProfile} style={styles.headerButton}>
-          <Feather name="edit-2" size={responsiveFont(24)} color="#FFD25B" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main Profile Photo */}
-        <View style={styles.mainPhotoContainer}>
-          <Image source={user.photos[0]} style={styles.mainPhoto} />
-          <View style={styles.nameContainer}>
-            <Text style={styles.name}>{user.name}, {user.age}</Text>
-            <View style={styles.locationContainer}>
-              <Feather name="map-pin" size={responsiveFont(16)} color="#fff" />
-              <Text style={styles.location}>{user.location}</Text>
-            </View>
+        {/* Cover Photo with Profile Photo overlapping */}
+        <View style={styles.coverContainer}>
+          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <View style={styles.profilePhotoContainer}>
+            <Image source={profilePhoto} style={styles.profilePhoto} />
           </View>
         </View>
 
-        {/* Profile Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <MaterialCommunityIcons name="bee" size={responsiveFont(24)} color="#FFD25B" />
-            <Text style={styles.statValue}>20,542</Text>
-            <Text style={styles.statLabel}>Bumble Coins</Text>
+        {/* Name, Age and Edit Profile Button */}
+        <View style={styles.nameContainer}>
+          <View>
+            <Text style={styles.name}>{user.name}, {user.age}</Text>
+            <Text style={styles.status}>Online</Text>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.statItem}>
-            <Ionicons name="ios-heart" size={responsiveFont(24)} color="#FFD25B" />
-            <Text style={styles.statValue}>243</Text>
-            <Text style={styles.statLabel}>Admirers</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.statItem}>
-            <Feather name="eye" size={responsiveFont(24)} color="#FFD25B" />
-            <Text style={styles.statValue}>1,532</Text>
-            <Text style={styles.statLabel}>Profile views</Text>
-          </View>
+          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+            <Feather name="edit" size={responsiveFont(16)} color="#fff" />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Bio Section */}
+        <View style={styles.section}>
+          <Text style={styles.bioText}>{user.bio}</Text>
         </View>
 
         {/* About Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.aboutText}>{user.about}</Text>
-        </View>
-
-        {/* Work & Education Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work & Education</Text>
-          <View style={styles.infoRow}>
-            <Feather name="briefcase" size={responsiveFont(20)} color="#666" />
-            <Text style={styles.infoText}>
-              {user.jobTitle} at {user.company}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Feather name="book" size={responsiveFont(20)} color="#666" />
-            <Text style={styles.infoText}>{user.school}</Text>
-          </View>
-        </View>
-
-        {/* Photo Gallery */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos</Text>
-          <View style={styles.photoGrid}>
-            {user.photos.map((photo, index) => (
-              <Image key={index} source={photo} style={styles.gridPhoto} />
-            ))}
-          </View>
-        </View>
-
-        {/* Interests Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-          <View style={styles.interestsContainer}>
-            {user.interests.map((interest, index) => (
-              <View key={index} style={styles.interestBadge}>
-                <Text style={styles.interestText}>{interest}</Text>
+          <View style={styles.gridContainer}>
+            {user.about.map((item, index) => (
+              <View key={index} style={styles.gridItem}>
+                <FontAwesome5 name={item.icon} size={responsiveFont(20)} color="#FF5864" />
+                <Text style={styles.gridLabel}>{item.label}</Text>
+                <Text style={styles.gridValue}>{item.value}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Verification Section */}
-        <View style={[styles.section, styles.verificationSection]}>
-          <MaterialCommunityIcons name="shield-check" size={responsiveFont(24)} color="#1E88E5" />
-          <View style={styles.verificationTextContainer}>
-            <Text style={styles.verificationTitle}>Profile Verified</Text>
-            <Text style={styles.verificationSubtitle}>
-              Your profile has been verified with photo and phone verification
-            </Text>
+        {/* Looking For Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Looking For</Text>
+          <View style={styles.gridContainer}>
+            {user.lookingFor.map((item, index) => (
+              <View key={index} style={styles.gridItem}>
+                <FontAwesome5 name={item.icon} size={responsiveFont(20)} color="#FF5864" />
+                <Text style={styles.gridLabel}>{item.label}</Text>
+                <Text style={styles.gridValue}>{item.value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Best At Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Best At</Text>
+          <View style={styles.gamesContainer}>
+            {user.bestAt.map((game, index) => (
+              <View key={index} style={styles.gameCard}>
+                <Image source={game.image} style={styles.gameImage} />
+                <View style={styles.gameInfo}>
+                  <Text style={styles.gameName}>{game.name}</Text>
+                  <View style={styles.gameLevel}>
+                    <MaterialCommunityIcons name="medal" size={responsiveFont(16)} color="#FFD700" />
+                    <Text style={styles.levelText}>{game.level}</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* My Plan Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>My Plan</Text>
+          <View style={styles.planCard}>
+            <View style={styles.planHeader}>
+              <MaterialCommunityIcons name="crown" size={responsiveFont(24)} color="#FFD700" />
+              <Text style={styles.planName}>{user.plan.name}</Text>
+            </View>
+            <View style={styles.planFeatures}>
+              {user.plan.features.map((feature, index) => (
+                <View key={index} style={styles.featureItem}>
+                  <Feather name="check-circle" size={responsiveFont(16)} color="#4CAF50" />
+                  <Text style={styles.featureText}>{feature}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -164,84 +173,77 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: responsiveWidth(15),
-    paddingVertical: responsiveHeight(10),
+    paddingVertical: responsiveHeight(15),
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  headerButton: {
-    width: responsiveWidth(40),
-    alignItems: 'center',
-  },
   headerTitle: {
-    fontSize: responsiveFont(18),
+    fontSize: responsiveFont(20),
     fontWeight: 'bold',
-    textAlign: 'center',
+    color: '#333',
   },
   scrollView: {
     flex: 1,
   },
-  mainPhotoContainer: {
+  coverContainer: {
     position: 'relative',
+    height: responsiveHeight(180),
   },
-  mainPhoto: {
+  coverPhoto: {
     width: '100%',
-    height: responsiveHeight(400),
+    height: '100%',
+  },
+  profilePhotoContainer: {
+    position: 'absolute',
+    bottom: -responsiveHeight(50),
+    left: responsiveWidth(20),
+    width: responsiveWidth(100),
+    height: responsiveWidth(100),
+    borderRadius: responsiveWidth(50),
+    borderWidth: 4,
+    borderColor: '#fff',
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+  },
+  profilePhoto: {
+    width: '100%',
+    height: '100%',
   },
   nameContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: responsiveWidth(20),
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: responsiveWidth(20),
+    marginTop: responsiveHeight(60),
+    marginBottom: responsiveHeight(20),
   },
   name: {
     fontSize: responsiveFont(24),
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: responsiveHeight(5),
-  },
-  location: {
-    fontSize: responsiveFont(16),
-    color: '#fff',
-    marginLeft: responsiveWidth(5),
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    padding: responsiveWidth(15),
-    marginBottom: responsiveHeight(10),
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: responsiveFont(16),
-    fontWeight: 'bold',
-    marginTop: responsiveHeight(5),
     color: '#333',
   },
-  statLabel: {
-    fontSize: responsiveFont(12),
-    color: '#666',
+  status: {
+    fontSize: responsiveFont(14),
+    color: '#4CAF50',
     marginTop: responsiveHeight(2),
   },
-  divider: {
-    width: 1,
-    backgroundColor: '#eee',
-    marginVertical: responsiveHeight(5),
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF5864',
+    paddingHorizontal: responsiveWidth(15),
+    paddingVertical: responsiveHeight(8),
+    borderRadius: responsiveWidth(20),
+  },
+  editButtonText: {
+    fontSize: responsiveFont(14),
+    color: '#fff',
+    marginLeft: responsiveWidth(5),
+    fontWeight: 'bold',
   },
   section: {
     backgroundColor: '#fff',
@@ -255,65 +257,99 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(15),
     color: '#333',
   },
-  aboutText: {
+  bioText: {
     fontSize: responsiveFont(16),
     lineHeight: responsiveFont(24),
     color: '#333',
   },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: responsiveHeight(10),
-  },
-  infoText: {
-    fontSize: responsiveFont(16),
-    marginLeft: responsiveWidth(10),
-    color: '#333',
-  },
-  photoGrid: {
+  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  gridPhoto: {
-    width: responsiveWidth(110),
-    height: responsiveWidth(110),
-    borderRadius: responsiveWidth(8),
+  gridItem: {
+    width: responsiveWidth(105),
+    alignItems: 'center',
+    padding: responsiveWidth(10),
+    backgroundColor: '#f9f9f9',
+    borderRadius: responsiveWidth(15),
     marginBottom: responsiveHeight(10),
   },
-  interestsContainer: {
+  gridLabel: {
+    fontSize: responsiveFont(12),
+    color: '#666',
+    marginTop: responsiveHeight(5),
+    textAlign: 'center',
+  },
+  gridValue: {
+    fontSize: responsiveFont(14),
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: responsiveHeight(2),
+    textAlign: 'center',
+  },
+  gamesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  interestBadge: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: responsiveWidth(20),
-    paddingVertical: responsiveHeight(8),
-    paddingHorizontal: responsiveWidth(16),
-    marginRight: responsiveWidth(10),
-    marginBottom: responsiveHeight(10),
+  gameCard: {
+    width: responsiveWidth(110),
+    marginBottom: responsiveHeight(15),
   },
-  interestText: {
-    color: '#333',
+  gameImage: {
+    width: '100%',
+    height: responsiveWidth(110),
+    borderRadius: responsiveWidth(10),
+  },
+  gameInfo: {
+    marginTop: responsiveHeight(5),
+  },
+  gameName: {
     fontSize: responsiveFont(14),
+    fontWeight: 'bold',
+    color: '#333',
   },
-  verificationSection: {
+  gameLevel: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  verificationTextContainer: {
-    marginLeft: responsiveWidth(15),
-    flex: 1,
-  },
-  verificationTitle: {
-    fontSize: responsiveFont(16),
-    fontWeight: 'bold',
-    color: '#1E88E5',
-  },
-  verificationSubtitle: {
-    fontSize: responsiveFont(14),
-    color: '#666',
     marginTop: responsiveHeight(2),
+  },
+  levelText: {
+    fontSize: responsiveFont(12),
+    color: '#666',
+    marginLeft: responsiveWidth(5),
+  },
+  planCard: {
+    backgroundColor: '#fff8e1',
+    borderRadius: responsiveWidth(15),
+    padding: responsiveWidth(15),
+    borderWidth: 1,
+    borderColor: '#ffe0b2',
+  },
+  planHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: responsiveHeight(10),
+  },
+  planName: {
+    fontSize: responsiveFont(18),
+    fontWeight: 'bold',
+    color: '#FF9800',
+    marginLeft: responsiveWidth(10),
+  },
+  planFeatures: {
+    paddingLeft: responsiveWidth(5),
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: responsiveHeight(8),
+  },
+  featureText: {
+    fontSize: responsiveFont(14),
+    color: '#333',
+    marginLeft: responsiveWidth(10),
   },
 });
 
