@@ -12,11 +12,21 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={LoginPage} />
-        <Stack.Screen name="Home" component={HomeScreen} /> 
-        <Stack.Screen name="Profile" component={Profile} /> 
-        <Stack.Screen name="Registration" component={Registration} />
+      <AuthProvider>
+      <Stack.Navigator initialRouteName={isLoggedIn ? 'Home' : 'Welcome'}>
+        {/* Define the stack screens here */}
+        <Stack.Screen name="Welcome" component={WelcomePage}
+        options={{ headerShown:false}} />
+        <Stack.Screen name="Login" component={LoginPage}
+        options={{ headerShown:false}} />
+        <Stack.Screen name="Registration" component={Registration}
+        options={{ headerShown:false}} />
+        <Stack.Screen name="Home" component={HomeScreen} 
+        options={{ headerShown:false}}/>
+        <Stack.Screen name="Profile" component={ProfilePage} 
+        options={{ headerShown:false}}/>
+        <Stack.Screen name="EditProfile" component={EditProfile}
+        options={{ headerShown:false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );
