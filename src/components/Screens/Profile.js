@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import profilePhoto from '../../../assets/profile1.jpg';
-import coverPhoto from '../../../assets/profile2.jpg';
+import coverPhoto from '../../../assets/profile3.jpg';
 import game1 from '../../../assets/game1.png';
 import game2 from '../../../assets/game2.png';
 import game3 from '../../../assets/game3.png';
@@ -46,13 +46,13 @@ const Profile = ({ navigation }) => {
       { image: game3, name: 'League of Legends', level: 'Gold' },
     ],
     plan: {
-      name: 'Gold Package',
+      name: 'Elite Gamer Package',
       features: [
         'Unlimited likes',
         'Send direct requests',
         'Premium avatars',
         'Priority visibility',
-        'Custom cover photos'
+        'Custom gaming themes'
       ]
     }
   });
@@ -65,14 +65,14 @@ const Profile = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Header with title only */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
 
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cover Photo with Profile Photo overlapping */}
+        {/* Gaming-themed Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
           <Image source={coverPhoto} style={styles.coverPhoto} />
           <View style={styles.profilePhotoContainer}>
@@ -84,10 +84,17 @@ const Profile = ({ navigation }) => {
         <View style={styles.nameContainer}>
           <View>
             <Text style={styles.name}>{user.name}, {user.age}</Text>
-            <Text style={styles.status}>Online</Text>
+            <View style={styles.statusContainer}>
+              <View style={styles.onlineDot} />
+              <Text style={styles.status}>Online Now</Text>
+            </View>
           </View>
-          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-            <Feather name="edit" size={responsiveFont(16)} color="#fff" />
+          <TouchableOpacity 
+            style={styles.editButton} 
+            onPress={handleEditProfile}
+            activeOpacity={0.7}
+          >
+            <Feather name="edit-3" size={responsiveFont(16)} color="#fff" />
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
@@ -99,11 +106,15 @@ const Profile = ({ navigation }) => {
 
         {/* About Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.sectionTitle}>Gamer Stats</Text>
           <View style={styles.gridContainer}>
             {user.about.map((item, index) => (
               <View key={index} style={styles.gridItem}>
-                <FontAwesome5 name={item.icon} size={responsiveFont(20)} color="#FF5864" />
+                <FontAwesome5 
+                  name={item.icon} 
+                  size={responsiveFont(20)} 
+                  color="#00ff88" 
+                />
                 <Text style={styles.gridLabel}>{item.label}</Text>
                 <Text style={styles.gridValue}>{item.value}</Text>
               </View>
@@ -113,11 +124,15 @@ const Profile = ({ navigation }) => {
 
         {/* Looking For Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Looking For</Text>
+          <Text style={styles.sectionTitle}>Play Preferences</Text>
           <View style={styles.gridContainer}>
             {user.lookingFor.map((item, index) => (
               <View key={index} style={styles.gridItem}>
-                <FontAwesome5 name={item.icon} size={responsiveFont(20)} color="#FF5864" />
+                <FontAwesome5 
+                  name={item.icon} 
+                  size={responsiveFont(20)} 
+                  color="#00ff88" 
+                />
                 <Text style={styles.gridLabel}>{item.label}</Text>
                 <Text style={styles.gridValue}>{item.value}</Text>
               </View>
@@ -127,35 +142,51 @@ const Profile = ({ navigation }) => {
 
         {/* Best At Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Best At</Text>
+          <Text style={styles.sectionTitle}>Main Games</Text>
           <View style={styles.gamesContainer}>
             {user.bestAt.map((game, index) => (
-              <View key={index} style={styles.gameCard}>
+              <TouchableOpacity 
+                key={index} 
+                style={styles.gameCard}
+                activeOpacity={0.7}
+              >
                 <Image source={game.image} style={styles.gameImage} />
                 <View style={styles.gameInfo}>
                   <Text style={styles.gameName}>{game.name}</Text>
                   <View style={styles.gameLevel}>
-                    <MaterialCommunityIcons name="medal" size={responsiveFont(16)} color="#FFD700" />
+                    <MaterialCommunityIcons 
+                      name="medal" 
+                      size={responsiveFont(16)} 
+                      color="#FFD700" 
+                    />
                     <Text style={styles.levelText}>{game.level}</Text>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
 
         {/* My Plan Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Plan</Text>
+          <Text style={styles.sectionTitle}>Gamer Subscription</Text>
           <View style={styles.planCard}>
             <View style={styles.planHeader}>
-              <MaterialCommunityIcons name="crown" size={responsiveFont(24)} color="#FFD700" />
+              <MaterialCommunityIcons 
+                name="crown" 
+                size={responsiveFont(24)} 
+                color="#FFD700" 
+              />
               <Text style={styles.planName}>{user.plan.name}</Text>
             </View>
             <View style={styles.planFeatures}>
               {user.plan.features.map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
-                  <Feather name="check-circle" size={responsiveFont(16)} color="#4CAF50" />
+                  <Ionicons 
+                    name="md-checkmark-circle" 
+                    size={responsiveFont(16)} 
+                    color="#00ff88" 
+                  />
                   <Text style={styles.featureText}>{feature}</Text>
                 </View>
               ))}
@@ -170,32 +201,37 @@ const Profile = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#1a1a2e',
   },
   header: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: responsiveHeight(15),
-    backgroundColor: '#fff',
+    backgroundColor: '#16213e',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#0f3460',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   headerTitle: {
     fontSize: responsiveFont(20),
     fontWeight: 'bold',
-    color: '#333',
+    color: '#00ff88',
+    fontFamily: 'Roboto',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   scrollView: {
     flex: 1,
   },
   coverContainer: {
     position: 'relative',
-    height: responsiveHeight(180),
+    height: responsiveHeight(200),
+    backgroundColor: '#0f3460',
   },
   coverPhoto: {
     width: '100%',
     height: '100%',
+    opacity: 0.8,
   },
   profilePhotoContainer: {
     position: 'absolute',
@@ -205,9 +241,14 @@ const styles = StyleSheet.create({
     height: responsiveWidth(100),
     borderRadius: responsiveWidth(50),
     borderWidth: 4,
-    borderColor: '#fff',
+    borderColor: '#00ff88',
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: '#16213e',
+    shadowColor: '#00ff88',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 10,
   },
   profilePhoto: {
     width: '100%',
@@ -222,22 +263,42 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(20),
   },
   name: {
-    fontSize: responsiveFont(24),
+    fontSize: responsiveFont(26),
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 255, 136, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: responsiveHeight(5),
+  },
+  onlineDot: {
+    width: responsiveWidth(10),
+    height: responsiveWidth(10),
+    borderRadius: responsiveWidth(5),
+    backgroundColor: '#00ff88',
+    marginRight: responsiveWidth(5),
   },
   status: {
     fontSize: responsiveFont(14),
-    color: '#4CAF50',
-    marginTop: responsiveHeight(2),
+    color: '#00ff88',
+    fontStyle: 'italic',
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF5864',
+    backgroundColor: '#e94560',
     paddingHorizontal: responsiveWidth(15),
     paddingVertical: responsiveHeight(8),
     borderRadius: responsiveWidth(20),
+    shadowColor: '#e94560',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 5,
+    elevation: 5,
   },
   editButtonText: {
     fontSize: responsiveFont(14),
@@ -246,21 +307,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: '#16213e',
     paddingHorizontal: responsiveWidth(20),
     paddingVertical: responsiveHeight(15),
     marginBottom: responsiveHeight(10),
+    borderRadius: responsiveWidth(10),
+    marginHorizontal: responsiveWidth(10),
+    borderWidth: 1,
+    borderColor: '#0f3460',
   },
   sectionTitle: {
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
     marginBottom: responsiveHeight(15),
-    color: '#333',
+    color: '#00ff88',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   bioText: {
     fontSize: responsiveFont(16),
     lineHeight: responsiveFont(24),
-    color: '#333',
+    color: '#fff',
   },
   gridContainer: {
     flexDirection: 'row',
@@ -271,20 +338,22 @@ const styles = StyleSheet.create({
     width: responsiveWidth(105),
     alignItems: 'center',
     padding: responsiveWidth(10),
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#0f3460',
     borderRadius: responsiveWidth(15),
     marginBottom: responsiveHeight(10),
+    borderWidth: 1,
+    borderColor: '#00ff88',
   },
   gridLabel: {
     fontSize: responsiveFont(12),
-    color: '#666',
+    color: '#00ff88',
     marginTop: responsiveHeight(5),
     textAlign: 'center',
   },
   gridValue: {
     fontSize: responsiveFont(14),
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginTop: responsiveHeight(2),
     textAlign: 'center',
   },
@@ -296,19 +365,23 @@ const styles = StyleSheet.create({
   gameCard: {
     width: responsiveWidth(110),
     marginBottom: responsiveHeight(15),
+    backgroundColor: '#0f3460',
+    borderRadius: responsiveWidth(10),
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#00ff88',
   },
   gameImage: {
     width: '100%',
     height: responsiveWidth(110),
-    borderRadius: responsiveWidth(10),
   },
   gameInfo: {
-    marginTop: responsiveHeight(5),
+    padding: responsiveWidth(10),
   },
   gameName: {
     fontSize: responsiveFont(14),
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   gameLevel: {
     flexDirection: 'row',
@@ -317,15 +390,15 @@ const styles = StyleSheet.create({
   },
   levelText: {
     fontSize: responsiveFont(12),
-    color: '#666',
+    color: '#00ff88',
     marginLeft: responsiveWidth(5),
   },
   planCard: {
-    backgroundColor: '#fff8e1',
+    backgroundColor: '#0f3460',
     borderRadius: responsiveWidth(15),
     padding: responsiveWidth(15),
-    borderWidth: 1,
-    borderColor: '#ffe0b2',
+    borderWidth: 2,
+    borderColor: '#00ff88',
   },
   planHeader: {
     flexDirection: 'row',
@@ -335,8 +408,11 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
-    color: '#FF9800',
+    color: '#FFD700',
     marginLeft: responsiveWidth(10),
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   planFeatures: {
     paddingLeft: responsiveWidth(5),
@@ -348,7 +424,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: responsiveFont(14),
-    color: '#333',
+    color: '#fff',
     marginLeft: responsiveWidth(10),
   },
 });
