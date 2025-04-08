@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text } from 'react-native';
 
 // Import Screens
+import WelcomePage from './screens/WelcomePage';
 import LoginPage from './screens/Loginpage';
 import Registration from './screens/Registration';
 import HomeScreen from './screens/HomeScreen';
@@ -47,7 +48,10 @@ function App() {
   return (
     <NavigationContainer>
       <AuthProvider>
-      <Stack.Navigator initialRouteName={isLoggedIn ? 'Home' : 'Login'}>
+      <Stack.Navigator initialRouteName={isLoggedIn ? 'Home' : 'Welcome'}>
+        {/* Define the stack screens here */}
+        <Stack.Screen name="Welcome" component={WelcomePage}
+        options={{ headerShown:false}} />
         <Stack.Screen name="Login" component={LoginPage}
         options={{ headerShown:false}} />
         <Stack.Screen name="Registration" component={Registration}
