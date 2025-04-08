@@ -1,320 +1,150 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
-  TouchableOpacity,
-  Dimensions,
-  Platform,
-  StatusBar,
-  SafeAreaView
-} from 'react-native';
-import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import profile1 from '../../../assets/profile1.jpg';
-import profile2 from '../../../assets/profile2.jpg';
-import profile3 from '../../../assets/profile3.jpg';
-import profile4 from '../../../assets/profile4.jpg';
-import profile5 from '../../../assets/profile5.jpg';
-import profile6 from '../../../assets/profile6.jpg';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import GridItem from '../common/Profile_grid';
 
-const { width, height } = Dimensions.get('window');
+const ProfilePage = () => {
+  const navigation = useNavigation();
 
-// Responsive sizing functions
-const responsiveWidth = (size) => (width / 375) * size;
-const responsiveHeight = (size) => (height / 812) * size;
-const responsiveFont = (size) => (width / 375) * size;
-
-const Profile = ({ navigation }) => {
-  const [user, setUser] = useState({
-    name: 'Jessica',
-    age: 28,
-    location: 'New York, NY',
-    about: 'Coffee enthusiast. Dog lover. Adventure seeker. Looking for someone who enjoys weekend hikes and trying new restaurants.',
-    jobTitle: 'Marketing Manager',
-    company: 'Creative Solutions',
-    school: 'University of California',
-    photos: [
-      profile1,
-      profile2,
-      profile3,
-      profile4,
-      profile5,
-      profile6,
+  const [profile, setProfile] = useState({
+    name: 'John Doe',
+    age: 25,
+    about: [
+      { icon: 'graduation-cap', text: 'Undergrad Degree' },
+      { icon: 'gamepad', text: 'Gamer & Dev' },
     ],
-    interests: ['Travel', 'Hiking', 'Photography', 'Dogs', 'Coffee', 'Reading'],
+    lookingFor: [
+      { icon: 'users', text: 'Gaming Partners' },
+      { icon: 'code', text: 'Developers' },
+    ],
+    bestAt: [
+      { icon: 'laptop', text: 'Coding' },
+      { icon: 'puzzle-piece', text: 'Problem Solving' },
+      { icon: 'trophy', text: 'Multiplayer Games' },
+    ],
+    plan: [
+      { icon: 'rocket', text: 'Game Project' },
+      { icon: 'lightbulb-o', text: 'New Ideas' },
+    ],
   });
 
-  const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { user });
-  };
+  const [coverImage] = useState('https://via.placeholder.com/400x200');
+  const [profileImage] = useState('https://via.placeholder.com/100');
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header with settings and edit button */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton}>
-          <Feather name="settings" size={responsiveFont(24)} color="#999" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity onPress={handleEditProfile} style={styles.headerButton}>
-          <Feather name="edit-2" size={responsiveFont(24)} color="#FFD25B" />
-        </TouchableOpacity>
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Cover Image */}
+      <View style={styles.coverContainer}>
+        <View style={styles.coverImageWrapper}>
+          <Image source={{ uri: coverImage }} style={styles.coverImage} />
+        </View>
       </View>
 
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Main Profile Photo */}
-        <View style={styles.mainPhotoContainer}>
-          <Image source={user.photos[0]} style={styles.mainPhoto} />
-          <View style={styles.nameContainer}>
-            <Text style={styles.name}>{user.name}, {user.age}</Text>
-            <View style={styles.locationContainer}>
-              <Feather name="map-pin" size={responsiveFont(16)} color="#fff" />
-              <Text style={styles.location}>{user.location}</Text>
-            </View>
-          </View>
+      {/* Profile Image overlapping on the left side of the cover image */}
+      <View style={styles.profileImageContainer}>
+        <View style={styles.profileImageWrapper}>
+          <Image source={{ uri: profileImage }} style={styles.profileImage} />
         </View>
+      </View>
 
-        {/* Profile Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <MaterialCommunityIcons name="bee" size={responsiveFont(24)} color="#FFD25B" />
-            <Text style={styles.statValue}>20,542</Text>
-            <Text style={styles.statLabel}>Bumble Coins</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.statItem}>
-            <Ionicons name="ios-heart" size={responsiveFont(24)} color="#FFD25B" />
-            <Text style={styles.statValue}>243</Text>
-            <Text style={styles.statLabel}>Admirers</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.statItem}>
-            <Feather name="eye" size={responsiveFont(24)} color="#FFD25B" />
-            <Text style={styles.statValue}>1,532</Text>
-            <Text style={styles.statLabel}>Profile views</Text>
-          </View>
+      <View style={styles.nameGrid}>
+        <View style={styles.nameAgeContainer}>
+          <Text style={styles.displayName}>{profile.name}, {profile.age}</Text>
+          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
+            <Ionicons name="settings-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* About Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.aboutText}>{user.about}</Text>
-        </View>
+      <View style={styles.sectionSpacing} />
 
-        {/* Work & Education Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work & Education</Text>
-          <View style={styles.infoRow}>
-            <Feather name="briefcase" size={responsiveFont(20)} color="#666" />
-            <Text style={styles.infoText}>
-              {user.jobTitle} at {user.company}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Feather name="book" size={responsiveFont(20)} color="#666" />
-            <Text style={styles.infoText}>{user.school}</Text>
-          </View>
-        </View>
-
-        {/* Photo Gallery */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos</Text>
-          <View style={styles.photoGrid}>
-            {user.photos.map((photo, index) => (
-              <Image key={index} source={photo} style={styles.gridPhoto} />
-            ))}
-          </View>
-        </View>
-
-        {/* Interests Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-          <View style={styles.interestsContainer}>
-            {user.interests.map((interest, index) => (
-              <View key={index} style={styles.interestBadge}>
-                <Text style={styles.interestText}>{interest}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Verification Section */}
-        <View style={[styles.section, styles.verificationSection]}>
-          <MaterialCommunityIcons name="shield-check" size={responsiveFont(24)} color="#1E88E5" />
-          <View style={styles.verificationTextContainer}>
-            <Text style={styles.verificationTitle}>Profile Verified</Text>
-            <Text style={styles.verificationSubtitle}>
-              Your profile has been verified with photo and phone verification
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <GridItem title="About Me" description={profile.about} />
+      <GridItem title="Looking For" description={profile.lookingFor} />
+      <GridItem title="Best At" description={profile.bestAt} />
+      <GridItem title="My Plan" description={profile.plan} />
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
+    flexGrow: 1,
+    backgroundColor: '#f1f1f1',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: responsiveWidth(15),
-    paddingVertical: responsiveHeight(10),
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
-  headerButton: {
-    width: responsiveWidth(40),
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  mainPhotoContainer: {
+  coverContainer: {
     position: 'relative',
+    marginBottom: 60,
   },
-  mainPhoto: {
+  coverImageWrapper: {
     width: '100%',
-    height: responsiveHeight(400),
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
-  nameContainer: {
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+    borderColor: '#000',
+    borderWidth: 2,
+  },
+  profileImageContainer: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: responsiveWidth(20),
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  name: {
-    fontSize: responsiveFont(24),
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: responsiveHeight(5),
-  },
-  location: {
-    fontSize: responsiveFont(16),
-    color: '#fff',
-    marginLeft: responsiveWidth(5),
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    top: 120,
+    left: 20,
+    borderRadius: 55,
+    padding: 2,
     backgroundColor: '#fff',
-    padding: responsiveWidth(15),
-    marginBottom: responsiveHeight(10),
   },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: responsiveFont(16),
-    fontWeight: 'bold',
-    marginTop: responsiveHeight(5),
-    color: '#333',
-  },
-  statLabel: {
-    fontSize: responsiveFont(12),
-    color: '#666',
-    marginTop: responsiveHeight(2),
-  },
-  divider: {
-    width: 1,
-    backgroundColor: '#eee',
-    marginVertical: responsiveHeight(5),
-  },
-  section: {
+  profileImageWrapper: {
+    borderRadius: 55,
+    padding: 2,
     backgroundColor: '#fff',
-    paddingHorizontal: responsiveWidth(20),
-    paddingVertical: responsiveHeight(15),
-    marginBottom: responsiveHeight(10),
   },
-  sectionTitle: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-    marginBottom: responsiveHeight(15),
-    color: '#333',
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#000',
   },
-  aboutText: {
-    fontSize: responsiveFont(16),
-    lineHeight: responsiveFont(24),
-    color: '#333',
+  nameGrid: {
+    marginHorizontal: 20,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    elevation: 2,
+    marginTop: 10,
   },
-  infoRow: {
+  nameAgeContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: responsiveHeight(10),
-  },
-  infoText: {
-    fontSize: responsiveFont(16),
-    marginLeft: responsiveWidth(10),
-    color: '#333',
-  },
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
-  },
-  gridPhoto: {
-    width: responsiveWidth(110),
-    height: responsiveWidth(110),
-    borderRadius: responsiveWidth(8),
-    marginBottom: responsiveHeight(10),
-  },
-  interestsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  interestBadge: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: responsiveWidth(20),
-    paddingVertical: responsiveHeight(8),
-    paddingHorizontal: responsiveWidth(16),
-    marginRight: responsiveWidth(10),
-    marginBottom: responsiveHeight(10),
-  },
-  interestText: {
-    color: '#333',
-    fontSize: responsiveFont(14),
-  },
-  verificationSection: {
-    flexDirection: 'row',
     alignItems: 'center',
   },
-  verificationTextContainer: {
-    marginLeft: responsiveWidth(15),
-    flex: 1,
-  },
-  verificationTitle: {
-    fontSize: responsiveFont(16),
+  displayName: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1E88E5',
+    color: '#333',
   },
-  verificationSubtitle: {
-    fontSize: responsiveFont(14),
-    color: '#666',
-    marginTop: responsiveHeight(2),
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00bcd4',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 5,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  sectionSpacing: {
+    height: 20,
   },
 });
 
-export default Profile;
+export default ProfilePage;

@@ -5,9 +5,9 @@ const { hashPassword, verifyPassword } = require("../helpers/authHelper");
 // Register Controller
 const registerController = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { username, gamingname, dob, email, password } = req.body;
 
-        if (!name || !email || !password) {
+        if (!username || !gamingname || !dob || !email || !password) {
             return res.status(400).json({ message: "Please fill all fields!" });
         }
 
@@ -25,7 +25,9 @@ const registerController = async (req, res) => {
         const hashedPassword = await hashPassword(password);
 
         const user = new usermodel({
-            name,
+            username,
+            gamingname,
+            dob,
             email,
             password: hashedPassword, // Save the hashed password
         });

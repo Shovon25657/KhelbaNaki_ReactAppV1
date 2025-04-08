@@ -1,439 +1,470 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  Dimensions,
-  Platform,
-  StatusBar,
-  SafeAreaView
-} from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
-const { width, height } = Dimensions.get('window');
+const EditProfile = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { profile: initialProfile } = route.params || {};
 
-// Responsive sizing functions
-const responsiveWidth = (size) => (width / 375) * size;
-const responsiveHeight = (size) => (height / 812) * size;
-const responsiveFont = (size) => (width / 375) * size;
-
-const EditProfile = ({ navigation, route }) => {
-  // Initialize with proper default values
-  const [userData, setUserData] = useState({
-    name: '',
-    photos: [],
-    interests: [],
-    about: '',
-    jobTitle: '',
-    company: '',
-    school: '',
-    birthday: '',
-    gender: '',
-    lookingFor: '',
-    ...route.params?.user
+  const [profile, setProfile] = useState(initialProfile || {
+    name: 'John Doe',
+    age: 25,
+    about: [
+      { icon: 'graduation-cap', text: 'Undergrad Degree' },
+      { icon: 'gamepad', text: 'Gamer & Dev' },
+    ],
+    lookingFor: [
+      { icon: 'users', text: 'Gaming Partners' },
+      { icon: 'code', text: 'Developers' },
+    ],
+    bestAt: [
+      { icon: 'laptop', text: 'Coding' },
+      { icon: 'puzzle-piece', text: 'Problem Solving' },
+      { icon: 'trophy', text: 'Multiplayer Games' },
+    ],
+    plan: [
+      { icon: 'rocket', text: 'Game Project' },
+      { icon: 'lightbulb-o', text: 'New Ideas' },
+    ],
+    coverImage: 'https://via.placeholder.com/400x200',
+    profileImage: 'https://via.placeholder.com/100',
   });
 
-  const [about, setAbout] = useState(userData.about || '');
-  const [jobTitle, setJobTitle] = useState(userData.jobTitle || '');
-  const [company, setCompany] = useState(userData.company || '');
-  const [school, setSchool] = useState(userData.school || '');
-  const [selectedInterests, setSelectedInterests] = useState(userData.interests || []);
+  const [editingSection, setEditingSection] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [editingAge, setEditingAge] = useState(false);
 
-  const allInterests = [
-    'Travel', 'Hiking', 'Photography', 'Dogs', 'Coffee', 'Reading',
-    'Movies', 'Music', 'Dancing', 'Cooking', 'Yoga', 'Fitness',
-    'Art', 'Gaming', 'Wine', 'Technology', 'Politics', 'Fashion'
-  ];
+  const pickProfileImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
 
-  const handleCancel = () => {
-    navigation.goBack();
-  };
-
-  const handleSave = () => {
-    const updatedUser = {
-      ...userData,
-      about,
-      jobTitle,
-      company,
-      school,
-      interests: selectedInterests,
-    };
-    
-    Alert.alert('Profile Updated', 'Your profile has been updated successfully');
-    navigation.navigate('Profile', { updatedUser });
-  };
-
-  const toggleInterest = (interest) => {
-    if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter(i => i !== interest));
-    } else {
-      if (selectedInterests.length < 6) {
-        setSelectedInterests([...selectedInterests, interest]);
-      } else {
-        Alert.alert('Maximum Interests', 'You can select up to 6 interests');
-      }
+    if (!result.canceled) {
+      setProfile({...profile, profileImage: result.assets[0].uri});
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleCancel} style={styles.headerButton}>
-          <Text style={styles.cancelButton}>Cancel</Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        
-        <TouchableOpacity onPress={handleSave} style={styles.headerButton}>
-          <Text style={styles.saveButton}>Save</Text>
-        </TouchableOpacity>
+  const pickCoverImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 2],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setProfile({...profile, coverImage: result.assets[0].uri});
+    }
+  };
+
+  const handleEdit = (section, index) => {
+    setEditingSection(section);
+    setEditingIndex(index);
+    setEditText(profile[section][index].text);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingSection && editingIndex !== null) {
+      const updatedSection = [...profile[editingSection]];
+      updatedSection[editingIndex] = {
+        ...updatedSection[editingIndex],
+        text: editText
+      };
+      
+      setProfile({
+        ...profile,
+        [editingSection]: updatedSection
+      });
+    }
+    setEditingSection(null);
+    setEditingIndex(null);
+  };
+
+  const handleRemoveItem = (section, index) => {
+    const updatedSection = [...profile[section]];
+    updatedSection.splice(index, 1);
+    setProfile({
+      ...profile,
+      [section]: updatedSection
+    });
+  };
+
+  const handleEditName = () => {
+    setEditingName(true);
+  };
+
+  const handleEditAge = () => {
+    setEditingAge(true);
+  };
+
+  const saveName = () => {
+    setEditingName(false);
+  };
+
+  const saveAge = () => {
+    setEditingAge(false);
+  };
+
+  const saveProfile = () => {
+    navigation.navigate('Profile', { profile });
+  };
+
+  const renderEditableSection = (title, sectionName) => (
+    <View style={styles.sectionContainer}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{title}</Text>
       </View>
-
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Photos Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos</Text>
-          <View style={styles.photoGrid}>
-            {/* Safely handle photos array */}
-            {userData.photos?.map((photo, index) => (
-              <View key={index} style={styles.photoContainer}>
-                <Image 
-                  source={typeof photo === 'string' ? { uri: photo } : photo} 
-                  style={styles.photo} 
-                />
-                <TouchableOpacity style={styles.removePhotoButton}>
-                  <Feather name="x" size={responsiveFont(14)} color="#fff" />
-                </TouchableOpacity>
-                {index === 0 && (
-                  <View style={styles.mainPhotoBadge}>
-                    <Text style={styles.mainPhotoText}>Main</Text>
-                  </View>
-                )}
-              </View>
-            ))}
-            <TouchableOpacity style={styles.addPhotoButton}>
-              <Feather name="plus" size={responsiveFont(24)} color="#ccc" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.photoTip}>
-            Tip: Add at least 4 photos to get more matches
-          </Text>
-        </View>
-
-        {/* Basic Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Info</Text>
-          <View style={styles.infoField}>
-            <Text style={styles.fieldLabel}>Name</Text>
-            <View style={styles.fieldValue}>
-              <Text style={styles.fieldText}>{userData.name || 'Not specified'}</Text>
-              <Feather name="chevron-right" size={responsiveFont(16)} color="#ccc" />
-            </View>
-          </View>
-          <View style={styles.infoField}>
-            <Text style={styles.fieldLabel}>Birthday</Text>
-            <View style={styles.fieldValue}>
-              <Text style={styles.fieldText}>{userData.birthday || 'Not specified'}</Text>
-              <Feather name="chevron-right" size={responsiveFont(16)} color="#ccc" />
-            </View>
-          </View>
-          <View style={styles.infoField}>
-            <Text style={styles.fieldLabel}>Gender</Text>
-            <View style={styles.fieldValue}>
-              <Text style={styles.fieldText}>{userData.gender || 'Not specified'}</Text>
-              <Feather name="chevron-right" size={responsiveFont(16)} color="#ccc" />
-            </View>
-          </View>
-          <View style={styles.infoField}>
-            <Text style={styles.fieldLabel}>Looking for</Text>
-            <View style={styles.fieldValue}>
-              <Text style={styles.fieldText}>{userData.lookingFor || 'Not specified'}</Text>
-              <Feather name="chevron-right" size={responsiveFont(16)} color="#ccc" />
-            </View>
-          </View>
-        </View>
-
-        {/* About Me Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About Me</Text>
-          <TextInput
-            style={styles.aboutInput}
-            multiline
-            placeholder="Share something about yourself..."
-            placeholderTextColor="#999"
-            value={about}
-            onChangeText={setAbout}
-            maxLength={300}
-          />
-          <Text style={styles.charCount}>{about.length}/300</Text>
-        </View>
-
-        {/* Work Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Job Title"
-            placeholderTextColor="#999"
-            value={jobTitle}
-            onChangeText={setJobTitle}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Company"
-            placeholderTextColor="#999"
-            value={company}
-            onChangeText={setCompany}
-          />
-        </View>
-
-        {/* Education Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Education</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="School"
-            placeholderTextColor="#999"
-            value={school}
-            onChangeText={setSchool}
-          />
-        </View>
-
-        {/* Interests Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-          <Text style={styles.interestSubtitle}>Select up to 6 interests</Text>
-          <View style={styles.interestsContainer}>
-            {allInterests.map((interest, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.interestButton,
-                  selectedInterests.includes(interest) && styles.selectedInterestButton,
-                ]}
-                onPress={() => toggleInterest(interest)}
+      
+      {profile[sectionName].map((item, index) => (
+        <View key={index} style={styles.itemContainer}>
+          {editingSection === sectionName && editingIndex === index ? (
+            <View style={styles.editInputContainer}>
+              <TextInput
+                style={styles.editInput}
+                value={editText}
+                onChangeText={setEditText}
+                autoFocus
+              />
+              <TouchableOpacity 
+                style={styles.saveButton} 
+                onPress={handleSaveEdit}
               >
-                <Text
-                  style={[
-                    styles.interestText,
-                    selectedInterests.includes(interest) && styles.selectedInterestText,
-                  ]}
-                >
-                  {interest}
-                </Text>
+                <Ionicons name="checkmark" size={20} color="#4CAF50" />
               </TouchableOpacity>
-            ))}
-          </View>
-          <Text style={styles.selectedCount}>
-            {selectedInterests.length} of 6 selected
-          </Text>
+            </View>
+          ) : (
+            <View style={styles.itemContent}>
+              <View style={styles.itemTextContainer}>
+                <Ionicons name={item.icon} size={20} color="#666" style={styles.itemIcon} />
+                <Text style={styles.itemText}>{item.text}</Text>
+              </View>
+              <View style={styles.itemActions}>
+                <TouchableOpacity 
+                  style={styles.editButton} 
+                  onPress={() => handleEdit(sectionName, index)}
+                >
+                  <Ionicons name="pencil" size={18} color="#00bcd4" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.deleteButton} 
+                  onPress={() => handleRemoveItem(sectionName, index)}
+                >
+                  <Ionicons name="trash" size={18} color="#f44336" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
+      ))}
+    </View>
+  );
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Cover Image */}
+        <View style={styles.coverContainer}>
+          <TouchableOpacity onPress={pickCoverImage} style={styles.coverImageWrapper}>
+            <Image 
+              source={{ uri: profile.coverImage }} 
+              style={styles.coverImage} 
+              resizeMode="cover"
+            />
+            <View style={styles.cameraIconCover}>
+              <Ionicons name="camera" size={28} color="#fff" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Profile Image */}
+        <View style={styles.profileImageContainer}>
+          <TouchableOpacity onPress={pickProfileImage} style={styles.profileImageWrapper}>
+            <Image 
+              source={{ uri: profile.profileImage }} 
+              style={styles.profileImage}
+              resizeMode="cover"
+            />
+            <View style={styles.cameraIconProfile}>
+              <Ionicons name="camera" size={24} color="#fff" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Editable Name and Age Section */}
+        <View style={styles.nameGrid}>
+          <View style={styles.nameAgeContainer}>
+            {editingName ? (
+              <View style={styles.editFieldContainer}>
+                <TextInput
+                  style={styles.editFieldInput}
+                  value={profile.name}
+                  onChangeText={(text) => setProfile({...profile, name: text})}
+                  autoFocus
+                />
+                <TouchableOpacity onPress={saveName} style={styles.editFieldSave}>
+                  <Ionicons name="checkmark" size={20} color="#4CAF50" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.editableTextContainer}
+                onPress={handleEditName}
+              >
+                <Text style={styles.displayName}>{profile.name}</Text>
+                <Ionicons name="pencil" size={16} color="#00bcd4" style={styles.editIcon} />
+              </TouchableOpacity>
+            )}
+            
+            {editingAge ? (
+              <View style={[styles.editFieldContainer, { marginLeft: 10 }]}>
+                <Text>, </Text>
+                <TextInput
+                  style={styles.editFieldInput}
+                  value={profile.age.toString()}
+                  onChangeText={(text) => setProfile({...profile, age: parseInt(text) || 0})}
+                  keyboardType="numeric"
+                  autoFocus
+                />
+                <TouchableOpacity onPress={saveAge} style={styles.editFieldSave}>
+                  <Ionicons name="checkmark" size={20} color="#4CAF50" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.editableTextContainer}
+                onPress={handleEditAge}
+              >
+                <Text style={styles.displayAge}>, {profile.age}</Text>
+                <Ionicons name="pencil" size={16} color="#00bcd4" style={styles.editIcon} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.sectionSpacing} />
+
+        {/* Profile Sections */}
+        {renderEditableSection("About Me", "about")}
+        {renderEditableSection("Looking For", "lookingFor")}
+        {renderEditableSection("Best At", "bestAt")}
+        {renderEditableSection("My Plan", "plan")}
+
+        {/* Save Button */}
+        <TouchableOpacity onPress={saveProfile} style={styles.bottomSaveButton}>
+          <Text style={styles.bottomSaveButtonText}>Save Profile</Text>
+        </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
+    flexGrow: 1,
+    backgroundColor: '#f1f1f1',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  scrollContainer: {
+    paddingBottom: 20,
+  },
+  coverContainer: {
+    position: 'relative',
+    marginBottom: 60,
+  },
+  coverImageWrapper: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: responsiveWidth(15),
-    paddingVertical: responsiveHeight(10),
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
-  headerButton: {
-    minWidth: responsiveWidth(60),
-  },
-  headerTitle: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-    textAlign: 'center',
-    flex: 1,
-    marginHorizontal: responsiveWidth(10),
-  },
-  cancelButton: {
-    fontSize: responsiveFont(16),
-    color: '#666',
-  },
-  saveButton: {
-    fontSize: responsiveFont(16),
-    fontWeight: 'bold',
-    color: '#FF5864',
-    textAlign: 'right',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: responsiveHeight(20),
-  },
-  section: {
-    backgroundColor: '#fff',
-    paddingHorizontal: responsiveWidth(20),
-    paddingVertical: responsiveHeight(15),
-    marginBottom: responsiveHeight(10),
-  },
-  sectionTitle: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-    marginBottom: responsiveHeight(15),
-    color: '#333',
-  },
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  photoContainer: {
-    width: responsiveWidth(110),
-    height: responsiveWidth(110),
-    marginBottom: responsiveHeight(10),
-    borderRadius: responsiveWidth(8),
+    borderRadius: 10,
     overflow: 'hidden',
   },
-  photo: {
+  coverImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 10,
+    borderColor: '#000',
+    borderWidth: 2,
   },
-  removePhotoButton: {
+  cameraIconCover: {
     position: 'absolute',
-    top: responsiveHeight(5),
-    right: responsiveWidth(5),
+    bottom: 10,
+    right: 10,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: responsiveWidth(12),
-    width: responsiveWidth(24),
-    height: responsiveWidth(24),
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 20,
+    padding: 6,
   },
-  mainPhotoBadge: {
+  profileImageContainer: {
     position: 'absolute',
-    bottom: responsiveHeight(5),
-    left: responsiveWidth(5),
-    backgroundColor: '#FF5864',
-    borderRadius: responsiveWidth(10),
-    paddingVertical: responsiveHeight(2),
-    paddingHorizontal: responsiveWidth(8),
+    top: 120,
+    left: 20,
+    borderRadius: 55,
+    padding: 2,
+    backgroundColor: '#fff',
   },
-  mainPhotoText: {
-    fontSize: responsiveFont(10),
-    fontWeight: 'bold',
-    color: '#fff',
+  profileImageWrapper: {
+    borderRadius: 55,
+    padding: 2,
+    backgroundColor: '#fff',
   },
-  addPhotoButton: {
-    width: responsiveWidth(110),
-    height: responsiveWidth(110),
-    borderRadius: responsiveWidth(8),
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  cameraIconProfile: {
+    position: 'absolute',
+    bottom: 0,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 20,
+    padding: 5,
+  },
+  nameGrid: {
+    marginHorizontal: 20,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    elevation: 2,
+    marginTop: 10,
+  },
+  nameAgeContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
   },
-  photoTip: {
-    fontSize: responsiveFont(12),
-    color: '#666',
-    marginTop: responsiveHeight(5),
-    textAlign: 'center',
+  editableTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  infoField: {
+  displayName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  displayAge: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  editIcon: {
+    marginLeft: 8,
+  },
+  editFieldContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editFieldInput: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    borderBottomWidth: 1,
+    borderBottomColor: '#00bcd4',
+    paddingVertical: 2,
+    minWidth: 50,
+  },
+  editFieldSave: {
+    marginLeft: 8,
+  },
+  sectionSpacing: {
+    height: 20,
+  },
+  sectionContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
+    marginHorizontal: 20,
+    elevation: 2,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: responsiveHeight(12),
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    marginBottom: 10,
   },
-  fieldLabel: {
-    fontSize: responsiveFont(16),
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#333',
   },
-  fieldValue: {
+  itemContainer: {
+    marginBottom: 10,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 5,
+  },
+  itemTextContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
-  fieldText: {
-    fontSize: responsiveFont(16),
-    color: '#666',
-    marginRight: responsiveWidth(5),
+  itemIcon: {
+    marginRight: 10,
   },
-  aboutInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: responsiveWidth(8),
-    padding: responsiveWidth(15),
-    fontSize: responsiveFont(16),
-    minHeight: responsiveHeight(120),
-    textAlignVertical: 'top',
+  itemText: {
+    fontSize: 16,
     color: '#333',
+    flex: 1,
   },
-  charCount: {
-    fontSize: responsiveFont(12),
-    color: '#666',
-    textAlign: 'right',
-    marginTop: responsiveHeight(5),
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: responsiveWidth(8),
-    padding: responsiveWidth(15),
-    fontSize: responsiveFont(16),
-    marginBottom: responsiveHeight(15),
-    color: '#333',
-  },
-  interestSubtitle: {
-    fontSize: responsiveFont(14),
-    color: '#666',
-    marginBottom: responsiveHeight(15),
-  },
-  interestsContainer: {
+  itemActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: responsiveHeight(5),
   },
-  interestButton: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: responsiveWidth(20),
-    paddingVertical: responsiveHeight(8),
-    paddingHorizontal: responsiveWidth(16),
-    marginRight: responsiveWidth(10),
-    marginBottom: responsiveHeight(10),
+  editButton: {
+    marginLeft: 10,
+    padding: 5,
   },
-  selectedInterestButton: {
-    backgroundColor: '#FF5864',
+  deleteButton: {
+    marginLeft: 5,
+    padding: 5,
   },
-  interestText: {
-    fontSize: responsiveFont(14),
-    color: '#333',
+  editInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 5,
   },
-  selectedInterestText: {
+  editInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    padding: 8,
+    backgroundColor: '#fff',
+  },
+  saveButton: {
+    marginLeft: 10,
+    padding: 5,
+  },
+  bottomSaveButton: {
+    backgroundColor: '#00bcd4',
+    padding: 15,
+    borderRadius: 10,
+    marginHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  bottomSaveButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-  },
-  selectedCount: {
-    fontSize: responsiveFont(14),
-    color: '#666',
-    textAlign: 'right',
+    fontSize: 16,
   },
 });
 
