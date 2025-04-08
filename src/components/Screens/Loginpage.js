@@ -85,7 +85,9 @@ const LoginPage = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.logoContainer}>
       <Logo/> {/* Logo component */}
+      </Text>
       <View style={styles.formContainer}>
         <Text style={styles.title}>Sign In</Text>
 
@@ -151,6 +153,8 @@ const styles = StyleSheet.create({
 
   logoContainer: {
     marginBottom: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   logoText: {
     fontSize: 48,
