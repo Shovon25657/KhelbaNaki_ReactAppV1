@@ -204,7 +204,7 @@ const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(17, 16, 19)',
+    backgroundColor: 'rgb(21, 4, 53)',
   },
   gradientTop: {
     height: '60%',
@@ -214,6 +214,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'rgb(43, 7, 100)',
+    shadowColor: 'rgb(1, 21, 24)',
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 10,
+    elevation: 10,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
@@ -284,6 +288,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'none',
     height: '100%',
+    gap: 10,
     justifyContent: 'center',
     padding: 10,
   },
