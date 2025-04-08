@@ -38,7 +38,7 @@ const LoginPage = () => {
           setState({ ...state, user: data?.user, token: data?.token }); // Uncomment if using AuthContext
           await AsyncStorage.setItem('@auth', JSON.stringify(data));
           Alert.alert('Success', 'Login successful!');
-          navigation.navigate('Home'); // Navigate to Home screen
+          navigation.navigate('EditProfile'); // Navigate to Home screen
         }
       } catch (error) {
         Alert.alert('Error', 'Invalid email or password');
@@ -88,6 +88,9 @@ const LoginPage = () => {
       <Text style={styles.logoContainer}>
       <Logo/> {/* Logo component */}
       </Text>
+      {/* <Logo/> Logo component */}
+
+
       <View style={styles.formContainer}>
         <Text style={styles.title}>Sign In</Text>
 

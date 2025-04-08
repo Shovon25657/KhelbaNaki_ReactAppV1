@@ -1,93 +1,149 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import GridItem from '../common/Profile_grid'; // Import the GridItem component
+import GridItem from '../common/Profile_grid';
 
 const ProfilePage = () => {
   const navigation = useNavigation();
 
-  // Dummy data for the profile
-  const [profile] = useState({
+  const [profile, setProfile] = useState({
     name: 'John Doe',
     age: 25,
-    about: 'I am a passionate gamer and developer.',
-    education: 'Undergrad degree in Computer Science',
-    lookingFor: 'Looking for gaming partners and developers.',
-    bestAt: 'Best at coding, problem-solving, and multiplayer games.',
-    plan: 'Working on my own game development project.',
+    about: [
+      { icon: 'graduation-cap', text: 'Undergrad Degree' },
+      { icon: 'gamepad', text: 'Gamer & Dev' },
+    ],
+    lookingFor: [
+      { icon: 'users', text: 'Gaming Partners' },
+      { icon: 'code', text: 'Developers' },
+    ],
+    bestAt: [
+      { icon: 'laptop', text: 'Coding' },
+      { icon: 'puzzle-piece', text: 'Problem Solving' },
+      { icon: 'trophy', text: 'Multiplayer Games' },
+    ],
+    plan: [
+      { icon: 'rocket', text: 'Game Project' },
+      { icon: 'lightbulb-o', text: 'New Ideas' },
+    ],
   });
+
+  const [coverImage] = useState('https://via.placeholder.com/400x200');
+  const [profileImage] = useState('https://via.placeholder.com/100');
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
-        <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.coverImage} />
-        <View style={styles.profileInfo}>
-          <Image source={{ uri: 'https://via.placeholder.com/50' }} style={styles.profileImage} />
+      {/* Cover Image */}
+      <View style={styles.coverContainer}>
+        <View style={styles.coverImageWrapper}>
+          <Image source={{ uri: coverImage }} style={styles.coverImage} />
+        </View>
+      </View>
+
+      {/* Profile Image overlapping on the left side of the cover image */}
+      <View style={styles.profileImageContainer}>
+        <View style={styles.profileImageWrapper}>
+          <Image source={{ uri: profileImage }} style={styles.profileImage} />
+        </View>
+      </View>
+
+      <View style={styles.nameGrid}>
+        <View style={styles.nameAgeContainer}>
           <Text style={styles.displayName}>{profile.name}, {profile.age}</Text>
           <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
-            <Text style={styles.editButtonText}>Edit Profile</Text>
+            <Ionicons name="settings-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+            <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* About Me Section */}
-      <GridItem title="About Me" icon="user" description={profile.about} />
+      <View style={styles.sectionSpacing} />
 
-      {/* Looking For Section */}
-      <GridItem title="Looking For" icon="search" description={profile.lookingFor} />
-
-      {/* Best At Section */}
-      <GridItem title="Best At" icon="trophy" description={profile.bestAt} />
-
-      {/* My Plan Section */}
-      <GridItem title="My Plan" icon="clipboard" description={profile.plan} />
+      <GridItem title="About Me" description={profile.about} />
+      <GridItem title="Looking For" description={profile.lookingFor} />
+      <GridItem title="Best At" description={profile.bestAt} />
+      <GridItem title="My Plan" description={profile.plan} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#f1f1f1',
   },
-  profileHeader: {
+  coverContainer: {
     position: 'relative',
-    marginBottom: 20,
+    marginBottom: 60,
+  },
+  coverImageWrapper: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   coverImage: {
     width: '100%',
-    height: 200,
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
+    height: '100%',
+    borderRadius: 10,
+    borderColor: '#000',
+    borderWidth: 2,
   },
-  profileInfo: {
+  profileImageContainer: {
     position: 'absolute',
-    bottom: 10,
+    top: 120,
     left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 55,
+    padding: 2,
+    backgroundColor: '#fff',
+  },
+  profileImageWrapper: {
+    borderRadius: 55,
+    padding: 2,
+    backgroundColor: '#fff',
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 10,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  nameGrid: {
+    marginHorizontal: 20,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    elevation: 2,
+    marginTop: 10,
+  },
+  nameAgeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   displayName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#333',
   },
   editButton: {
-    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#00bcd4',
-    padding: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 5,
   },
   editButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  sectionSpacing: {
+    height: 20,
   },
 });
 
