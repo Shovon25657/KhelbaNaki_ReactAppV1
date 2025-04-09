@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import partnar from '../../../assets/partner.png';
-import { hydrateRoot } from 'react-dom/client';
+import AnimatedButton from '../common/AnimatedButon'; // Adjust the path as necessary
+
 const { width } = Dimensions.get('window');
 
 const features = [
@@ -10,19 +10,19 @@ const features = [
     id: 1,
     title: "Gaming Partner Finder",
     description: "Connect with like-minded gamers to team up and play together",
-    image: require('../../../assets/partner.png'), // Replace with your actual image path
+    image: require('../../../assets/partner.png'), // Make sure this path is correct
   },
   {
     id: 2,
     title: "Marketplace",
     description: "Buy, sell, and trade gaming items and accounts securely",
-    image: partnar, // Replace with your actual image path
+    image: require('../../../assets/partner.png'), // Make sure this path is correct
   },
   {
     id: 3,
     title: "Recruitment",
     description: "Find teammates or join esports organizations",
-    image: partnar, // Replace with your actual image path
+    image: require('../../../assets/partner.png'), // Make sure this path is correct
   }
 ];
 
@@ -32,8 +32,8 @@ const WelcomeScreen = () => {
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
-  const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
-  const scrollX = useRef(new Animated.Value(0)).current;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef(null);
   
   const texts = [
     "Gaming is not just a hobby...",
@@ -47,13 +47,16 @@ const WelcomeScreen = () => {
   // Auto-scroll features
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentFeatureIndex(prevIndex => 
-        prevIndex === features.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 3000);
+      const nextIndex = (currentIndex + 1) % features.length;
+      setCurrentIndex(nextIndex);
+      flatListRef.current?.scrollToIndex({
+        index: nextIndex,
+        animated: true
+      });
+    }, 6000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [currentIndex]);
 
   // Blink cursor effect
   useEffect(() => {
@@ -105,6 +108,18 @@ const WelcomeScreen = () => {
     return () => clearTimeout(timeout);
   }, [isDeleting, currentTextIndex]);
 
+  const renderItem = ({ item }) => (
+    <View style={styles.featureSlide}>
+      <Image 
+        source={item.image} 
+        style={styles.featureImage} 
+        resizeMode="contain"
+      />
+      <Text style={styles.featureTitle}>{item.title}</Text>
+      <Text style={styles.featureDescription}>{item.description}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.gradientTop}>
@@ -120,81 +135,67 @@ const WelcomeScreen = () => {
         </View>
 
         <View style={styles.featureContainer}>
-          <Animated.ScrollView
+          <FlatList
+            ref={flatListRef}
+            data={features}
+            renderItem={renderItem}
+            keyExtractor={item => item.id.toString()}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
-            )}
-            scrollEventThrottle={16}
-            contentContainerStyle={styles.scrollViewContent}
-          >
-            {features.map((feature, index) => (
-              <View key={feature.id} style={styles.featureSlide}>
-                <Image 
-                  source={feature.image} 
-                  style={styles.featureImage} 
-                  resizeMode="contain"
-                />
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={styles.featureDescription}>{feature.description}</Text>
-              </View>
-            ))}
-          </Animated.ScrollView>
+            initialScrollIndex={0}
+            getItemLayout={(data, index) => ({
+              length: width,
+              offset: width * index,
+              index
+            })}
+            onMomentumScrollEnd={(event) => {
+              const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+              setCurrentIndex(newIndex);
+            }}
+          />
           
           <View style={styles.indicatorContainer}>
-            {features.map((_, i) => {
-              const inputRange = [
-                (i - 1) * width,
-                i * width,
-                (i + 1) * width
-              ];
-              
-              const dotWidth = scrollX.interpolate({
-                inputRange,
-                outputRange: [8, 16, 8],
-                extrapolate: 'clamp'
-              });
-              
-              const opacity = scrollX.interpolate({
-                inputRange,
-                outputRange: [0.3, 1, 0.3],
-                extrapolate: 'clamp'
-              });
-              
-              return (
-                <Animated.View
-                  key={`indicator-${i}`}
-                  style={[
-                    styles.indicator,
-                    { width: dotWidth, opacity }
-                  ]}
-                />
-              );
-            })}
+            {features.map((_, i) => (
+              <View
+                key={`indicator-${i}`}
+                style={[
+                  styles.indicator,
+                  currentIndex === i && styles.activeIndicator
+                ]}
+              />
+            ))}
           </View>
         </View>
       </View>
 
       <View style={styles.gradientBottom}>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.button}
             onPress={() => navigation.navigate('Login')}
             activeOpacity={0.7}
           >
             <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          <TouchableOpacity
-            style={styles.signUpButton}
+          <AnimatedButton 
+          onPress={() => navigation.navigate('Login')}
+          title="Login"
+          style={styles.loginButton}
+          textStyle={styles.loginButtonText}
+          fillColor="rgb(238, 60, 128)"
+          borderColor="rgb(94, 18, 235)"
+          animationType="slide" // or "fade"
+          animationDuration={300}
+          emptyColor="rgb(94, 18, 235)"
+          />
+
+            <AnimatedButton  
+            
             onPress={() => navigation.navigate('Registration')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.signUpButtonText}>Sign Up</Text>
-          </TouchableOpacity>
+            title='Sign Up' />
+    
         </View>
       </View>
     </View>
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingTop: '15%',
     paddingBottom: '5%',
-    justifyContent: 'space-between',
+    justifyContent: 'space-evenly',
     alignItems: 'center',
     backgroundColor: 'rgb(43, 7, 100)',
     shadowColor: 'rgb(1, 21, 24)',
@@ -225,14 +226,11 @@ const styles = StyleSheet.create({
     height: '40%',
     width: '100%',
     justifyContent: 'center',
+    backgroundColor: 'rgb(21, 4, 53)',
   },
-
-
   logoContainer: {
-    marginBottom: 30,
+    marginBottom: '2%',
   },
-
-
   logoText: {
     fontSize: 48,
     fontWeight: 'bold',
@@ -247,7 +245,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   mottoLine1: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -257,44 +255,21 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
-  mottoLine2: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#DDDDDD',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: 20,
-  },
   featureContainer: {
-    flex: 1,
+    height: 200,
     width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    overflow: 'none',
+    marginTop: 10,
   },
-  scrollViewContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    height: '100%',
-    alignItems: 'center',
-    overflow: 'none',
-    justifyContent: 'center',
-  },
-
   featureSlide: {
-    flex: 1,
-    width: width - 40,
-    marginHorizontal: 20,
+    width: width,
     alignItems: 'center',
-    overflow: 'none',
-    height: '100%',
-    gap: 10,
     justifyContent: 'center',
-    padding: 10,
+    padding: 20,
   },
   featureImage: {
     width: 100,
     height: 100,
+    marginBottom: 15,
   },
   featureTitle: {
     fontSize: 18,
@@ -316,13 +291,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   indicator: {
+    width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#FFFFFF',
     marginHorizontal: 4,
+    opacity: 0.3,
+  },
+  activeIndicator: {
+    width: 16,
+    opacity: 1,
   },
   buttonContainer: {
     width: '100%',
+    gap: 10,
+    justifyContent: 'center',
+    
     alignItems: 'center',
     marginTop: 20,
   },
@@ -360,8 +344,9 @@ const styles = StyleSheet.create({
   },
   cursor: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
+    textShadowColor: 'rgb(26, 216, 230)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 10,
   },
