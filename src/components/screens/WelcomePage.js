@@ -180,12 +180,20 @@ const WelcomeScreen = () => {
           </TouchableOpacity> */}
 
           <AnimatedButton 
-          style={styles.button}
           onPress={() => navigation.navigate('Login')}
-            title='Login' 
+          title="Login"
+          style={styles.loginButton}
+          textStyle={styles.loginButtonText}
+          fillColor="rgb(238, 60, 128)"
+          borderColor="rgb(94, 18, 235)"
+          animationType="slide" // or "fade"
+          animationDuration={300}
+          emptyColor="rgb(94, 18, 235)"
           />
 
-            <AnimatedButton  onPress={() => navigation.navigate('Registration')}
+            <AnimatedButton  
+            
+            onPress={() => navigation.navigate('Registration')}
             title='Sign Up' />
     
         </View>
@@ -204,7 +212,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingTop: '15%',
     paddingBottom: '5%',
-    justifyContent: 'space-between',
+    justifyContent: 'space-evenly',
     alignItems: 'center',
     backgroundColor: 'rgb(43, 7, 100)',
     shadowColor: 'rgb(1, 21, 24)',
@@ -221,7 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgb(21, 4, 53)',
   },
   logoContainer: {
-    marginBottom: 30,
+    marginBottom: '2%',
   },
   logoText: {
     fontSize: 48,
@@ -296,6 +304,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
+    gap: 10,
+    justifyContent: 'center',
+    
     alignItems: 'center',
     marginTop: 20,
   },
