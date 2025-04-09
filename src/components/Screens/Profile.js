@@ -34,17 +34,53 @@ const Profile = ({ navigation }) => {
       { icon: 'graduation-cap', label: 'Education', value: 'Undergrad Degree' },
       { icon: 'map-marker-alt', label: 'Location', value: 'New York, NY' },
       { icon: 'briefcase', label: 'Occupation', value: 'Streamer' },
+      { icon: 'smoking', label: 'Smoking', value: 'Yes' },
+      { icon: 'glass-whiskey', label: 'Drinking', value: 'Socially' },
+      { icon: 'pray', label: 'Religion', value: 'Islam' },
+      { icon: 'genderless', label: 'Gender', value: 'Male' }
     ],
     lookingFor: [
       { icon: 'moon', label: 'Availability', value: 'Night' },
       { icon: 'gamepad', label: 'Play Style', value: 'Competitive' },
-      { icon: 'users', label: 'Team Size', value: 'Squad (4)' },
+      { icon: 'users', label: 'Play Mode', value: 'Team Based' },
     ],
     bestAt: [
-      { image: game1, name: 'Valorant', level: 'Diamond', tag: 'Most Played' },
-      { image: game2, name: 'Apex Legends', level: 'Platinum', tag: 'Recently Tried' },
-      { image: game3, name: 'League of Legends', level: 'Gold', tag: 'Not My Type' },
+      { 
+        image: game1, 
+        name: 'Valorant', 
+        level: 'Gold',
+        frequency: 'Most Played',
+        isFavorite: true
+      },
+      { 
+        image: game2, 
+        name: 'Call of Duty Mobile', 
+        level: 'Platinum',
+        frequency: 'Recently Played',
+        isFavorite: false
+      },
+      { 
+        image: game3, 
+        name: 'EA FC 24', 
+        level: 'Gold',
+        frequency: 'Once Played',
+        isFavorite: false
+      },
     ],
+
+    bestBadge: {
+      position: 'absolute',
+      top: responsiveHeight(5),
+      left: responsiveWidth(5),
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: responsiveWidth(8),
+      paddingVertical: responsiveHeight(3),
+      borderRadius: responsiveWidth(10),
+      zIndex: 1,
+    },
+   
     plan: {
       name: 'Elite Gamer Package',
       features: [
@@ -99,31 +135,31 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Bio Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Player Bio</Text>
-          <View style={styles.bioContainer}>
-            <Text style={styles.bioText}>{user.bio}</Text>
-          </View>
-        </View>
+  {/* Bio Section - Updated version */}
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Player Bio</Text>
+      <View style={styles.bioContainer}>
+        <Text style={styles.bioText}>{user.bio}</Text>
+      </View>
+    </View>
 
-        {/* About Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.gridContainer}>
-            {user.about.map((item, index) => (
-              <View key={index} style={styles.smallGridItem}>
-                <FontAwesome5 
-                  name={item.icon} 
-                  size={responsiveFont(16)} 
-                  color="#00ff88" 
-                />
-                <Text style={styles.smallGridLabel}>{item.label}</Text>
-                <Text style={styles.smallGridValue}>{item.value}</Text>
-              </View>
-            ))}
-          </View>
+            {/* About Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>About</Text>
+        <View style={styles.gridContainer}>
+          {user.about.map((item, index) => (
+            <View key={index} style={styles.smallGridItem}>
+              <FontAwesome5 
+                name={item.icon} 
+                size={responsiveFont(16)} 
+                color="#00ff88" 
+              />
+              <Text style={styles.smallGridLabel}>{item.label}</Text>
+              <Text style={styles.smallGridValue}>{item.value}</Text>
+            </View>
+          ))}
         </View>
+      </View>
 
         {/* Looking For Section */}
         <View style={styles.section}>
@@ -143,33 +179,47 @@ const Profile = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Games Played Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Games Played</Text>
-          <View style={styles.gamesContainer}>
-            {user.bestAt.map((game, index) => (
-              <TouchableOpacity 
-                key={index} 
-                style={styles.smallGameCard}
-                activeOpacity={0.7}
-              >
-                <Image source={game.image} style={styles.smallGameImage} />
-                <View style={styles.gameInfo}>
-                  <Text style={styles.gameTag}>{game.tag}</Text>
-                  <Text style={styles.gameName}>{game.name}</Text>
-                  <View style={styles.gameLevel}>
-                    <MaterialCommunityIcons 
-                      name="medal" 
-                      size={responsiveFont(14)} 
-                      color="#FFD700" 
-                    />
-                    <Text style={styles.levelText}>{game.level}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+{/* Games Played Section */}
+// Find this section in your code and make these adjustments to the layout
+<View style={styles.section}>
+  <Text style={styles.sectionTitle}>Games Played</Text>
+  <ScrollView 
+    horizontal={true} 
+    showsHorizontalScrollIndicator={false}
+    contentContainerStyle={{paddingHorizontal: responsiveWidth(5)}}
+  >
+    {user.bestAt.map((game, index) => (
+      <TouchableOpacity 
+        key={index} 
+        style={styles.smallGameCard}
+        activeOpacity={0.7}
+      >
+        {game.isFavorite && (
+          <View style={styles.favoriteBadge}>
+            <MaterialCommunityIcons 
+              name="heart" 
+              size={responsiveFont(14)} 
+              color="#e94560" 
+            />
+          </View>
+        )}
+        <Image source={game.image} style={styles.smallGameImage} />
+        <Text style={styles.frequencyTag}>{game.frequency}</Text>
+        <View style={styles.gameInfo}>
+          <Text style={styles.gameName}>{game.name}</Text>
+          <View style={styles.gameLevel}>
+            <MaterialCommunityIcons 
+              name="medal" 
+              size={responsiveFont(14)} 
+              color="#FFD700" 
+            />
+            <Text style={styles.levelText}>{game.level}</Text>
           </View>
         </View>
+      </TouchableOpacity>
+    ))}
+  </ScrollView>
+</View>
 
         {/* My Plan Section */}
         <View style={styles.section}>
@@ -325,11 +375,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   bioContainer: {
-    backgroundColor: '#0f3460',
+    backgroundColor: 'rgba(15, 52, 96, 0.5)', // Reduced opacity
     padding: responsiveWidth(15),
     borderRadius: responsiveWidth(10),
-    borderWidth: 1,
-    borderColor: '#00ff88',
+    // Removed border
   },
   bioText: {
     fontSize: responsiveFont(16),
@@ -365,26 +414,65 @@ const styles = StyleSheet.create({
     marginTop: responsiveHeight(2),
     textAlign: 'center',
   },
-  gamesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  // Change these styles in the StyleSheet
+smallGameCard: {
+  width: responsiveWidth(150), // Increase from 90 to 150
+  height: responsiveHeight(200), // Add explicit height
+  marginBottom: responsiveHeight(20), // Increase from 15 to 20
+  backgroundColor: '#0f3460',
+  borderRadius: responsiveWidth(12), // Slightly increase from 8
+  overflow: 'hidden',
+  borderWidth: 1,
+  borderColor: '#00ff88',
+  margin: responsiveWidth(5), // Add margin on all sides
+},
+smallGameImage: {
+  width: '100%',
+  height: responsiveHeight(130), // Set explicit height instead of square ratio
+  resizeMode: 'cover', // Ensure image covers the area properly
+},
+gamesContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-around', // Change from 'space-between' to 'space-around'
+},
+  favoriteBadge: {
+    position: 'absolute',
+    top: responsiveHeight(5),
+    left: responsiveWidth(5),
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: responsiveWidth(10),
+    width: responsiveWidth(24),
+    height: responsiveWidth(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
-  smallGameCard: {
-    width: responsiveWidth(90),
-    marginBottom: responsiveHeight(15),
-    backgroundColor: '#0f3460',
-    borderRadius: responsiveWidth(8),
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#00ff88',
+  frequencyTag: {
+    position: 'absolute',
+    top: responsiveHeight(5),
+    right: responsiveWidth(5),
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: '#00ff88',
+    fontSize: responsiveFont(10),
+    fontWeight: 'bold',
+    paddingHorizontal: responsiveWidth(8),
+    paddingVertical: responsiveHeight(3),
+    borderRadius: responsiveWidth(10),
   },
-  smallGameImage: {
-    width: '100%',
-    height: responsiveWidth(90),
-  },
+  
   gameInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: responsiveWidth(8),
+  },
+  gameLevel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: responsiveHeight(5),
   },
   gameTag: {
     fontSize: responsiveFont(10),
@@ -397,11 +485,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  gameLevel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: responsiveHeight(2),
-  },
+ 
   levelText: {
     fontSize: responsiveFont(10),
     color: '#00ff88',
