@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -26,6 +26,9 @@ const responsiveHeight = (size) => (height / 812) * size;
 const responsiveFont = (size) => (width / 375) * size;
 
 const Profile = ({ navigation }) => {
+  const gamesScrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+
   const [user, setUser] = useState({
     name: 'Jessica',
     age: 28,
@@ -97,6 +100,34 @@ const Profile = ({ navigation }) => {
     navigation.navigate('EditProfile', { user });
   };
 
+  // Function to scroll right
+  const scrollGamesRight = () => {
+    if (gamesScrollRef.current) {
+      gamesScrollRef.current.scrollTo({
+        x: responsiveWidth(150), // Scroll by approximately one card width
+        y: 0,
+        animated: true
+      });
+    }
+  };
+
+  // Function to scroll left
+  const scrollGamesLeft = () => {
+    if (gamesScrollRef.current) {
+      gamesScrollRef.current.scrollTo({
+        x: 0,
+        y: 0,
+        animated: true
+      });
+    }
+  };
+
+  // Handle scroll events to show/hide left arrow
+  const handleScroll = (event) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    setCanScrollLeft(scrollPosition > 10); // Show left arrow if scrolled right
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with title only */}
@@ -135,31 +166,31 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-  {/* Bio Section - Updated version */}
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Player Bio</Text>
-      <View style={styles.bioContainer}>
-        <Text style={styles.bioText}>{user.bio}</Text>
-      </View>
-    </View>
-
-            {/* About Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.gridContainer}>
-          {user.about.map((item, index) => (
-            <View key={index} style={styles.smallGridItem}>
-              <FontAwesome5 
-                name={item.icon} 
-                size={responsiveFont(16)} 
-                color="#00ff88" 
-              />
-              <Text style={styles.smallGridLabel}>{item.label}</Text>
-              <Text style={styles.smallGridValue}>{item.value}</Text>
-            </View>
-          ))}
+        {/* Bio Section - Updated version */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Player Bio</Text>
+          <View style={styles.bioContainer}>
+            <Text style={styles.bioText}>{user.bio}</Text>
+          </View>
         </View>
-      </View>
+
+        {/* About Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <View style={styles.gridContainer}>
+            {user.about.map((item, index) => (
+              <View key={index} style={styles.smallGridItem}>
+                <FontAwesome5 
+                  name={item.icon} 
+                  size={responsiveFont(16)} 
+                  color="#00ff88" 
+                />
+                <Text style={styles.smallGridLabel}>{item.label}</Text>
+                <Text style={styles.smallGridValue}>{item.value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
 
         {/* Looking For Section */}
         <View style={styles.section}>
@@ -179,47 +210,79 @@ const Profile = ({ navigation }) => {
           </View>
         </View>
 
-{/* Games Played Section */}
-// Find this section in your code and make these adjustments to the layout
-<View style={styles.section}>
-  <Text style={styles.sectionTitle}>Games Played</Text>
-  <ScrollView 
-    horizontal={true} 
-    showsHorizontalScrollIndicator={false}
-    contentContainerStyle={{paddingHorizontal: responsiveWidth(5)}}
-  >
-    {user.bestAt.map((game, index) => (
-      <TouchableOpacity 
-        key={index} 
-        style={styles.smallGameCard}
-        activeOpacity={0.7}
-      >
-        {game.isFavorite && (
-          <View style={styles.favoriteBadge}>
-            <MaterialCommunityIcons 
-              name="heart" 
-              size={responsiveFont(14)} 
-              color="#e94560" 
-            />
-          </View>
-        )}
-        <Image source={game.image} style={styles.smallGameImage} />
-        <Text style={styles.frequencyTag}>{game.frequency}</Text>
-        <View style={styles.gameInfo}>
-          <Text style={styles.gameName}>{game.name}</Text>
-          <View style={styles.gameLevel}>
-            <MaterialCommunityIcons 
-              name="medal" 
-              size={responsiveFont(14)} 
-              color="#FFD700" 
-            />
-            <Text style={styles.levelText}>{game.level}</Text>
+        {/* Games Played Section - Updated with scrollable indicators */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Games Played</Text>
+          <View style={{ position: 'relative' }}>
+            <ScrollView 
+              ref={gamesScrollRef}
+              horizontal={true} 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.gamesScrollContainer}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+            >
+              {user.bestAt.map((game, index) => (
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.smallGameCard}
+                  activeOpacity={0.7}
+                >
+                  {game.isFavorite && (
+                    <View style={styles.favoriteBadge}>
+                      <MaterialCommunityIcons 
+                        name="heart" 
+                        size={responsiveFont(14)} 
+                        color="#e94560" 
+                      />
+                    </View>
+                  )}
+                  <Image source={game.image} style={styles.smallGameImage} />
+                  <Text style={styles.frequencyTag}>{game.frequency}</Text>
+                  <View style={styles.gameInfo}>
+                    <Text style={styles.gameName}>{game.name}</Text>
+                    <View style={styles.gameLevel}>
+                      <MaterialCommunityIcons 
+                        name="medal" 
+                        size={responsiveFont(14)} 
+                        color="#FFD700" 
+                      />
+                      <Text style={styles.levelText}>{game.level}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            
+            {/* Left scroll arrow - only visible when scrolled right */}
+            {canScrollLeft && (
+              <TouchableOpacity 
+                style={[styles.scrollIndicator, styles.scrollIndicatorLeft]}
+                onPress={scrollGamesLeft}
+                activeOpacity={0.7}
+              >
+                <Feather 
+                  name="chevron-left" 
+                  size={responsiveFont(20)} 
+                  color="#00ff88" 
+                />
+              </TouchableOpacity>
+            )}
+
+            {/* Right scroll arrow */}
+            <TouchableOpacity 
+              style={styles.scrollIndicator}
+              onPress={scrollGamesRight}
+              activeOpacity={0.7}
+            >
+              <Feather 
+                name="chevron-right" 
+                size={responsiveFont(20)} 
+                color="#00ff88" 
+              />
+            </TouchableOpacity>
           </View>
         </View>
-      </TouchableOpacity>
-    ))}
-  </ScrollView>
-</View>
 
         {/* My Plan Section */}
         <View style={styles.section}>
@@ -414,28 +477,51 @@ const styles = StyleSheet.create({
     marginTop: responsiveHeight(2),
     textAlign: 'center',
   },
-  // Change these styles in the StyleSheet
-smallGameCard: {
-  width: responsiveWidth(150), // Increase from 90 to 150
-  height: responsiveHeight(200), // Add explicit height
-  marginBottom: responsiveHeight(20), // Increase from 15 to 20
-  backgroundColor: '#0f3460',
-  borderRadius: responsiveWidth(12), // Slightly increase from 8
-  overflow: 'hidden',
-  borderWidth: 1,
-  borderColor: '#00ff88',
-  margin: responsiveWidth(5), // Add margin on all sides
-},
-smallGameImage: {
-  width: '100%',
-  height: responsiveHeight(130), // Set explicit height instead of square ratio
-  resizeMode: 'cover', // Ensure image covers the area properly
-},
-gamesContainer: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  justifyContent: 'space-around', // Change from 'space-between' to 'space-around'
-},
+  // Updated Games Section styles
+  gamesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+  },
+  gamesScrollContainer: {
+    paddingRight: responsiveWidth(20), // Extra padding at the end for better UX
+    paddingLeft: responsiveWidth(5),
+  },
+  smallGameCard: {
+    width: responsiveWidth(120), // Adjusted size
+    height: responsiveHeight(170),
+    marginRight: responsiveWidth(12),
+    marginBottom: responsiveHeight(10),
+    backgroundColor: '#0f3460',
+    borderRadius: responsiveWidth(10),
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#00ff88',
+  },
+  smallGameImage: {
+    width: '100%',
+    height: responsiveHeight(110),
+    resizeMode: 'cover',
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    right: responsiveWidth(10),
+    top: '50%',
+    transform: [{ translateY: -responsiveHeight(15) }],
+    backgroundColor: 'rgba(0, 255, 136, 0.2)',
+    borderRadius: responsiveWidth(15),
+    width: responsiveWidth(30),
+    height: responsiveWidth(30),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#00ff88',
+    zIndex: 2,
+  },
+  scrollIndicatorLeft: {
+    right: 'auto',
+    left: responsiveWidth(10),
+  },
   favoriteBadge: {
     position: 'absolute',
     top: responsiveHeight(5),
@@ -460,7 +546,6 @@ gamesContainer: {
     paddingVertical: responsiveHeight(3),
     borderRadius: responsiveWidth(10),
   },
-  
   gameInfo: {
     position: 'absolute',
     bottom: 0,
@@ -485,7 +570,6 @@ gamesContainer: {
     fontWeight: 'bold',
     color: '#fff',
   },
- 
   levelText: {
     fontSize: responsiveFont(10),
     color: '#00ff88',
