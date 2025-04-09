@@ -48,7 +48,7 @@ function App() {
   return (
     <NavigationContainer>
       <AuthProvider>
-      <Stack.Navigator initialRouteName={isLoggedIn ? 'Home' : 'Welcome'}>
+      <Stack.Navigator initialRouteName={isLoggedIn ? 'Profile' : 'Welcome'}>
         {/* Define the stack screens here */}
         <Stack.Screen name="Welcome" component={WelcomePage}
         options={{ headerShown:false}} />

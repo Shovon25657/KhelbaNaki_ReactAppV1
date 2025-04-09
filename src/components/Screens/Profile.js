@@ -1,150 +1,454 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import GridItem from '../common/Profile_grid';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  ScrollView, 
+  TouchableOpacity,
+  Dimensions,
+  Platform,
+  StatusBar,
+  SafeAreaView
+} from 'react-native';
+import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import profilePhoto from '../../../assets/profile1.jpg';
+import coverPhoto from '../../../assets/profile3.jpg';
+import game1 from '../../../assets/game1.png';
+import game2 from '../../../assets/game2.png';
+import game3 from '../../../assets/game3.png';
 
-const ProfilePage = () => {
-  const navigation = useNavigation();
+const { width, height } = Dimensions.get('window');
 
-  const [profile, setProfile] = useState({
-    name: 'John Doe',
-    age: 25,
+// Responsive sizing functions
+const responsiveWidth = (size) => (width / 375) * size;
+const responsiveHeight = (size) => (height / 812) * size;
+const responsiveFont = (size) => (width / 375) * size;
+
+const Profile = ({ navigation }) => {
+  const [user, setUser] = useState({
+    name: 'Jessica',
+    age: 28,
+    bio: 'Professional gamer and streamer. Love playing FPS and strategy games. Looking for teammates who communicate well!',
     about: [
-      { icon: 'graduation-cap', text: 'Undergrad Degree' },
-      { icon: 'gamepad', text: 'Gamer & Dev' },
+      { icon: 'graduation-cap', label: 'Education', value: 'Undergrad Degree' },
+      { icon: 'map-marker-alt', label: 'Location', value: 'New York, NY' },
+      { icon: 'briefcase', label: 'Occupation', value: 'Streamer' },
     ],
     lookingFor: [
-      { icon: 'users', text: 'Gaming Partners' },
-      { icon: 'code', text: 'Developers' },
+      { icon: 'moon', label: 'Availability', value: 'Night' },
+      { icon: 'gamepad', label: 'Play Style', value: 'Competitive' },
+      { icon: 'users', label: 'Team Size', value: 'Squad (4)' },
     ],
     bestAt: [
-      { icon: 'laptop', text: 'Coding' },
-      { icon: 'puzzle-piece', text: 'Problem Solving' },
-      { icon: 'trophy', text: 'Multiplayer Games' },
+      { image: game1, name: 'Valorant', level: 'Diamond', tag: 'Most Played' },
+      { image: game2, name: 'Apex Legends', level: 'Platinum', tag: 'Recently Tried' },
+      { image: game3, name: 'League of Legends', level: 'Gold', tag: 'Not My Type' },
     ],
-    plan: [
-      { icon: 'rocket', text: 'Game Project' },
-      { icon: 'lightbulb-o', text: 'New Ideas' },
-    ],
+    plan: {
+      name: 'Elite Gamer Package',
+      features: [
+        'Unlimited likes',
+        'Send direct requests',
+        'Premium avatars',
+        'Priority visibility',
+        'Custom gaming themes'
+      ]
+    }
   });
 
-  const [coverImage] = useState('https://via.placeholder.com/400x200');
-  const [profileImage] = useState('https://via.placeholder.com/100');
+  const handleEditProfile = () => {
+    navigation.navigate('EditProfile', { user });
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Cover Image */}
-      <View style={styles.coverContainer}>
-        <View style={styles.coverImageWrapper}>
-          <Image source={{ uri: coverImage }} style={styles.coverImage} />
-        </View>
+    <SafeAreaView style={styles.container}>
+      {/* Header with title only */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
 
-      {/* Profile Image overlapping on the left side of the cover image */}
-      <View style={styles.profileImageContainer}>
-        <View style={styles.profileImageWrapper}>
-          <Image source={{ uri: profileImage }} style={styles.profileImage} />
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Cover Photo with Profile Photo overlapping */}
+        <View style={styles.coverContainer}>
+          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <View style={styles.profilePhotoContainer}>
+            <Image source={profilePhoto} style={styles.profilePhoto} />
+          </View>
         </View>
-      </View>
 
-      <View style={styles.nameGrid}>
-        <View style={styles.nameAgeContainer}>
-          <Text style={styles.displayName}>{profile.name}, {profile.age}</Text>
-          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
-            <Ionicons name="settings-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+        {/* Name, Age and Edit Profile Button */}
+        <View style={styles.nameContainer}>
+          <View>
+            <Text style={styles.name}>{user.name}, {user.age}</Text>
+            <View style={styles.statusContainer}>
+              <View style={styles.onlineDot} />
+              <Text style={styles.status}>Online Now</Text>
+            </View>
+          </View>
+          <TouchableOpacity 
+            style={styles.editButton} 
+            onPress={handleEditProfile}
+            activeOpacity={0.7}
+          >
+            <Feather name="edit-3" size={responsiveFont(16)} color="#fff" />
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      <View style={styles.sectionSpacing} />
+        {/* Bio Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Player Bio</Text>
+          <View style={styles.bioContainer}>
+            <Text style={styles.bioText}>{user.bio}</Text>
+          </View>
+        </View>
 
-      <GridItem title="About Me" description={profile.about} />
-      <GridItem title="Looking For" description={profile.lookingFor} />
-      <GridItem title="Best At" description={profile.bestAt} />
-      <GridItem title="My Plan" description={profile.plan} />
-    </ScrollView>
+        {/* About Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <View style={styles.gridContainer}>
+            {user.about.map((item, index) => (
+              <View key={index} style={styles.smallGridItem}>
+                <FontAwesome5 
+                  name={item.icon} 
+                  size={responsiveFont(16)} 
+                  color="#00ff88" 
+                />
+                <Text style={styles.smallGridLabel}>{item.label}</Text>
+                <Text style={styles.smallGridValue}>{item.value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Looking For Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Looking For</Text>
+          <View style={styles.gridContainer}>
+            {user.lookingFor.map((item, index) => (
+              <View key={index} style={styles.smallGridItem}>
+                <FontAwesome5 
+                  name={item.icon} 
+                  size={responsiveFont(16)} 
+                  color="#00ff88" 
+                />
+                <Text style={styles.smallGridLabel}>{item.label}</Text>
+                <Text style={styles.smallGridValue}>{item.value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Games Played Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Games Played</Text>
+          <View style={styles.gamesContainer}>
+            {user.bestAt.map((game, index) => (
+              <TouchableOpacity 
+                key={index} 
+                style={styles.smallGameCard}
+                activeOpacity={0.7}
+              >
+                <Image source={game.image} style={styles.smallGameImage} />
+                <View style={styles.gameInfo}>
+                  <Text style={styles.gameTag}>{game.tag}</Text>
+                  <Text style={styles.gameName}>{game.name}</Text>
+                  <View style={styles.gameLevel}>
+                    <MaterialCommunityIcons 
+                      name="medal" 
+                      size={responsiveFont(14)} 
+                      color="#FFD700" 
+                    />
+                    <Text style={styles.levelText}>{game.level}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* My Plan Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Gamer Subscription</Text>
+          <View style={styles.planCard}>
+            <View style={styles.planHeader}>
+              <MaterialCommunityIcons 
+                name="crown" 
+                size={responsiveFont(24)} 
+                color="#FFD700" 
+              />
+              <Text style={styles.planName}>{user.plan.name}</Text>
+            </View>
+            <View style={styles.planFeatures}>
+              {user.plan.features.map((feature, index) => (
+                <View key={index} style={styles.featureItem}>
+                  <View style={styles.bulletPoint} />
+                  <Text style={styles.featureText}>{feature}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: '#f1f1f1',
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+  },
+  header: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: responsiveHeight(15),
+    backgroundColor: '#16213e',
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
+  headerTitle: {
+    fontSize: responsiveFont(20),
+    fontWeight: 'bold',
+    color: '#00ff88',
+    fontFamily: 'Roboto',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
   coverContainer: {
     position: 'relative',
-    marginBottom: 60,
+    height: responsiveHeight(200),
+    backgroundColor: '#0f3460',
   },
-  coverImageWrapper: {
-    width: '100%',
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  coverImage: {
+  coverPhoto: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
-    borderColor: '#000',
-    borderWidth: 2,
+    opacity: 0.8,
   },
-  profileImageContainer: {
+  profilePhotoContainer: {
     position: 'absolute',
-    top: 120,
-    left: 20,
-    borderRadius: 55,
-    padding: 2,
-    backgroundColor: '#fff',
+    bottom: -responsiveHeight(50),
+    left: responsiveWidth(20),
+    width: responsiveWidth(100),
+    height: responsiveWidth(100),
+    borderRadius: responsiveWidth(50),
+    borderWidth: 4,
+    borderColor: '#00ff88',
+    overflow: 'hidden',
+    backgroundColor: '#16213e',
+    shadowColor: '#00ff88',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 10,
   },
-  profileImageWrapper: {
-    borderRadius: 55,
-    padding: 2,
-    backgroundColor: '#fff',
+  profilePhoto: {
+    width: '100%',
+    height: '100%',
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2,
-    borderColor: '#000',
-  },
-  nameGrid: {
-    marginHorizontal: 20,
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    elevation: 2,
-    marginTop: 10,
-  },
-  nameAgeContainer: {
+  nameContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    paddingHorizontal: responsiveWidth(20),
+    marginTop: responsiveHeight(60),
+    marginBottom: responsiveHeight(20),
   },
-  displayName: {
-    fontSize: 20,
+  name: {
+    fontSize: responsiveFont(26),
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 255, 136, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: responsiveHeight(5),
+  },
+  onlineDot: {
+    width: responsiveWidth(10),
+    height: responsiveWidth(10),
+    borderRadius: responsiveWidth(5),
+    backgroundColor: '#00ff88',
+    marginRight: responsiveWidth(5),
+  },
+  status: {
+    fontSize: responsiveFont(14),
+    color: '#00ff88',
+    fontStyle: 'italic',
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#00bcd4',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 5,
+    backgroundColor: '#e94560',
+    paddingHorizontal: responsiveWidth(15),
+    paddingVertical: responsiveHeight(8),
+    borderRadius: responsiveWidth(20),
+    shadowColor: '#e94560',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 5,
+    elevation: 5,
   },
   editButtonText: {
+    fontSize: responsiveFont(14),
     color: '#fff',
+    marginLeft: responsiveWidth(5),
     fontWeight: 'bold',
   },
-  sectionSpacing: {
-    height: 20,
+  section: {
+    backgroundColor: '#16213e',
+    paddingHorizontal: responsiveWidth(20),
+    paddingVertical: responsiveHeight(15),
+    marginBottom: responsiveHeight(10),
+    borderRadius: responsiveWidth(10),
+    marginHorizontal: responsiveWidth(10),
+    borderWidth: 1,
+    borderColor: '#0f3460',
+  },
+  sectionTitle: {
+    fontSize: responsiveFont(18),
+    fontWeight: 'bold',
+    marginBottom: responsiveHeight(15),
+    color: '#00ff88',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  bioContainer: {
+    backgroundColor: '#0f3460',
+    padding: responsiveWidth(15),
+    borderRadius: responsiveWidth(10),
+    borderWidth: 1,
+    borderColor: '#00ff88',
+  },
+  bioText: {
+    fontSize: responsiveFont(16),
+    lineHeight: responsiveFont(24),
+    color: '#fff',
+    textAlign: 'center',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  smallGridItem: {
+    width: responsiveWidth(90),
+    alignItems: 'center',
+    padding: responsiveWidth(8),
+    backgroundColor: '#0f3460',
+    borderRadius: responsiveWidth(10),
+    marginBottom: responsiveHeight(10),
+    borderWidth: 1,
+    borderColor: '#00ff88',
+  },
+  smallGridLabel: {
+    fontSize: responsiveFont(10),
+    color: '#00ff88',
+    marginTop: responsiveHeight(4),
+    textAlign: 'center',
+  },
+  smallGridValue: {
+    fontSize: responsiveFont(12),
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: responsiveHeight(2),
+    textAlign: 'center',
+  },
+  gamesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  smallGameCard: {
+    width: responsiveWidth(90),
+    marginBottom: responsiveHeight(15),
+    backgroundColor: '#0f3460',
+    borderRadius: responsiveWidth(8),
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#00ff88',
+  },
+  smallGameImage: {
+    width: '100%',
+    height: responsiveWidth(90),
+  },
+  gameInfo: {
+    padding: responsiveWidth(8),
+  },
+  gameTag: {
+    fontSize: responsiveFont(10),
+    color: '#00ff88',
+    fontStyle: 'italic',
+    marginBottom: responsiveHeight(2),
+  },
+  gameName: {
+    fontSize: responsiveFont(12),
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  gameLevel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: responsiveHeight(2),
+  },
+  levelText: {
+    fontSize: responsiveFont(10),
+    color: '#00ff88',
+    marginLeft: responsiveWidth(3),
+  },
+  planCard: {
+    backgroundColor: '#0f3460',
+    borderRadius: responsiveWidth(15),
+    padding: responsiveWidth(15),
+    borderWidth: 2,
+    borderColor: '#00ff88',
+  },
+  planHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: responsiveHeight(10),
+  },
+  planName: {
+    fontSize: responsiveFont(18),
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginLeft: responsiveWidth(10),
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  planFeatures: {
+    paddingLeft: responsiveWidth(5),
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: responsiveHeight(8),
+  },
+  bulletPoint: {
+    width: responsiveWidth(6),
+    height: responsiveWidth(6),
+    borderRadius: responsiveWidth(3),
+    backgroundColor: '#00ff88',
+    marginTop: responsiveHeight(5),
+    marginRight: responsiveWidth(8),
+  },
+  featureText: {
+    fontSize: responsiveFont(14),
+    color: '#fff',
+    flex: 1,
   },
 });
 
-export default ProfilePage;
+export default Profile;
