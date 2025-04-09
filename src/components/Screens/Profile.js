@@ -11,7 +11,7 @@ import {
   StatusBar,
   SafeAreaView
 } from 'react-native';
-import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import profilePhoto from '../../../assets/profile1.jpg';
 import coverPhoto from '../../../assets/profile3.jpg';
 import game1 from '../../../assets/game1.png';
@@ -41,9 +41,9 @@ const Profile = ({ navigation }) => {
       { icon: 'users', label: 'Team Size', value: 'Squad (4)' },
     ],
     bestAt: [
-      { image: game1, name: 'Valorant', level: 'Diamond' },
-      { image: game2, name: 'Apex Legends', level: 'Platinum' },
-      { image: game3, name: 'League of Legends', level: 'Gold' },
+      { image: game1, name: 'Valorant', level: 'Diamond', tag: 'Most Played' },
+      { image: game2, name: 'Apex Legends', level: 'Platinum', tag: 'Recently Tried' },
+      { image: game3, name: 'League of Legends', level: 'Gold', tag: 'Not My Type' },
     ],
     plan: {
       name: 'Elite Gamer Package',
@@ -72,7 +72,7 @@ const Profile = ({ navigation }) => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Gaming-themed Cover Photo with Profile Photo overlapping */}
+        {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
           <Image source={coverPhoto} style={styles.coverPhoto} />
           <View style={styles.profilePhotoContainer}>
@@ -101,22 +101,25 @@ const Profile = ({ navigation }) => {
 
         {/* Bio Section */}
         <View style={styles.section}>
-          <Text style={styles.bioText}>{user.bio}</Text>
+          <Text style={styles.sectionTitle}>Player Bio</Text>
+          <View style={styles.bioContainer}>
+            <Text style={styles.bioText}>{user.bio}</Text>
+          </View>
         </View>
 
         {/* About Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Gamer Stats</Text>
+          <Text style={styles.sectionTitle}>About</Text>
           <View style={styles.gridContainer}>
             {user.about.map((item, index) => (
-              <View key={index} style={styles.gridItem}>
+              <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 
                   name={item.icon} 
-                  size={responsiveFont(20)} 
+                  size={responsiveFont(16)} 
                   color="#00ff88" 
                 />
-                <Text style={styles.gridLabel}>{item.label}</Text>
-                <Text style={styles.gridValue}>{item.value}</Text>
+                <Text style={styles.smallGridLabel}>{item.label}</Text>
+                <Text style={styles.smallGridValue}>{item.value}</Text>
               </View>
             ))}
           </View>
@@ -124,39 +127,40 @@ const Profile = ({ navigation }) => {
 
         {/* Looking For Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Play Preferences</Text>
+          <Text style={styles.sectionTitle}>Looking For</Text>
           <View style={styles.gridContainer}>
             {user.lookingFor.map((item, index) => (
-              <View key={index} style={styles.gridItem}>
+              <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 
                   name={item.icon} 
-                  size={responsiveFont(20)} 
+                  size={responsiveFont(16)} 
                   color="#00ff88" 
                 />
-                <Text style={styles.gridLabel}>{item.label}</Text>
-                <Text style={styles.gridValue}>{item.value}</Text>
+                <Text style={styles.smallGridLabel}>{item.label}</Text>
+                <Text style={styles.smallGridValue}>{item.value}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Best At Section */}
+        {/* Games Played Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Main Games</Text>
+          <Text style={styles.sectionTitle}>Games Played</Text>
           <View style={styles.gamesContainer}>
             {user.bestAt.map((game, index) => (
               <TouchableOpacity 
                 key={index} 
-                style={styles.gameCard}
+                style={styles.smallGameCard}
                 activeOpacity={0.7}
               >
-                <Image source={game.image} style={styles.gameImage} />
+                <Image source={game.image} style={styles.smallGameImage} />
                 <View style={styles.gameInfo}>
+                  <Text style={styles.gameTag}>{game.tag}</Text>
                   <Text style={styles.gameName}>{game.name}</Text>
                   <View style={styles.gameLevel}>
                     <MaterialCommunityIcons 
                       name="medal" 
-                      size={responsiveFont(16)} 
+                      size={responsiveFont(14)} 
                       color="#FFD700" 
                     />
                     <Text style={styles.levelText}>{game.level}</Text>
@@ -182,11 +186,7 @@ const Profile = ({ navigation }) => {
             <View style={styles.planFeatures}>
               {user.plan.features.map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
-                  <Ionicons 
-                    name="md-checkmark-circle" 
-                    size={responsiveFont(16)} 
-                    color="#00ff88" 
-                  />
+                  <View style={styles.bulletPoint} />
                   <Text style={styles.featureText}>{feature}</Text>
                 </View>
               ))}
@@ -324,34 +324,42 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
+  bioContainer: {
+    backgroundColor: '#0f3460',
+    padding: responsiveWidth(15),
+    borderRadius: responsiveWidth(10),
+    borderWidth: 1,
+    borderColor: '#00ff88',
+  },
   bioText: {
     fontSize: responsiveFont(16),
     lineHeight: responsiveFont(24),
     color: '#fff',
+    textAlign: 'center',
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  gridItem: {
-    width: responsiveWidth(105),
+  smallGridItem: {
+    width: responsiveWidth(90),
     alignItems: 'center',
-    padding: responsiveWidth(10),
+    padding: responsiveWidth(8),
     backgroundColor: '#0f3460',
-    borderRadius: responsiveWidth(15),
+    borderRadius: responsiveWidth(10),
     marginBottom: responsiveHeight(10),
     borderWidth: 1,
     borderColor: '#00ff88',
   },
-  gridLabel: {
-    fontSize: responsiveFont(12),
+  smallGridLabel: {
+    fontSize: responsiveFont(10),
     color: '#00ff88',
-    marginTop: responsiveHeight(5),
+    marginTop: responsiveHeight(4),
     textAlign: 'center',
   },
-  gridValue: {
-    fontSize: responsiveFont(14),
+  smallGridValue: {
+    fontSize: responsiveFont(12),
     fontWeight: 'bold',
     color: '#fff',
     marginTop: responsiveHeight(2),
@@ -362,24 +370,30 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  gameCard: {
-    width: responsiveWidth(110),
+  smallGameCard: {
+    width: responsiveWidth(90),
     marginBottom: responsiveHeight(15),
     backgroundColor: '#0f3460',
-    borderRadius: responsiveWidth(10),
+    borderRadius: responsiveWidth(8),
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#00ff88',
   },
-  gameImage: {
+  smallGameImage: {
     width: '100%',
-    height: responsiveWidth(110),
+    height: responsiveWidth(90),
   },
   gameInfo: {
-    padding: responsiveWidth(10),
+    padding: responsiveWidth(8),
+  },
+  gameTag: {
+    fontSize: responsiveFont(10),
+    color: '#00ff88',
+    fontStyle: 'italic',
+    marginBottom: responsiveHeight(2),
   },
   gameName: {
-    fontSize: responsiveFont(14),
+    fontSize: responsiveFont(12),
     fontWeight: 'bold',
     color: '#fff',
   },
@@ -389,9 +403,9 @@ const styles = StyleSheet.create({
     marginTop: responsiveHeight(2),
   },
   levelText: {
-    fontSize: responsiveFont(12),
+    fontSize: responsiveFont(10),
     color: '#00ff88',
-    marginLeft: responsiveWidth(5),
+    marginLeft: responsiveWidth(3),
   },
   planCard: {
     backgroundColor: '#0f3460',
@@ -419,13 +433,21 @@ const styles = StyleSheet.create({
   },
   featureItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: responsiveHeight(8),
+  },
+  bulletPoint: {
+    width: responsiveWidth(6),
+    height: responsiveWidth(6),
+    borderRadius: responsiveWidth(3),
+    backgroundColor: '#00ff88',
+    marginTop: responsiveHeight(5),
+    marginRight: responsiveWidth(8),
   },
   featureText: {
     fontSize: responsiveFont(14),
     color: '#fff',
-    marginLeft: responsiveWidth(10),
+    flex: 1,
   },
 });
 
