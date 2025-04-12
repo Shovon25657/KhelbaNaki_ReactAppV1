@@ -11,7 +11,9 @@ import {
   StatusBar,
   SafeAreaView,
   TextInput,
-  Alert
+  Alert,
+  Modal,
+  FlatList
 } from 'react-native';
 import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,6 +24,15 @@ const { width, height } = Dimensions.get('window');
 const responsiveWidth = (size) => (width / 375) * size;
 const responsiveHeight = (size) => (height / 812) * size;
 const responsiveFont = (size) => (width / 375) * size;
+
+// Status options data
+const statusOptions = [
+  { id: '1', name: 'Online', icon: 'circle', color: '#00ff88' },
+  { id: '2', name: 'Offline', icon: 'circle', color: '#aaa' },
+  { id: '3', name: 'Invisible', icon: 'eye-off', color: '#aaa' },
+  { id: '4', name: 'Do Not Disturb', icon: 'minus-circle', color: '#e94560' },
+  { id: '5', name: 'Ready to Play', icon: 'gamepad', color: '#00bfff' },
+];
 
 const EditProfile = ({ navigation, route }) => {
   // Default images
@@ -37,10 +48,10 @@ const EditProfile = ({ navigation, route }) => {
     bestAt: [],
     plan: { name: '', features: [] },
     profileImage: defaultProfile,
-    coverImage: defaultCover
+    coverImage: defaultCover,
+    status: 'Online'
   };
 
-  
   const [user, setUser] = useState(initialUser);
   const [name, setName] = useState(initialUser.name);
   const [age, setAge] = useState(initialUser.age?.toString() || '');
@@ -48,6 +59,9 @@ const EditProfile = ({ navigation, route }) => {
   const [profileImage, setProfileImage] = useState(initialUser.profileImage);
   const [coverImage, setCoverImage] = useState(initialUser.coverImage);
   const [isEditing, setIsEditing] = useState({ bio: false });
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(initialUser.status || 'Online');
+  const [wordCount, setWordCount] = useState(initialUser.bio ? initialUser.bio.split(/\s+/).length : 0);
 
   // Image Picker Functions
   const pickProfileImage = async () => {
@@ -88,6 +102,15 @@ const EditProfile = ({ navigation, route }) => {
     }
   };
 
+  // Handle bio text change with word limit
+  const handleBioChange = (text) => {
+    const words = text.split(/\s+/);
+    if (words.length <= 150 || text.length < bio.length) {
+      setBio(text);
+      setWordCount(words.length);
+    }
+  };
+
   // Save Profile Function
   const handleSaveProfile = () => {
     const updatedUser = {
@@ -96,10 +119,17 @@ const EditProfile = ({ navigation, route }) => {
       age: parseInt(age) || 0,
       bio: bio,
       profileImage: profileImage,
-      coverImage: coverImage
+      coverImage: coverImage,
+      status: currentStatus
     };
 
     navigation.navigate('Profile', { updatedUser });
+  };
+
+  // Select status function
+  const selectStatus = (status) => {
+    setCurrentStatus(status);
+    setShowStatusModal(false);
   };
 
   // Navigation Functions
@@ -107,6 +137,35 @@ const EditProfile = ({ navigation, route }) => {
   const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
   const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
   const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
+
+  // Render status option item
+  const renderStatusItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.statusOption} 
+      onPress={() => selectStatus(item.name)}
+    >
+      <Feather 
+        name={item.icon} 
+        size={responsiveFont(20)} 
+        color={item.color} 
+      />
+      <Text style={styles.statusOptionText}>{item.name}</Text>
+      {currentStatus === item.name && (
+        <Feather 
+          name="check" 
+          size={responsiveFont(20)} 
+          color="#00ff88" 
+          style={styles.statusCheck}
+        />
+      )}
+    </TouchableOpacity>
+  );
+
+  // Get status color based on current status
+  const getStatusColor = () => {
+    const status = statusOptions.find(option => option.name === currentStatus);
+    return status ? status.color : '#00ff88';
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -185,9 +244,9 @@ const EditProfile = ({ navigation, route }) => {
             </View>
           </View>
           <View style={styles.statusContainer}>
-            <View style={styles.onlineDot} />
-            <TouchableOpacity>
-              <Text style={styles.status}>Online Now (Tap to change)</Text>
+            <View style={[styles.onlineDot, { backgroundColor: getStatusColor() }]} />
+            <TouchableOpacity onPress={() => setShowStatusModal(true)}>
+              <Text style={styles.status}>{currentStatus} (Tap to change)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -196,28 +255,33 @@ const EditProfile = ({ navigation, route }) => {
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Player Bio</Text>
-            <TouchableOpacity 
-              onPress={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
-            >
-              <Feather 
-                name={isEditing.bio ? "check" : "edit-2"} 
-                size={responsiveFont(18)} 
-                color="#00ff88" 
-              />
-            </TouchableOpacity>
+            <View style={styles.wordCountContainer}>
+              <Text style={styles.wordCountText}>{wordCount}/150 words</Text>
+              <TouchableOpacity 
+                onPress={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
+                style={styles.editButton}
+              >
+                <Feather 
+                  name={isEditing.bio ? "check" : "edit-2"} 
+                  size={responsiveFont(18)} 
+                  color="#00ff88" 
+                />
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.bioContainer}>
             {isEditing.bio ? (
               <TextInput
                 style={styles.bioInput}
                 value={bio}
-                onChangeText={setBio}
+                onChangeText={handleBioChange}
                 multiline={true}
-                placeholder="Tell others about yourself as a gamer..."
+                placeholder="Tell others about yourself as a gamer (max 150 words)..."
                 placeholderTextColor="#aaa"
+                maxLength={1000} // Approximate limit for 150 words
               />
             ) : (
-              <Text style={styles.bioText}>{bio}</Text>
+              <Text style={styles.bioText}>{bio || 'No bio added yet'}</Text>
             )}
           </View>
         </View>
@@ -334,11 +398,36 @@ const EditProfile = ({ navigation, route }) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Status Selection Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showStatusModal}
+        onRequestClose={() => setShowStatusModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Status</Text>
+            <FlatList
+              data={statusOptions}
+              renderItem={renderStatusItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.statusList}
+            />
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setShowStatusModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
-// Styles remain exactly the same as in your original code
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -503,6 +592,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: responsiveHeight(15),
   },
+  wordCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  wordCountText: {
+    fontSize: responsiveFont(12),
+    color: '#aaa',
+    marginRight: responsiveWidth(10),
+  },
+  editButton: {
+    padding: responsiveWidth(5),
+  },
   sectionTitle: {
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
@@ -666,6 +767,61 @@ const styles = StyleSheet.create({
     fontSize: responsiveFont(14),
     color: '#fff',
     flex: 1,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContent: {
+    width: responsiveWidth(300),
+    backgroundColor: '#16213e',
+    borderRadius: responsiveWidth(15),
+    padding: responsiveWidth(20),
+    borderWidth: 2,
+    borderColor: '#00ff88',
+  },
+  modalTitle: {
+    fontSize: responsiveFont(20),
+    fontWeight: 'bold',
+    color: '#00ff88',
+    marginBottom: responsiveHeight(20),
+    textAlign: 'center',
+  },
+  statusList: {
+    paddingBottom: responsiveHeight(10),
+  },
+  statusOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: responsiveHeight(12),
+    paddingHorizontal: responsiveWidth(15),
+    marginBottom: responsiveHeight(5),
+    backgroundColor: '#0f3460',
+    borderRadius: responsiveWidth(10),
+  },
+  statusOptionText: {
+    fontSize: responsiveFont(16),
+    color: '#fff',
+    marginLeft: responsiveWidth(10),
+    flex: 1,
+  },
+  statusCheck: {
+    marginLeft: 'auto',
+  },
+  closeButton: {
+    backgroundColor: '#00ff88',
+    padding: responsiveWidth(12),
+    borderRadius: responsiveWidth(10),
+    marginTop: responsiveHeight(10),
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#16213e',
+    fontWeight: 'bold',
+    fontSize: responsiveFont(16),
   },
 });
 
