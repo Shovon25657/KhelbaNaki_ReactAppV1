@@ -96,10 +96,11 @@ const Profile = ({ navigation }) => {
     }
   });
 
-  const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { user });
-  };
-
+// In Profile.js
+const handleEditProfile = () => {
+  // Pass the entire user object as a parameter when navigating
+  navigation.navigate('EditProfile', { user });
+};
   // Function to scroll right
   const scrollGamesRight = () => {
     if (gamesScrollRef.current) {
