@@ -39,6 +39,7 @@ const EditProfile = ({ navigation, route }) => {
     profileImage: defaultProfile,
     coverImage: defaultCover
   };
+
   
   const [user, setUser] = useState(initialUser);
   const [name, setName] = useState(initialUser.name);

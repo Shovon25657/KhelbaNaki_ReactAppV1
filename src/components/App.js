@@ -13,6 +13,10 @@ import HomeScreen from './screens/HomeScreen';
 import ProfilePage from './screens/Profile';
 import EditProfile from './screens/EditProfile';
 import { AuthProvider } from './context/authContext';
+import EditAbout from './screens/EditAbout';
+import EditLookingFor from './screens/EditLookingFor';
+import EditGames from './screens/EditGames';
+import EditPackage from './screens/EditPackage';
 
 // Create Stack Navigator
 const Stack = createStackNavigator();
@@ -72,6 +76,10 @@ function App() {
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Profile" component={ProfilePage} />
           <Stack.Screen name="EditProfile" component={EditProfile} />
+          <Stack.Screen name="EditAbout" component={EditAbout} />
+          <Stack.Screen name="EditLookingFor" component={EditLookingFor} />
+          <Stack.Screen name="EditGames" component={EditGames} />
+          <Stack.Screen name="EditPackage" component={EditPackage} />
         </Stack.Navigator>
       </AuthProvider>
     </NavigationContainer>
