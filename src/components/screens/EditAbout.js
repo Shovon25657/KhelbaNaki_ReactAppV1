@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -13,7 +13,8 @@ import {
   Platform,
   Animated,
   Easing,
-  Alert
+  Alert,
+  BackHandler
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -26,7 +27,9 @@ const EditAbout = ({ navigation, route }) => {
   const [currentField, setCurrentField] = useState('');
   const [customInput, setCustomInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const pulseAnim = new Animated.Value(1);
+  const backAnim = new Animated.Value(1);
 
   // Gaming theme colors
   const colors = {
@@ -51,8 +54,15 @@ const EditAbout = ({ navigation, route }) => {
     occupation: ['Student', 'Engineer', 'Doctor', 'Teacher', 'Artist', 'Streamer', 'Gamer', 'Developer', 'Other']
   };
 
-  // Pulsing animation for save button
+  // Check for changes
   useEffect(() => {
+    const changesDetected = JSON.stringify(about) !== JSON.stringify(initialAbout);
+    setHasChanges(changesDetected);
+  }, [about, initialAbout]);
+
+  // Pulsing animations
+  useEffect(() => {
+    // Save button animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -69,10 +79,74 @@ const EditAbout = ({ navigation, route }) => {
         }),
       ])
     ).start();
-  }, []);
+
+    // Back button animation (subtler)
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(backAnim, {
+          toValue: 1.02,
+          duration: 1500,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backAnim, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Handle back button press
+    const backAction = () => {
+      if (hasChanges) {
+        showUnsavedChangesAlert();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [hasChanges]);
+
+  const showUnsavedChangesAlert = () => {
+    Alert.alert(
+      'Unsaved Changes',
+      'You have unsaved changes. Would you like to save before exiting?',
+      [
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => navigation.goBack(),
+        },
+        {
+          text: 'Save',
+          onPress: handleSave,
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
 
   const handleSave = () => {
     navigation.navigate('EditProfile', { updatedAbout: about });
+  };
+
+  const handleBack = () => {
+    if (hasChanges) {
+      showUnsavedChangesAlert();
+    } else {
+      navigation.goBack();
+    }
   };
 
   const openModal = (field) => {
@@ -156,17 +230,30 @@ const EditAbout = ({ navigation, route }) => {
         {renderField('religion', 'Religion')}
         {renderField('occupation', 'Occupation')}
 
-        {/* Animated Save Button */}
-        <Animated.View style={[styles.saveButtonContainer, { transform: [{ scale: pulseAnim }] }]}>
-          <TouchableOpacity 
-            style={styles.saveButton} 
-            onPress={handleSave}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
-            <Ionicons name="save" size={20} color="#fff" style={styles.saveIcon} />
-          </TouchableOpacity>
-        </Animated.View>
+        {/* Action Buttons */}
+        <View style={styles.buttonRow}>
+          <Animated.View style={[styles.backButtonContainer, { transform: [{ scale: backAnim }] }]}>
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={handleBack}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.backButtonText}>BACK</Text>
+              <Ionicons name="arrow-back" size={20} color="#fff" style={styles.backIcon} />
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View style={[styles.saveButtonContainer, { transform: [{ scale: pulseAnim }] }]}>
+            <TouchableOpacity 
+              style={styles.saveButton} 
+              onPress={handleSave}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
+              <Ionicons name="save" size={20} color="#fff" style={styles.saveIcon} />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
 
         {/* Selection Modal */}
         <Modal
@@ -277,12 +364,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a2e',
   },
-// Just modify the scrollContainer style:
-scrollContainer: {
-  padding: 20,
-  paddingBottom: 40,
-  paddingTop: 40, // Increase this value to push content down more
-},
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 40,
+    paddingTop: 40,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -337,14 +423,21 @@ scrollContainer: {
     color: '#888',
     fontSize: 16,
   },
-  saveButtonContainer: {
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 30,
-    alignItems: 'center',
+  },
+  saveButtonContainer: {
+    width: '65%',
+  },
+  backButtonContainer: {
+    width: '30%',
   },
   saveButton: {
     backgroundColor: '#6e44ff',
     paddingVertical: 16,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -354,15 +447,37 @@ scrollContainer: {
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 5,
-    width: width * 0.8,
+  },
+  backButton: {
+    backgroundColor: '#ff44b4',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#ff44b4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 5,
   },
   saveButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16,
+    letterSpacing: 1,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
     letterSpacing: 1,
   },
   saveIcon: {
+    marginLeft: 10,
+  },
+  backIcon: {
     marginLeft: 10,
   },
   modalOverlay: {
