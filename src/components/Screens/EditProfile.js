@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -13,12 +13,8 @@ import {
   TextInput,
   Alert
 } from 'react-native';
-import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import profilePhoto from '../../../assets/profile1.jpg';
-import coverPhoto from '../../../assets/profile3.jpg';
-import game1 from '../../../assets/game1.png';
-import game2 from '../../../assets/game2.png';
-import game3 from '../../../assets/game3.png';
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,7 +24,10 @@ const responsiveHeight = (size) => (height / 812) * size;
 const responsiveFont = (size) => (width / 375) * size;
 
 const EditProfile = ({ navigation, route }) => {
-  // Add a default empty object if route.params or route.params.user is undefined
+  // Default images
+  const defaultProfile = require('../../../assets/profile1.jpg');
+  const defaultCover = require('../../../assets/profile3.jpg');
+
   const initialUser = route.params?.user || {
     name: '',
     age: '',
@@ -36,58 +35,81 @@ const EditProfile = ({ navigation, route }) => {
     about: [],
     lookingFor: [],
     bestAt: [],
-    plan: { name: '', features: [] }
+    plan: { name: '', features: [] },
+    profileImage: defaultProfile,
+    coverImage: defaultCover
   };
   
   const [user, setUser] = useState(initialUser);
   const [name, setName] = useState(initialUser.name);
   const [age, setAge] = useState(initialUser.age?.toString() || '');
   const [bio, setBio] = useState(initialUser.bio);
-  const [isEditing, setIsEditing] = useState({
-    bio: false
-  });
+  const [profileImage, setProfileImage] = useState(initialUser.profileImage);
+  const [coverImage, setCoverImage] = useState(initialUser.coverImage);
+  const [isEditing, setIsEditing] = useState({ bio: false });
 
+  // Image Picker Functions
+  const pickProfileImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'We need access to your photos to change your profile picture.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setProfileImage({ uri: result.assets[0].uri });
+    }
+  };
+
+  const pickCoverImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'We need access to your photos to change your cover photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [3, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setCoverImage({ uri: result.assets[0].uri });
+    }
+  };
+
+  // Save Profile Function
   const handleSaveProfile = () => {
     const updatedUser = {
       ...user,
       name: name,
       age: parseInt(age) || 0,
-      bio: bio
+      bio: bio,
+      profileImage: profileImage,
+      coverImage: coverImage
     };
-    
-    // Navigate directly to Profile with the updated data
+
     navigation.navigate('Profile', { updatedUser });
   };
 
-  const navigateToEditAbout = () => {
-    navigation.navigate('EditAbout', { about: user.about });
-  };
-
-  const navigateToEditLookingFor = () => {
-    navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
-  };
-
-  const navigateToEditGames = () => {
-    navigation.navigate('EditGames', { games: user.bestAt });
-  };
-
-  const navigateToEditPackage = () => {
-    navigation.navigate('EditPackage', { plan: user.plan });
-  };
-
-  const handleChangeProfilePhoto = () => {
-    // In a real app, this would open image picker
-    Alert.alert("Change Profile Photo", "This would open your image gallery");
-  };
-
-  const handleChangeCoverPhoto = () => {
-    // In a real app, this would open image picker
-    Alert.alert("Change Cover Photo", "This would open your image gallery");
-  };
+  // Navigation Functions
+  const navigateToEditAbout = () => navigation.navigate('EditAbout', { about: user.about });
+  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
+  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
+  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with title and Save button */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -108,30 +130,38 @@ const EditProfile = ({ navigation, route }) => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cover Photo with change option */}
+        {/* Cover Photo Section */}
         <View style={styles.coverContainer}>
-          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <Image 
+            source={coverImage} 
+            style={styles.coverPhoto} 
+            defaultSource={defaultCover}
+          />
           <TouchableOpacity 
             style={styles.changeCoverButton}
-            onPress={handleChangeCoverPhoto}
+            onPress={pickCoverImage}
           >
             <Feather name="camera" size={responsiveFont(18)} color="#fff" />
             <Text style={styles.changeButtonText}>Change Cover</Text>
           </TouchableOpacity>
           
-          {/* Profile Photo with change option */}
+          {/* Profile Photo Section */}
           <View style={styles.profilePhotoContainer}>
-            <Image source={profilePhoto} style={styles.profilePhoto} />
+            <Image 
+              source={profileImage} 
+              style={styles.profilePhoto} 
+              defaultSource={defaultProfile}
+            />
             <TouchableOpacity 
               style={styles.changeProfileButton}
-              onPress={handleChangeProfilePhoto}
+              onPress={pickProfileImage}
             >
               <Feather name="camera" size={responsiveFont(16)} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Name, Age Editing */}
+        {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
             <TextInput
@@ -161,7 +191,7 @@ const EditProfile = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Bio Section - Editable */}
+        {/* Bio Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Player Bio</Text>
@@ -191,7 +221,7 @@ const EditProfile = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* About Section - with edit option */}
+        {/* About Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>About</Text>
@@ -214,7 +244,7 @@ const EditProfile = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Looking For Section - with edit option */}
+        {/* Looking For Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Looking For</Text>
@@ -237,7 +267,7 @@ const EditProfile = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Games Played Section - with edit option */}
+        {/* Games Played Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Games Played</Text>
@@ -275,7 +305,7 @@ const EditProfile = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* My Plan Section - with edit option */}
+        {/* Subscription Plan Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Gamer Subscription</Text>
@@ -307,6 +337,7 @@ const EditProfile = ({ navigation, route }) => {
   );
 };
 
+// Styles remain exactly the same as in your original code
 const styles = StyleSheet.create({
   container: {
     flex: 1,
