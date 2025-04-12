@@ -37,6 +37,8 @@ const EditGames = ({ navigation, route }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [errorVisible, setErrorVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [gameToDelete, setGameToDelete] = useState(null);
   const savePulseAnim = new Animated.Value(1);
   const backPulseAnim = new Animated.Value(1);
 
@@ -51,6 +53,7 @@ const EditGames = ({ navigation, route }) => {
     placeholder: '#888',
     success: '#2ecc71',
     danger: '#e74c3c',
+    warning: '#f39c12',
   };
 
   // Popular game suggestions
@@ -138,6 +141,11 @@ const EditGames = ({ navigation, route }) => {
     setTimeout(() => setErrorVisible(false), 3000);
   };
 
+  const showDeleteConfirmation = (index) => {
+    setGameToDelete(index);
+    setDeleteConfirmVisible(true);
+  };
+
   const handleGameNameChange = (text) => {
     setNewGame({ ...newGame, name: text });
     if (text.length > 1) {
@@ -175,10 +183,12 @@ const EditGames = ({ navigation, route }) => {
     setShowSuggestions(false);
   };
 
-  const removeGame = (index) => {
+  const confirmDeleteGame = () => {
     const updatedGames = [...games];
-    updatedGames.splice(index, 1);
+    updatedGames.splice(gameToDelete, 1);
     setGames(updatedGames);
+    setDeleteConfirmVisible(false);
+    setGameToDelete(null);
   };
 
   const handleSave = () => {
@@ -279,7 +289,7 @@ const EditGames = ({ navigation, route }) => {
               </View>
               <TouchableOpacity 
                 style={styles.removeButton}
-                onPress={() => removeGame(index)}
+                onPress={() => showDeleteConfirmation(index)}
               >
                 <Ionicons name="trash" size={20} color={colors.danger} />
               </TouchableOpacity>
@@ -398,6 +408,38 @@ const EditGames = ({ navigation, route }) => {
               >
                 <Text style={styles.errorButtonText}>OK</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Delete Confirmation Popup */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={deleteConfirmVisible}
+          onRequestClose={() => setDeleteConfirmVisible(false)}
+        >
+          <View style={styles.errorOverlay}>
+            <View style={styles.errorContainer}>
+              <View style={styles.errorHeader}>
+                <Ionicons name="alert-circle" size={28} color={colors.warning} />
+                <Text style={styles.warningTitle}>Delete Game</Text>
+              </View>
+              <Text style={styles.errorText}>Are you sure you want to delete this game?</Text>
+              <View style={styles.confirmButtonRow}>
+                <TouchableOpacity 
+                  style={[styles.confirmButton, styles.cancelDeleteButton]}
+                  onPress={() => setDeleteConfirmVisible(false)}
+                >
+                  <Text style={styles.confirmButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.confirmButton, styles.deleteButton]}
+                  onPress={confirmDeleteGame}
+                >
+                  <Text style={styles.confirmButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -716,6 +758,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
   },
+  warningTitle: {
+    color: '#f39c12',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
   errorText: {
     color: '#e6e6e6',
     fontSize: 16,
@@ -724,15 +772,62 @@ const styles = StyleSheet.create({
   },
   errorButton: {
     backgroundColor: '#e74c3c',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 15,
+    height: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   errorButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
+ // Delete Confirmation Styles
+confirmButtonRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: 15,
+},
+confirmButton: {
+  flex: 1,
+  borderRadius: 10, // This makes the rounded square shape
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginHorizontal: 5,
+  height: 48, // Fixed height for consistency
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  elevation: 5,
+},
+cancelDeleteButton: {
+  backgroundColor: '#6e44ff',
+  borderWidth: 2,
+  borderColor: '#6e44ff',
+},
+deleteButton: {
+  backgroundColor: '#e74c3c',
+  borderWidth: 2,
+  borderColor: '#e74c3c',
+},
+confirmButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 16,
+  letterSpacing: 0.5,
+},
+
   // Modal Styles (existing)
   modalOverlay: {
     flex: 1,
@@ -864,3 +959,4 @@ const styles = StyleSheet.create({
 });
 
 export default EditGames;
+
