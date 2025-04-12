@@ -6,8 +6,9 @@ import {
   TouchableOpacity, 
   FlatList, 
   Modal,
-  ScrollView,
-  Dimensions
+  Dimensions,
+  SafeAreaView,
+  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -30,7 +31,7 @@ const EditPackage = ({ navigation, route }) => {
         '5 GB Storage'
       ],
       price: 4.99,
-      color: '#cd7f32' // Bronze color
+      color: '#cd7f32'
     },
     { 
       id: '2', 
@@ -43,7 +44,7 @@ const EditPackage = ({ navigation, route }) => {
         'Ad-free Experience'
       ],
       price: 9.99,
-      color: '#c0c0c0' // Silver color
+      color: '#c0c0c0'
     },
     { 
       id: '3', 
@@ -57,9 +58,13 @@ const EditPackage = ({ navigation, route }) => {
         'Early Access'
       ],
       price: 19.99,
-      color: '#ffd700' // Gold color
+      color: '#ffd700'
     },
   ];
+
+  const handleBack = () => {
+    navigation.goBack();
+  };
 
   const handleSelectPackage = (pkg) => {
     setSelectedPackage(pkg);
@@ -68,7 +73,6 @@ const EditPackage = ({ navigation, route }) => {
   };
 
   const handlePayment = () => {
-    // Simulate payment processing
     setTimeout(() => {
       setPaymentSuccess(true);
     }, 1500);
@@ -115,101 +119,135 @@ const EditPackage = ({ navigation, route }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Choose Your Package</Text>
-      <Text style={styles.subtitle}>Select the plan that fits your needs</Text>
-      
-      <FlatList
-        data={packages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderPackage}
-        contentContainerStyle={styles.listContainer}
-      />
-
-      {/* Payment Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showPaymentModal}
-        onRequestClose={() => setShowPaymentModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {!paymentSuccess ? (
-              <>
-                <Text style={styles.modalTitle}>Payment Details</Text>
-                <View style={styles.packageSummary}>
-                  <Text style={styles.summaryTitle}>Selected Package:</Text>
-                  <Text style={styles.summaryName}>{selectedPackage.name}</Text>
-                  <Text style={styles.summaryPrice}>${selectedPackage.price}/month</Text>
-                </View>
-                
-                {/* Simulated Payment Form */}
-                <View style={styles.paymentForm}>
-                  <Text style={styles.paymentTitle}>Enter Card Details</Text>
-                  <View style={styles.cardInput}>
-                    <Text style={styles.cardText}>4242 4242 4242 4242</Text>
-                  </View>
-                  <View style={styles.cardDetails}>
-                    <View style={styles.cardDetailInput}>
-                      <Text style={styles.cardText}>MM/YY</Text>
-                    </View>
-                    <View style={styles.cardDetailInput}>
-                      <Text style={styles.cardText}>CVC</Text>
-                    </View>
-                  </View>
-                </View>
-                
-                <TouchableOpacity 
-                  style={styles.payButton} 
-                  onPress={handlePayment}
-                >
-                  <Text style={styles.payButtonText}>PAY ${selectedPackage.price}</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <View style={styles.successContainer}>
-                <Ionicons name="checkmark-circle" size={80} color="#00ff88" />
-                <Text style={styles.successTitle}>Payment Successful!</Text>
-                <Text style={styles.successText}>
-                  Thank you for subscribing to {selectedPackage.name}. 
-                  Your account has been upgraded.
-                </Text>
-                <TouchableOpacity 
-                  style={styles.doneButton} 
-                  onPress={handleComplete}
-                >
-                  <Text style={styles.doneButtonText}>DONE</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.container}>
+        {/* Header with spacing from status bar */}
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#00ff88" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Choose Your Package</Text>
+            <View style={styles.headerRightPlaceholder} />
           </View>
         </View>
-      </Modal>
-    </View>
+        
+        <Text style={styles.subtitle}>Select the plan that fits your needs</Text>
+        
+        <FlatList
+          data={packages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderPackage}
+          contentContainerStyle={styles.listContainer}
+        />
+
+        {/* Payment Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showPaymentModal}
+          onRequestClose={() => setShowPaymentModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {!paymentSuccess ? (
+                <>
+                  <Text style={styles.modalTitle}>Payment Details</Text>
+                  <View style={styles.packageSummary}>
+                    <Text style={styles.summaryTitle}>Selected Package:</Text>
+                    <Text style={styles.summaryName}>{selectedPackage.name}</Text>
+                    <Text style={styles.summaryPrice}>${selectedPackage.price}/month</Text>
+                  </View>
+                  
+                  <View style={styles.paymentForm}>
+                    <Text style={styles.paymentTitle}>Enter Card Details</Text>
+                    <View style={styles.cardInput}>
+                      <Text style={styles.cardText}>4242 4242 4242 4242</Text>
+                    </View>
+                    <View style={styles.cardDetails}>
+                      <View style={styles.cardDetailInput}>
+                        <Text style={styles.cardText}>MM/YY</Text>
+                      </View>
+                      <View style={styles.cardDetailInput}>
+                        <Text style={styles.cardText}>CVC</Text>
+                      </View>
+                    </View>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.payButton} 
+                    onPress={handlePayment}
+                  >
+                    <Text style={styles.payButtonText}>PAY ${selectedPackage.price}</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={styles.successContainer}>
+                  <Ionicons name="checkmark-circle" size={80} color="#00ff88" />
+                  <Text style={styles.successTitle}>Payment Successful!</Text>
+                  <Text style={styles.successText}>
+                    Thank you for subscribing to {selectedPackage.name}. 
+                    Your account has been upgraded.
+                  </Text>
+                  <TouchableOpacity 
+                    style={styles.doneButton} 
+                    onPress={handleComplete}
+                  >
+                    <Text style={styles.doneButtonText}>DONE</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#1a1a2e'
   },
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a2e'
+  },
+  headerContainer: {
+    paddingTop: 16, // Additional padding below status bar
+    paddingHorizontal: 20
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 10
+  },
+  backButton: {
+    padding: 5
+  },
+  headerRightPlaceholder: {
+    width: 24
+  },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#00ff88',
-    marginBottom: 5,
-    textAlign: 'center'
+    textAlign: 'center',
+    marginTop: 4 // Fine-tuning vertical alignment
   },
   subtitle: {
     fontSize: 16,
     color: '#b892ff',
     marginBottom: 25,
-    textAlign: 'center'
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    marginTop: -4 // Adjust spacing from header
   },
   listContainer: {
+    paddingHorizontal: 20,
     paddingBottom: 20
   },
   packageCard: {
