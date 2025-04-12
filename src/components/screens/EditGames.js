@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,92 +6,550 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
+  ScrollView,
+  Modal,
+  Pressable,
+  Animated,
+  Easing,
+  Alert,
+  Dimensions,
+  StatusBar,
+  SafeAreaView
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+const { width, height } = Dimensions.get('window');
 
 const EditGames = ({ navigation, route }) => {
   const initialGames = route.params?.games || [];
   const [games, setGames] = useState(initialGames);
-  const [newGame, setNewGame] = useState({ name: '', level: '', frequency: '' });
+  const [newGame, setNewGame] = useState({ 
+    name: '', 
+    level: '', 
+    frequency: '' 
+  });
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentField, setCurrentField] = useState('');
+  const [customInput, setCustomInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const savePulseAnim = new Animated.Value(1);
+  const backPulseAnim = new Animated.Value(1);
+
+  // Gaming theme colors
+  const colors = {
+    primary: '#6e44ff',
+    secondary: '#b892ff',
+    accent: '#00ff88',
+    background: '#1a1a2e',
+    card: '#16213e',
+    text: '#e6e6e6',
+    placeholder: '#888',
+    success: '#2ecc71',
+    danger: '#e74c3c',
+  };
+
+  // Popular game suggestions
+  const gameSuggestions = [
+    'League of Legends',
+    'Valorant',
+    'Fortnite',
+    'Call of Duty: Warzone',
+    'Apex Legends',
+    'Dota 2',
+    'Counter-Strike 2',
+    'Overwatch 2',
+    'Minecraft',
+    'Genshin Impact',
+    'Roblox',
+    'PUBG Mobile',
+    'Free Fire',
+    'Rocket League',
+    'Rainbow Six Siege',
+    'World of Warcraft',
+    'Destiny 2',
+    'GTA V',
+    'Valheim',
+    'Elden Ring'
+  ];
+
+  // Frequency options
+  const frequencyOptions = [
+    'Daily',
+    'Weekly',
+    'Monthly',
+    'Regular',
+    'Occasional',
+    'Weekends',
+    'Seasonal',
+    'Custom'
+  ];
+
+  // Level options
+  const levelOptions = [
+    'Beginner',
+    'Intermediate',
+    'Advanced',
+    'Expert',
+    'Pro',
+    'Casual',
+    'Competitive',
+    'Custom'
+  ];
+
+  // Compare current state with initial state
+  useEffect(() => {
+    const changesExist = JSON.stringify(games) !== JSON.stringify(initialGames);
+    setHasChanges(changesExist);
+  }, [games, initialGames]);
+
+  // Pulsing animations for buttons
+  useEffect(() => {
+    const pulseAnimation = (anim) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1.05,
+            duration: 1000,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    };
+
+    pulseAnimation(savePulseAnim);
+    pulseAnimation(backPulseAnim);
+  }, []);
+
+  const showError = (message) => {
+    setErrorMessage(message);
+    setErrorVisible(true);
+    setTimeout(() => setErrorVisible(false), 3000);
+  };
+
+  const handleGameNameChange = (text) => {
+    setNewGame({ ...newGame, name: text });
+    if (text.length > 1) {
+      const filtered = gameSuggestions.filter(game =>
+        game.toLowerCase().includes(text.toLowerCase())
+      );
+      setSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectGame = (game) => {
+    setNewGame({ ...newGame, name: game });
+    setShowSuggestions(false);
+  };
 
   const addGame = () => {
-    if (newGame.name && newGame.level && newGame.frequency) {
-      setGames([...games, newGame]);
-      setNewGame({ name: '', level: '', frequency: '' });
+    if (!newGame.name) {
+      showError('Please enter a game name');
+      return;
     }
+    if (!newGame.level) {
+      showError('Please select your skill level');
+      return;
+    }
+    if (!newGame.frequency) {
+      showError('Please select play frequency');
+      return;
+    }
+
+    setGames([...games, newGame]);
+    setNewGame({ name: '', level: '', frequency: '' });
+    setShowSuggestions(false);
+  };
+
+  const removeGame = (index) => {
+    const updatedGames = [...games];
+    updatedGames.splice(index, 1);
+    setGames(updatedGames);
   };
 
   const handleSave = () => {
     navigation.navigate('EditProfile', { updatedGamesPlayed: games });
   };
 
+  const handleBack = () => {
+    if (!hasChanges) {
+      navigation.goBack();
+      return;
+    }
+
+    Alert.alert(
+      "Unsaved Changes",
+      "You have unsaved changes. What would you like to do?",
+      [
+        {
+          text: "Discard Changes",
+          style: "destructive",
+          onPress: () => navigation.goBack()
+        },
+        {
+          text: "Save Changes",
+          style: "default",
+          onPress: handleSave
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => {}
+        }
+      ]
+    );
+  };
+
+  const openModal = (field) => {
+    setCurrentField(field);
+    setModalVisible(true);
+    setCustomInput('');
+  };
+
+  const handleOptionSelect = (option) => {
+    if (option === 'Custom') {
+      setIsTyping(true);
+      return;
+    }
+    
+    setNewGame({ ...newGame, [currentField]: option });
+    setModalVisible(false);
+    setIsTyping(false);
+  };
+
+  const saveCustomInput = () => {
+    if (customInput.trim()) {
+      setNewGame({ ...newGame, [currentField]: customInput });
+      setModalVisible(false);
+      setIsTyping(false);
+      setCustomInput('');
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Edit Games Played</Text>
-      
-      <FlatList
-        data={games}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.gameCard}>
-            <Text style={styles.gameName}>{item.name}</Text>
-            <Text style={styles.gameDetail}>Level: {item.level}</Text>
-            <Text style={styles.gameDetail}>Frequency: {item.frequency}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <Ionicons name="game-controller" size={28} color={colors.accent} style={styles.gameIcon} />
+            <Text style={styles.title}>Games Played</Text>
           </View>
-        )}
-        contentContainerStyle={styles.listContent}
-      />
+          
+          <TouchableOpacity 
+            onPress={() => {
+              Alert.alert(
+                "Games Played Guide",
+                "Add the games you play regularly:\n\n• Search for games by name\n• Select your skill level\n• Choose how often you play",
+                [
+                  { text: "GOT IT", style: "default" }
+                ]
+              );
+            }}
+            style={styles.helpButton}
+          >
+            <Ionicons name="information-circle-outline" size={28} color={colors.secondary} />
+          </TouchableOpacity>
+        </View>
 
-      {/* Add New Game Section */}
-      <View style={styles.addGameContainer}>
-        <TextInput
-          placeholder="Game Name"
-          placeholderTextColor="#aaa"
-          value={newGame.name}
-          onChangeText={(text) => setNewGame({ ...newGame, name: text })}
-          style={styles.input}
+        {/* Current Games List */}
+        <FlatList
+          data={games}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item, index }) => (
+            <View style={styles.gameCard}>
+              <View style={styles.gameInfo}>
+                <Text style={styles.gameName}>{item.name}</Text>
+                <Text style={styles.gameDetail}>Level: {item.level}</Text>
+                <Text style={styles.gameDetail}>Frequency: {item.frequency}</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.removeButton}
+                onPress={() => removeGame(index)}
+              >
+                <Ionicons name="trash" size={20} color={colors.danger} />
+              </TouchableOpacity>
+            </View>
+          )}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No games added yet</Text>
+          }
         />
-        <TextInput
-          placeholder="Level"
-          placeholderTextColor="#aaa"
-          value={newGame.level}
-          onChangeText={(text) => setNewGame({ ...newGame, level: text })}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Frequency (e.g., Regular)"
-          placeholderTextColor="#aaa"
-          value={newGame.frequency}
-          onChangeText={(text) => setNewGame({ ...newGame, frequency: text })}
-          style={styles.input}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={addGame}>
-          <Text style={styles.addButtonText}>Add Game</Text>
-        </TouchableOpacity>
+
+        {/* Add New Game Section */}
+        <View style={styles.addGameContainer}>
+          {/* Game Name Input with Suggestions */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Game Name"
+              placeholderTextColor={colors.placeholder}
+              value={newGame.name}
+              onChangeText={handleGameNameChange}
+              style={styles.input}
+              onFocus={() => newGame.name.length > 1 && setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            />
+            {showSuggestions && suggestions.length > 0 && (
+              <View style={styles.suggestionsContainer}>
+                <ScrollView 
+                  style={styles.suggestionsList}
+                  keyboardShouldPersistTaps="always"
+                >
+                  {suggestions.map((game, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.suggestionItem}
+                      onPress={() => selectGame(game)}
+                    >
+                      <Text style={styles.suggestionText}>{game}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Level and Frequency Selection */}
+          <TouchableOpacity 
+            style={styles.selectorInput}
+            onPress={() => openModal('level')}
+          >
+            <Text style={newGame.level ? styles.selectedText : styles.placeholderText}>
+              {newGame.level || 'Select your level'}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color={colors.secondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.selectorInput}
+            onPress={() => openModal('frequency')}
+          >
+            <Text style={newGame.frequency ? styles.selectedText : styles.placeholderText}>
+              {newGame.frequency || 'Select play frequency'}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color={colors.secondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.addButton} 
+            onPress={addGame}
+          >
+            <Text style={styles.addButtonText}>Add Game</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Button Row */}
+        <View style={styles.buttonRow}>
+          <Animated.View style={[styles.buttonContainer, { transform: [{ scale: backPulseAnim }] }]}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.backButtonStyle]} 
+              onPress={handleBack}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.actionButtonText}>BACK</Text>
+              <Ionicons name="arrow-back" size={20} color="#fff" style={styles.actionButtonIcon} />
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View style={[styles.buttonContainer, { transform: [{ scale: savePulseAnim }] }]}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.saveButtonStyle]} 
+              onPress={handleSave}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.actionButtonText}>SAVE</Text>
+              <Ionicons name="save" size={20} color="#fff" style={styles.actionButtonIcon} />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
+        {/* Error Popup */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={errorVisible}
+          onRequestClose={() => setErrorVisible(false)}
+        >
+          <View style={styles.errorOverlay}>
+            <View style={styles.errorContainer}>
+              <View style={styles.errorHeader}>
+                <Ionicons name="warning" size={28} color={colors.danger} />
+                <Text style={styles.errorTitle}>Missing Information</Text>
+              </View>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+              <TouchableOpacity 
+                style={styles.errorButton}
+                onPress={() => setErrorVisible(false)}
+              >
+                <Text style={styles.errorButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Selection Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(false);
+            setIsTyping(false);
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <Pressable 
+              style={styles.modalOutside}
+              onPress={() => {
+                setModalVisible(false);
+                setIsTyping(false);
+              }}
+            />
+            
+            <View style={styles.modalContainer}>
+              {isTyping ? (
+                <View style={styles.customInputContainer}>
+                  <Text style={styles.modalTitle}>ENTER YOUR {currentField.toUpperCase()}</Text>
+                  
+                  <View style={styles.typingContainer}>
+                    <TextInput
+                      style={styles.customInput}
+                      placeholder={`Type your ${currentField}...`}
+                      placeholderTextColor={colors.placeholder}
+                      value={customInput}
+                      onChangeText={setCustomInput}
+                      autoFocus={true}
+                      multiline={true}
+                      maxLength={50}
+                      selectionColor={colors.accent}
+                      keyboardAppearance="dark"
+                    />
+                    <View style={styles.characterCount}>
+                      <Text style={styles.countText}>{customInput.length}/50</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.modalButtonRow}>
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={() => {
+                        setIsTyping(false);
+                        setCustomInput('');
+                      }}
+                    >
+                      <Text style={styles.modalButtonText}>CANCEL</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.confirmButton]}
+                      onPress={saveCustomInput}
+                      disabled={!customInput.trim()}
+                    >
+                      <Text style={styles.modalButtonText}>CONFIRM</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.optionsContainer}>
+                  <Text style={styles.modalTitle}>SELECT {currentField.toUpperCase()}</Text>
+                  
+                  <ScrollView 
+                    style={styles.optionsScroll}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {(currentField === 'level' ? levelOptions : frequencyOptions).map((option, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.optionButton,
+                          newGame[currentField] === option && styles.selectedOption
+                        ]}
+                        onPress={() => handleOptionSelect(option)}
+                        activeOpacity={0.6}
+                      >
+                        <Text style={styles.optionText}>{option}</Text>
+                        {newGame[currentField] === option && (
+                          <Ionicons name="checkmark" size={20} color={colors.accent} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                  
+                  <TouchableOpacity 
+                    style={styles.closeModalButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.closeModalText}>CLOSE</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
       </View>
-
-      {/* Save Button */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save All Changes</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#1a1a2e',
+  },
+  container: {
+    flex: 1,
     paddingHorizontal: 20,
+    paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 10 : 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gameIcon: {
+    marginRight: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#00ff88',
-    marginVertical: 20,
-    textAlign: 'center',
+    color: '#e6e6e6',
+    textShadowColor: 'rgba(0, 255, 136, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  helpButton: {
+    padding: 5,
   },
   listContent: {
     paddingBottom: 20,
+    flexGrow: 1,
+  },
+  emptyText: {
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
   },
   gameCard: {
     backgroundColor: '#16213e',
@@ -100,6 +558,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#0f3460',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  gameInfo: {
+    flex: 1,
   },
   gameName: {
     color: '#fff',
@@ -112,9 +576,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 3,
   },
+  removeButton: {
+    padding: 8,
+    marginLeft: 10,
+  },
   addGameContainer: {
     marginTop: 20,
-    marginBottom: 30,
+    marginBottom: 20,
+  },
+  inputContainer: {
+    position: 'relative',
+    marginBottom: 10,
   },
   input: {
     backgroundColor: '#16213e',
@@ -122,9 +594,52 @@ const styles = StyleSheet.create({
     padding: 12,
     color: '#fff',
     fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#0f3460',
+  },
+  selectorInput: {
+    backgroundColor: '#16213e',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#0f3460',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  suggestionsContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    maxHeight: 200,
+    backgroundColor: '#16213e',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#0f3460',
+    zIndex: 100,
+    marginTop: 2,
+  },
+  suggestionsList: {
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+  },
+  suggestionText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  selectedText: {
+    color: '#e6e6e6',
+    fontSize: 14,
+  },
+  placeholderText: {
+    color: '#888',
+    fontSize: 14,
   },
   addButton: {
     backgroundColor: '#00ff88',
@@ -138,17 +653,213 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  saveButton: {
-    backgroundColor: '#00ff88',
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
-  saveButtonText: {
-    color: '#16213e',
+  buttonContainer: {
+    width: '48%',
+  },
+  actionButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  backButtonStyle: {
+    backgroundColor: '#6e44ff',
+    shadowColor: '#6e44ff',
+  },
+  saveButtonStyle: {
+    backgroundColor: '#00ff88',
+    shadowColor: '#00ff88',
+  },
+  actionButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+    letterSpacing: 1,
+  },
+  actionButtonIcon: {
+    marginLeft: 10,
+  },
+  // Error Popup Styles
+  errorOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  errorContainer: {
+    width: width * 0.8,
+    backgroundColor: '#16213e',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#e74c3c',
+  },
+  errorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  errorTitle: {
+    color: '#e74c3c',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  errorText: {
+    color: '#e6e6e6',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  errorButton: {
+    backgroundColor: '#e74c3c',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  errorButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  // Modal Styles (existing)
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  modalOutside: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  modalContainer: {
+    width: width * 0.85,
+    maxHeight: height * 0.7,
+    backgroundColor: '#16213e',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#6e44ff',
+    overflow: 'hidden',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#e6e6e6',
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingTop: 20,
+    letterSpacing: 0.5,
+  },
+  optionsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+  },
+  optionsScroll: {
+    maxHeight: height * 0.5,
+  },
+  optionButton: {
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: 'rgba(110, 68, 255, 0.2)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectedOption: {
+    backgroundColor: 'rgba(110, 68, 255, 0.5)',
+    borderWidth: 1,
+    borderColor: '#6e44ff',
+  },
+  optionText: {
+    color: '#e6e6e6',
+    fontSize: 16,
+  },
+  closeModalButton: {
+    marginTop: 15,
+    padding: 14,
+    backgroundColor: 'rgba(231, 76, 60, 0.2)',
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(231, 76, 60, 0.5)',
+  },
+  closeModalText: {
+    color: '#e6e6e6',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  customInputContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  typingContainer: {
+    position: 'relative',
+  },
+  customInput: {
+    borderWidth: 2,
+    borderColor: '#6e44ff',
+    padding: 16,
+    borderRadius: 12,
+    color: '#e6e6e6',
+    backgroundColor: 'rgba(30, 30, 60, 0.7)',
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  characterCount: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  countText: {
+    color: '#b892ff',
+    fontSize: 12,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  modalButton: {
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '48%',
+  },
+  cancelButton: {
+    backgroundColor: 'rgba(231, 76, 60, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(231, 76, 60, 0.5)',
+  },
+  confirmButton: {
+    backgroundColor: 'rgba(46, 204, 113, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(46, 204, 113, 0.5)',
+  },
+  modalButtonText: {
+    color: '#e6e6e6',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
 
