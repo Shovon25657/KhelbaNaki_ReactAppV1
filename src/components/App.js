@@ -8,7 +8,7 @@ import { ActivityIndicator, View } from 'react-native';
 import SplashScreen from './screens/SplashScreen'; // New splash screen
 import WelcomePage from './screens/WelcomePage';
 import LoginPage from './screens/Loginpage';
-import Registration from './screens/Registration';
+import Registration from './screens/registration/Registration';
 import HomeScreen from './screens/HomeScreen';
 import ProfilePage from './screens/Profile';
 import EditProfile from './screens/EditProfile';
