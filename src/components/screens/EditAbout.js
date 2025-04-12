@@ -28,6 +28,7 @@ const EditAbout = ({ navigation, route }) => {
   const [customInput, setCustomInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [unsavedChangesVisible, setUnsavedChangesVisible] = useState(false);
   const pulseAnim = new Animated.Value(1);
   const backAnim = new Animated.Value(1);
 
@@ -42,6 +43,7 @@ const EditAbout = ({ navigation, route }) => {
     placeholder: '#888',
     success: '#2ecc71',
     danger: '#e74c3c',
+    warning: '#f39c12',
   };
 
   // Options for each field
@@ -101,7 +103,7 @@ const EditAbout = ({ navigation, route }) => {
     // Handle back button press
     const backAction = () => {
       if (hasChanges) {
-        showUnsavedChangesAlert();
+        setUnsavedChangesVisible(true);
         return true;
       }
       return false;
@@ -115,35 +117,13 @@ const EditAbout = ({ navigation, route }) => {
     return () => backHandler.remove();
   }, [hasChanges]);
 
-  const showUnsavedChangesAlert = () => {
-    Alert.alert(
-      'Unsaved Changes',
-      'You have unsaved changes. Would you like to save before exiting?',
-      [
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: () => navigation.goBack(),
-        },
-        {
-          text: 'Save',
-          onPress: handleSave,
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ]
-    );
-  };
-
   const handleSave = () => {
     navigation.navigate('EditProfile', { updatedAbout: about });
   };
 
   const handleBack = () => {
     if (hasChanges) {
-      showUnsavedChangesAlert();
+      setUnsavedChangesVisible(true);
     } else {
       navigation.goBack();
     }
@@ -254,6 +234,59 @@ const EditAbout = ({ navigation, route }) => {
             </TouchableOpacity>
           </Animated.View>
         </View>
+
+        {/* Unsaved Changes Popup */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={unsavedChangesVisible}
+          onRequestClose={() => setUnsavedChangesVisible(false)}
+        >
+          <View style={styles.errorOverlay}>
+            <View style={styles.unsavedContainer}>
+              <View style={styles.unsavedHeader}>
+                <Ionicons name="alert-circle" size={32} color={colors.warning} />
+                <Text style={styles.unsavedTitle}>Unsaved Changes</Text>
+              </View>
+              <Text style={styles.unsavedText}>You have unsaved changes. What would you like to do?</Text>
+              
+              <View style={styles.unsavedGrid}>
+                {/* Discard Button */}
+                <TouchableOpacity 
+                  style={[styles.unsavedButton, styles.discardButton]}
+                  onPress={() => {
+                    setUnsavedChangesVisible(false);
+                    navigation.goBack();
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={28} color="#fff" style={styles.unsavedButtonIcon} />
+                  <Text style={styles.unsavedButtonText}>Discard Changes</Text>
+                </TouchableOpacity>
+                
+                {/* Save Button */}
+                <TouchableOpacity 
+                  style={[styles.unsavedButton, styles.saveChangesButton]}
+                  onPress={() => {
+                    setUnsavedChangesVisible(false);
+                    handleSave();
+                  }}
+                >
+                  <Ionicons name="save-outline" size={28} color="#fff" style={styles.unsavedButtonIcon} />
+                  <Text style={styles.unsavedButtonText}>Save Changes</Text>
+                </TouchableOpacity>
+                
+                {/* Continue Editing Button */}
+                <TouchableOpacity 
+                  style={[styles.unsavedButton, styles.continueButton]}
+                  onPress={() => setUnsavedChangesVisible(false)}
+                >
+                  <Ionicons name="pencil-outline" size={28} color="#fff" style={styles.unsavedButtonIcon} />
+                  <Text style={styles.unsavedButtonText}>Continue Editing</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Selection Modal */}
         <Modal
@@ -480,6 +513,81 @@ const styles = StyleSheet.create({
   backIcon: {
     marginLeft: 10,
   },
+  // Unsaved Changes Popup Styles
+  errorOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  unsavedContainer: {
+    width: width * 0.9,
+    backgroundColor: '#16213e',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#6e44ff',
+  },
+  unsavedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
+  },
+  unsavedTitle: {
+    color: '#f39c12',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  unsavedText: {
+    color: '#e6e6e6',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  unsavedGrid: {
+    flexDirection: 'column',
+  },
+  unsavedButton: {
+    width: '100%',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  discardButton: {
+    backgroundColor: '#e74c3c',
+    borderWidth: 2,
+    borderColor: '#e74c3c',
+  },
+  saveChangesButton: {
+    backgroundColor: '#00ff88',
+    borderWidth: 2,
+    borderColor: '#00ff88',
+  },
+  continueButton: {
+    backgroundColor: '#6e44ff',
+    borderWidth: 2,
+    borderColor: '#6e44ff',
+  },
+  unsavedButtonIcon: {
+    marginRight: 10,
+  },
+  unsavedButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
