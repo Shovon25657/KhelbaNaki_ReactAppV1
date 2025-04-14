@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
 
 // Import Screens
-import SplashScreen from './screens/SplashScreen'; // New splash screen
+import SplashScreen from './screens/SplashScreen';
 import WelcomePage from './screens/WelcomePage';
 import LoginPage from './screens/Loginpage';
 import Registration from './screens/registration/Registration';
@@ -17,6 +17,7 @@ import EditAbout from './screens/EditAbout';
 import EditLookingFor from './screens/EditLookingFor';
 import EditGames from './screens/EditGames';
 import EditPackage from './screens/EditPackage';
+import SettingsScreen from './screens/Settings';
 
 // Create Stack Navigator
 const Stack = createStackNavigator();
@@ -25,14 +26,11 @@ function App() {
   const [appReady, setAppReady] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(null);
 
-  // Check if the user is logged in and prepare app
   useEffect(() => {
     const prepareApp = async () => {
       try {
-        // Simulate loading resources
         await Promise.all([
           AsyncStorage.getItem('@auth'),
-          // Add other async tasks here if needed
         ]);
 
         const userToken = await AsyncStorage.getItem('@auth');
@@ -48,7 +46,6 @@ function App() {
     prepareApp();
   }, []);
 
-  // Show loading indicator while checking auth status
   if (!appReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -64,15 +61,10 @@ function App() {
           initialRouteName={isLoggedIn ? 'Home' : 'Splash'} 
           screenOptions={{ headerShown: false }}
         >
-          {/* Splash screen shows first, then navigates automatically */}
           <Stack.Screen name="Splash" component={SplashScreen} />
-          
-          {/* Auth screens */}
           <Stack.Screen name="Welcome" component={WelcomePage} />
           <Stack.Screen name="Login" component={LoginPage} />
           <Stack.Screen name="Registration" component={Registration} />
-          
-          {/* App screens */}
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Profile" component={ProfilePage} />
           <Stack.Screen name="EditProfile" component={EditProfile} />
@@ -80,6 +72,7 @@ function App() {
           <Stack.Screen name="EditLookingFor" component={EditLookingFor} />
           <Stack.Screen name="EditGames" component={EditGames} />
           <Stack.Screen name="EditPackage" component={EditPackage} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>
       </AuthProvider>
     </NavigationContainer>
