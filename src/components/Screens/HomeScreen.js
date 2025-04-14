@@ -10,8 +10,7 @@ import {
   Modal, 
   SafeAreaView,
   StatusBar,
-  Dimensions,
-  Alert
+  Dimensions
 } from 'react-native';
 import { AuthContext } from '../context/authContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -181,6 +180,11 @@ const HomeScreen = () => {
     navigation.navigate('Profile', { profile: profiles[currentIndex] });
   };
 
+  const navigateToPrivacyPolicy = () => {
+    setShowSideMenu(false);
+    navigation.navigate('Privacy');
+  };
+
   const renderCurrentProfile = () => {
     const profile = profiles[currentIndex];
     
@@ -318,8 +322,6 @@ const HomeScreen = () => {
             <Icon name="done" size={30} color="#FFF" />
           </TouchableOpacity>
         </View>
-        
-        <View style={styles.navBarPlaceholder} />
       </View>
       
       {/* Side Menu Modal */}
@@ -375,7 +377,10 @@ const HomeScreen = () => {
             </View>
             
             <View style={styles.slideInMenuFooter}>
-              <TouchableOpacity style={styles.slideInPrivacyButton}>
+              <TouchableOpacity 
+                style={styles.slideInPrivacyButton}
+                onPress={navigateToPrivacyPolicy}
+              >
                 <Icon name="privacy-tip" size={20} color="#FFD700" />
                 <Text style={styles.slideInPrivacyText}>PRIVACY POLICY</Text>
               </TouchableOpacity>
@@ -390,7 +395,7 @@ const HomeScreen = () => {
         </View>
       </Modal>
 
-      {/* Custom Colorful Logout Confirmation Modal */}
+      {/* Logout Confirmation Modal */}
       <Modal
         transparent={true}
         visible={showLogoutModal}
@@ -644,9 +649,6 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  navBarPlaceholder: {
-    height: 60,
   },
   slideInMenuContainer: {
     flex: 1,

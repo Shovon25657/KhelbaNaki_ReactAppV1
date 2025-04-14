@@ -18,6 +18,7 @@ import EditLookingFor from './screens/EditLookingFor';
 import EditGames from './screens/EditGames';
 import EditPackage from './screens/EditPackage';
 import SettingsScreen from './screens/Settings';
+import PrivacyPolicy from './screens/Privacy'; // Add this import
 
 // Create Stack Navigator
 const Stack = createStackNavigator();
@@ -48,8 +49,13 @@ function App() {
 
   if (!appReady) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#6200ee" />
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: '#1a1a2e'
+      }}>
+        <ActivityIndicator size="large" color="#FFD700" />
       </View>
     );
   }
@@ -59,7 +65,10 @@ function App() {
       <AuthProvider>
         <Stack.Navigator 
           initialRouteName={isLoggedIn ? 'Home' : 'Splash'} 
-          screenOptions={{ headerShown: false }}
+          screenOptions={{ 
+            headerShown: false,
+            cardStyle: { backgroundColor: '#1a1a2e' }
+          }}
         >
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Welcome" component={WelcomePage} />
@@ -73,6 +82,7 @@ function App() {
           <Stack.Screen name="EditGames" component={EditGames} />
           <Stack.Screen name="EditPackage" component={EditPackage} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="Privacy" component={PrivacyPolicy} />
         </Stack.Navigator>
       </AuthProvider>
     </NavigationContainer>
