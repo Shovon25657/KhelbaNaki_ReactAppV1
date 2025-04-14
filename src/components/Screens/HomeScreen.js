@@ -11,7 +11,6 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
-  ImageBackground,
   Alert
 } from 'react-native';
 import { AuthContext } from '../context/authContext';
@@ -22,12 +21,11 @@ import Icon2 from 'react-native-vector-icons/Feather';
 
 const { width, height } = Dimensions.get('window');
 
-const BG_IMAGE = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
-
 const HomeScreen = () => {
   const [state, setState] = useContext(AuthContext);
   const navigation = useNavigation();
   const [showSideMenu, setShowSideMenu] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   
   const [profiles, setProfiles] = useState([
     {
@@ -63,50 +61,67 @@ const HomeScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const swipe = useRef(new Animated.ValueXY()).current;
   const tilt = useRef(new Animated.Value(0)).current;
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderMove: (_, { dx, dy }) => {
-      swipe.setValue({ x: dx, y: dy });
-      tilt.setValue(dx / 5);
-    },
-    onPanResponderRelease: (_, { dx, dy }) => {
-      const direction = Math.sign(dx);
-      const isActionActive = Math.abs(dx) > 120;
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 5;
+      },
+      onPanResponderMove: (_, { dx, dy }) => {
+        swipe.setValue({ x: dx, y: dy });
+        tilt.setValue(dx / 5);
+      },
+      onPanResponderRelease: (_, { dx, dy, vx }) => {
+        const direction = Math.sign(dx);
+        const isActionActive = Math.abs(dx) > 120 || Math.abs(vx) > 0.5;
 
-      if (isActionActive) {
-        Animated.timing(swipe, {
-          toValue: { 
-            x: direction * 500, 
-            y: dy 
-          },
-          duration: 200,
-          useNativeDriver: true
-        }).start(handleSwipeComplete);
-        
-        if (direction > 0) {
-          handleLike();
+        if (isActionActive) {
+          setIsTransitioning(true);
+          Animated.timing(swipe, {
+            toValue: { 
+              x: direction * (width + 100), 
+              y: dy 
+            },
+            duration: 200,
+            useNativeDriver: true
+          }).start(() => {
+            if (direction > 0) {
+              handleLike();
+            } else {
+              handleDislike();
+            }
+            handleSwipeComplete();
+          });
         } else {
-          handleDislike();
+          Animated.spring(swipe, {
+            toValue: { x: 0, y: 0 },
+            friction: 4,
+            useNativeDriver: true
+          }).start();
         }
-      } else {
+      },
+      onPanResponderTerminate: () => {
         Animated.spring(swipe, {
           toValue: { x: 0, y: 0 },
           friction: 4,
           useNativeDriver: true
         }).start();
       }
-    }
-  });
+    })
+  ).current;
 
   const handleSwipeComplete = () => {
-    if (currentIndex < profiles.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      swipe.setValue({ x: 0, y: 0 });
-      tilt.setValue(0);
-    } else {
-      setCurrentIndex(0);
-    }
+    const nextIndex = currentIndex < profiles.length - 1 ? currentIndex + 1 : 0;
+    
+    swipe.setValue({ x: 0, y: 0 });
+    tilt.setValue(0);
+    
+    setTimeout(() => {
+      setCurrentIndex(nextIndex);
+      setIsTransitioning(false);
+    }, 50);
   };
 
   const rotateCard = tilt.interpolate({
@@ -143,34 +158,23 @@ const HomeScreen = () => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-          onPress: () => setShowSideMenu(false)
-        },
-        { 
-          text: "Logout", 
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('@auth');
-              setState({ ...state, user: null, token: '' });
-              navigation.navigate('Welcome');
-              setShowSideMenu(false); // Close menu after logout
-            } catch (error) {
-              console.error('Error logging out:', error);
-            }
-          }
-        }
-      ],
-      {
-        cancelable: true,
-        onDismiss: () => setShowSideMenu(false)
-      }
-    );
+    setShowLogoutModal(true);
+    setShowSideMenu(false);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('@auth');
+      setState({ ...state, user: null, token: '' });
+      navigation.navigate('Welcome');
+      setShowLogoutModal(false);
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const navigateToProfile = () => {
@@ -181,13 +185,14 @@ const HomeScreen = () => {
     const profile = profiles[currentIndex];
     
     return (
-      <TouchableOpacity 
-        activeOpacity={0.9} 
-        onPress={navigateToProfile}
+      <Animated.View 
+        style={[styles.card, animatedCardStyles]}
+        {...panResponder.panHandlers}
       >
-        <Animated.View 
-          style={[styles.card, animatedCardStyles]}
-          {...panResponder.panHandlers}
+        <TouchableOpacity 
+          activeOpacity={0.9} 
+          onPress={navigateToProfile}
+          style={styles.touchableArea}
         >
           <Image 
             source={{ uri: profile.image }} 
@@ -210,214 +215,236 @@ const HomeScreen = () => {
               </View>
             </View>
           </View>
-          
-          <Animated.View style={[styles.likeBadge, { opacity: likeOpacity }]}>
-            <View style={styles.likeContainer}>
-              <Icon name="done" size={50} color="#4CAF50" />
-              <Text style={styles.likeText}>LIKE</Text>
-            </View>
-          </Animated.View>
-          
-          <Animated.View style={[styles.dislikeBadge, { opacity: dislikeOpacity }]}>
-            <View style={styles.dislikeContainer}>
-              <Icon name="close" size={50} color="#F44336" />
-              <Text style={styles.dislikeText}>REJECT</Text>
-            </View>
-          </Animated.View>
+        </TouchableOpacity>
+        
+        <Animated.View style={[styles.likeBadge, { opacity: likeOpacity }]}>
+          <View style={styles.likeContainer}>
+            <Icon name="done" size={50} color="#4CAF50" />
+            <Text style={styles.likeText}>LIKE</Text>
+          </View>
         </Animated.View>
-      </TouchableOpacity>
+        
+        <Animated.View style={[styles.dislikeBadge, { opacity: dislikeOpacity }]}>
+          <View style={styles.dislikeContainer}>
+            <Icon name="close" size={50} color="#F44336" />
+            <Text style={styles.dislikeText}>REJECT</Text>
+          </View>
+        </Animated.View>
+      </Animated.View>
     );
   };
 
+  const handleButtonSwipe = (direction) => {
+    if (isTransitioning) return;
+
+    setIsTransitioning(true);
+    
+    Animated.timing(swipe, {
+      toValue: { x: direction * (width + 100), y: 0 },
+      duration: 200,
+      useNativeDriver: true
+    }).start(() => {
+      if (direction > 0) {
+        handleLike();
+      } else {
+        handleDislike();
+      }
+      handleSwipeComplete();
+    });
+  };
+
   return (
-    <ImageBackground source={{ uri: BG_IMAGE }} style={styles.backgroundImage} blurRadius={2}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar backgroundColor="transparent" translucent barStyle="light-content" />
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity 
-              onPress={() => setShowSideMenu(true)} 
-              style={styles.menuButton}
-              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-            >
-              <Icon2 name="menu" size={28} color="#FFF" />
-            </TouchableOpacity>
-            
-            <Text style={styles.headerTitle}>HOME</Text>
-            
-            <TouchableOpacity 
-              onPress={() => navigation.navigate('EditPackage')} 
-              style={styles.thunderButton}
-              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-            >
-              <Icon name="bolt" size={28} color="#FFD700" />
-            </TouchableOpacity>
-          </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => setShowSideMenu(true)} 
+            style={styles.menuButton}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+          >
+            <Icon2 name="menu" size={28} color="#FFF" />
+          </TouchableOpacity>
           
-          {/* Card Container */}
-          <View style={styles.cardContainer}>
-            {profiles.length > 0 && currentIndex < profiles.length ? (
-              renderCurrentProfile()
-            ) : (
-              <View style={styles.noProfiles}>
-                <Text style={styles.noProfilesText}>No more profiles to show</Text>
-                <TouchableOpacity 
-                  style={styles.resetButton}
-                  onPress={() => setCurrentIndex(0)}
-                >
-                  <Text style={styles.resetButtonText}>RESET</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+          <Text style={styles.headerTitle}>HOME</Text>
           
-          {/* Action Buttons - Now closer together */}
-          <View style={styles.actions}>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('EditPackage')} 
+            style={styles.thunderButton}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+          >
+            <Icon name="bolt" size={28} color="#FFD700" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.cardContainer}>
+          {profiles.length > 0 && currentIndex < profiles.length ? (
+            renderCurrentProfile()
+          ) : (
+            <View style={styles.noProfiles}>
+              <Text style={styles.noProfilesText}>No more profiles to show</Text>
+              <TouchableOpacity 
+                style={styles.resetButton}
+                onPress={() => setCurrentIndex(0)}
+              >
+                <Text style={styles.resetButtonText}>RESET</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.actions}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.dislikeButton]}
+            onPress={() => handleButtonSwipe(-1)}
+            disabled={isTransitioning}
+          >
+            <Icon name="close" size={30} color="#FFF" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.viewButton]}
+            onPress={navigateToProfile}
+            disabled={isTransitioning}
+          >
+            <Icon name="visibility" size={30} color="#FFF" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.likeButton]}
+            onPress={() => handleButtonSwipe(1)}
+            disabled={isTransitioning}
+          >
+            <Icon name="done" size={30} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.navBarPlaceholder} />
+      </View>
+      
+      {/* Side Menu Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showSideMenu}
+        onRequestClose={() => setShowSideMenu(false)}
+      >
+        <View style={styles.slideInMenuContainer}>
+          <View style={styles.slideInMenu}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.dislikeButton]}
-              onPress={() => {
-                swipe.setValue({ x: -500, y: 0 });
-                Animated.spring(swipe, {
-                  toValue: { x: -500, y: 0 },
-                  friction: 4,
-                  useNativeDriver: true
-                }).start(() => {
-                  handleDislike();
-                  handleSwipeComplete();
-                });
-              }}
+              style={styles.slideInMenuCloseButton}
+              onPress={() => setShowSideMenu(false)}
             >
               <Icon name="close" size={30} color="#FFF" />
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.viewButton]}
-              onPress={navigateToProfile}
-            >
-              <Icon name="visibility" size={30} color="#FFF" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.likeButton]}
-              onPress={() => {
-                swipe.setValue({ x: 500, y: 0 });
-                Animated.spring(swipe, {
-                  toValue: { x: 500, y: 0 },
-                  friction: 4,
-                  useNativeDriver: true
-                }).start(() => {
-                  handleLike();
-                  handleSwipeComplete();
-                });
-              }}
-            >
-              <Icon name="done" size={30} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-          
-          {/* Space for future nav bar */}
-          <View style={styles.navBarPlaceholder} />
-        </View>
-        
-        {/* Slide-in Side Menu Modal */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={showSideMenu}
-          onRequestClose={() => setShowSideMenu(false)}
-        >
-          <View style={styles.slideInMenuContainer}>
-            <View style={styles.slideInMenu}>
-              {/* Close Button at top right */}
-              <TouchableOpacity 
-                style={styles.slideInMenuCloseButton}
-                onPress={() => setShowSideMenu(false)}
-              >
-                <Icon name="close" size={30} color="#FFF" />
-              </TouchableOpacity>
-              
-              {/* Menu Header */}
-              <View style={styles.slideInMenuHeader}>
-                <Text style={styles.slideInMenuHeaderText}>MENU</Text>
-              </View>
-              
-              {/* Main Menu Items */}
-              <View style={styles.slideInMenuItems}>
-                <TouchableOpacity 
-                  style={styles.slideInMenuItem}
-                  onPress={() => {
-                    setShowSideMenu(false);
-                    navigation.navigate('Profile');
-                  }}
-                >
-                  <Icon name="account-circle" size={24} color="#FFD700" />
-                  <Text style={styles.slideInMenuItemText}>ACCOUNT</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.slideInMenuItem}
-                  onPress={() => {
-                    setShowSideMenu(false);
-                    navigation.navigate('Settings');
-                  }}
-                >
-                  <Icon name="settings" size={24} color="#FFD700" />
-                  <Text style={styles.slideInMenuItemText}>SETTINGS</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.slideInMenuItem}
-                  onPress={handleLogout}
-                >
-                  <Icon name="logout" size={24} color="#FFD700" />
-                  <Text style={styles.slideInMenuItemText}>LOGOUT</Text>
-                </TouchableOpacity>
-              </View>
-              
-              {/* Privacy Policy at Bottom */}
-              <View style={styles.slideInMenuFooter}>
-                <TouchableOpacity style={styles.slideInPrivacyButton}>
-                  <Icon name="privacy-tip" size={20} color="#FFD700" />
-                  <Text style={styles.slideInPrivacyText}>PRIVACY POLICY</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.slideInMenuHeader}>
+              <Text style={styles.slideInMenuHeaderText}>MENU</Text>
             </View>
             
-            {/* Transparent area to close menu when tapped */}
-            <TouchableOpacity 
-              style={styles.slideInMenuOverlay}
-              activeOpacity={1}
-              onPress={() => setShowSideMenu(false)}
-            />
+            <View style={styles.slideInMenuItems}>
+              <TouchableOpacity 
+                style={styles.slideInMenuItem}
+                onPress={() => {
+                  setShowSideMenu(false);
+                  navigation.navigate('Profile');
+                }}
+              >
+                <Icon name="account-circle" size={24} color="#FFD700" />
+                <Text style={styles.slideInMenuItemText}>ACCOUNT</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.slideInMenuItem}
+                onPress={() => {
+                  setShowSideMenu(false);
+                  navigation.navigate('Settings');
+                }}
+              >
+                <Icon name="settings" size={24} color="#FFD700" />
+                <Text style={styles.slideInMenuItemText}>SETTINGS</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.slideInMenuItem}
+                onPress={handleLogout}
+              >
+                <Icon name="logout" size={24} color="#FFD700" />
+                <Text style={styles.slideInMenuItemText}>LOGOUT</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.slideInMenuFooter}>
+              <TouchableOpacity style={styles.slideInPrivacyButton}>
+                <Icon name="privacy-tip" size={20} color="#FFD700" />
+                <Text style={styles.slideInPrivacyText}>PRIVACY POLICY</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </Modal>
-      </SafeAreaView>
-    </ImageBackground>
+          
+          <TouchableOpacity 
+            style={styles.slideInMenuOverlay}
+            activeOpacity={1}
+            onPress={() => setShowSideMenu(false)}
+          />
+        </View>
+      </Modal>
+
+      {/* Custom Colorful Logout Confirmation Modal */}
+      <Modal
+        transparent={true}
+        visible={showLogoutModal}
+        animationType="fade"
+        onRequestClose={cancelLogout}
+      >
+        <View style={styles.logoutModalContainer}>
+          <View style={styles.logoutModalContent}>
+            <View style={styles.logoutModalHeader}>
+              <Icon name="warning" size={40} color="#FFD700" />
+              <Text style={styles.logoutModalTitle}>CONFIRM LOGOUT</Text>
+            </View>
+            
+            <Text style={styles.logoutModalText}>
+              Are you sure you want to logout?
+            </Text>
+            
+            <View style={styles.logoutModalButtons}>
+              <TouchableOpacity 
+                style={[styles.logoutModalButton, styles.cancelButton]}
+                onPress={cancelLogout}
+              >
+                <Text style={styles.logoutModalButtonText}>CANCEL</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.logoutModalButton, styles.confirmButton]}
+                onPress={confirmLogout}
+              >
+                <Text style={styles.logoutModalButtonText}>LOGOUT</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   safeArea: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: '#1a1a2e',
   },
   container: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight || 10,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: 'rgba(30, 30, 30, 0.8)',
+    paddingVertical: 10,
+    backgroundColor: '#16213e',
     borderBottomWidth: 2,
     borderBottomColor: '#FFD700',
   },
@@ -443,14 +470,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10,
+    marginBottom: 10,
+    marginTop: 5,
   },
   card: {
     width: width * 0.8,
     height: height * 0.6,
     borderRadius: 15,
-    backgroundColor: 'rgba(45, 45, 45, 0.9)',
+    backgroundColor: '#0f3460',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.5,
@@ -459,6 +486,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#FFD700',
+    zIndex: 1,
+  },
+  touchableArea: {
+    flex: 1,
   },
   profileImage: {
     width: '100%',
@@ -514,6 +545,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '30%',
     left: 20,
+    zIndex: 2,
   },
   likeContainer: {
     flexDirection: 'row',
@@ -535,6 +567,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '30%',
     right: 20,
+    zIndex: 2,
   },
   dislikeContainer: {
     flexDirection: 'row',
@@ -554,16 +587,16 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'center', // Changed from 'space-around' to 'center'
-    padding: 10, // Reduced padding
-    paddingBottom: 20,
-    marginBottom: 60,
-    gap: 10, // Added gap between buttons
+    justifyContent: 'center',
+    padding: 10,
+    paddingBottom: 15,
+    marginBottom: 40,
+    gap: 15,
   },
   actionButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -573,7 +606,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     borderWidth: 2,
     borderColor: '#FFF',
-    marginHorizontal: 5, // Added horizontal margin
+    marginHorizontal: 5,
   },
   dislikeButton: {
     backgroundColor: '#F44336',
@@ -587,7 +620,7 @@ const styles = StyleSheet.create({
   noProfiles: {
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'rgba(45, 45, 45, 0.9)',
+    backgroundColor: '#0f3460',
     borderRadius: 15,
     borderWidth: 2,
     borderColor: '#FFD700',
@@ -622,7 +655,7 @@ const styles = StyleSheet.create({
   slideInMenu: {
     width: width * 0.65,
     height: '100%',
-    backgroundColor: 'rgba(30, 30, 30, 0.95)',
+    backgroundColor: '#16213e',
     borderRightWidth: 2,
     borderRightColor: '#FFD700',
   },
@@ -682,6 +715,71 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 16,
     marginLeft: 10,
+  },
+  logoutModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  logoutModalContent: {
+    width: width * 0.8,
+    backgroundColor: '#1a1a2e',
+    borderRadius: 20,
+    padding: 25,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  logoutModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  logoutModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginLeft: 10,
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
+  },
+  logoutModalText: {
+    color: '#FFF',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 25,
+  },
+  logoutModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  logoutModalButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+    borderWidth: 2,
+  },
+  cancelButton: {
+    backgroundColor: '#0f3460',
+    borderColor: '#2196F3',
+  },
+  confirmButton: {
+    backgroundColor: '#0f3460',
+    borderColor: '#F44336',
+  },
+  logoutModalButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
