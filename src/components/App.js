@@ -18,7 +18,10 @@ import EditLookingFor from './screens/EditLookingFor';
 import EditGames from './screens/EditGames';
 import EditPackage from './screens/EditPackage';
 import SettingsScreen from './screens/Settings';
-import PrivacyPolicy from './screens/Privacy'; // Add this import
+import PrivacyPolicy from './screens/Privacy';
+import Explore from './screens/Explore';
+import Marketplace from './screens/Marketplace';
+import Chat from './screens/Chat';
 
 // Create Stack Navigator
 const Stack = createStackNavigator();
@@ -70,12 +73,20 @@ function App() {
             cardStyle: { backgroundColor: '#1a1a2e' }
           }}
         >
+          {/* Auth Screens */}
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Welcome" component={WelcomePage} />
           <Stack.Screen name="Login" component={LoginPage} />
           <Stack.Screen name="Registration" component={Registration} />
+
+          {/* Main App Screens with Bottom Navigation */}
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Profile" component={ProfilePage} />
+          <Stack.Screen name="Explore" component={Explore} />
+          <Stack.Screen name="Marketplace" component={Marketplace} />
+          <Stack.Screen name="Chat" component={Chat} />
+
+          {/* Edit/Setting Screens */}
           <Stack.Screen name="EditProfile" component={EditProfile} />
           <Stack.Screen name="EditAbout" component={EditAbout} />
           <Stack.Screen name="EditLookingFor" component={EditLookingFor} />
