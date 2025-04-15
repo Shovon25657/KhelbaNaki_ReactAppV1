@@ -1,3 +1,6 @@
+
+
+
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -12,23 +15,24 @@ const AuthProvider = ({ children }) => {
     token: "",
   });
 
-  // initial local storage data
   useEffect(() => {
-    const loadLoaclStorageData = async () => {
+    const loadLocalStorageData = async () => {
       let data = await AsyncStorage.getItem("@auth");
       let loginData = JSON.parse(data);
-
-      setState({ ...state, user: loginData?.user, token: loginData?.token });
+  
+      if (loginData) {
+        setState({ ...state, user: loginData.user, token: loginData.token });
+      }
     };
-    loadLoaclStorageData();
+    loadLocalStorageData();
   }, []);
 
   let token = state && state.token;
 
   //default axios setting
- axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   axios.defaults.baseURL =
-    "http://192.168.0.106:8080/api/v1";
+    "http://192.168.0.102:8080/api/v1";
 
   return (
     <AuthContext.Provider value={[state, setState]}>

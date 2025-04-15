@@ -3,51 +3,51 @@ const mongoose = require('mongoose');
 const userAboutSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // reference to the User model
+        ref: 'User', // Reference to the User model
         required: true
     },
     bio: {
         type: String,
-        required: true
+        default: ""
     },
     educationQualification: {
         type: String,
-        required: true
+        default: ""
     },
     smoking: {
         type: String,
-        enum: ['Yes', 'No'],
-        required: true
+        enum: ['Yes', 'No', ''], // Allow empty string
+        default: ""
     },
     drinks: {
         type: String,
-        enum: ['Yes', 'No'],
-        required: true
+        enum: ['Yes', 'No', ''],
+        default: ""
     },
     gender: {
         type: String,
-        enum: ['Male', 'Female', 'Other'],
-        required: true
+        enum: ['Male', 'Female', 'Other', ''],
+        default: ""
     },
     religion: {
         type: String,
-        required: true
+        default: ""
     },
     occupation: {
         type: String,
-        required: true
+        default: ""
     },
     lookingFor: {
         type: String,
-        required: true
+        default: ""
     },
     bestAt: {
         type: String,
-        required: true
+        default: ""
     },
     gamerSubscription: {
         type: String,
-        required: true
+        default: ""
     }
 }, { timestamps: true });
 

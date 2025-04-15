@@ -88,7 +88,7 @@ const Registration = () => {
     } else {
       try {
         setIsLoading(true);
-        const { data } = await axios.post('/auth/register', formData);
+         const { data } = await axios.post('/auth/register', formData);
         
         if (data?.message) {
           Alert.alert('Success', data.message);
