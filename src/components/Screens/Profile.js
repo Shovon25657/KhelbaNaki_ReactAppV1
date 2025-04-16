@@ -17,6 +17,7 @@ import coverPhoto from '../../../assets/profile3.jpg';
 import game1 from '../../../assets/game1.png';
 import game2 from '../../../assets/game2.png';
 import game3 from '../../../assets/game3.png';
+import BottomNavBar from '../common/BottomNavBar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -70,20 +71,6 @@ const Profile = ({ navigation }) => {
         isFavorite: false
       },
     ],
-
-    bestBadge: {
-      position: 'absolute',
-      top: responsiveHeight(5),
-      left: responsiveWidth(5),
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: responsiveWidth(8),
-      paddingVertical: responsiveHeight(3),
-      borderRadius: responsiveWidth(10),
-      zIndex: 1,
-    },
-   
     plan: {
       name: 'Elite Gamer Package',
       features: [
@@ -96,16 +83,15 @@ const Profile = ({ navigation }) => {
     }
   });
 
-// In Profile.js
-const handleEditProfile = () => {
-  // Pass the entire user object as a parameter when navigating
-  navigation.navigate('EditProfile', { user });
-};
+  const handleEditProfile = () => {
+    navigation.navigate('EditProfile', { user });
+  };
+
   // Function to scroll right
   const scrollGamesRight = () => {
     if (gamesScrollRef.current) {
       gamesScrollRef.current.scrollTo({
-        x: responsiveWidth(150), // Scroll by approximately one card width
+        x: responsiveWidth(150),
         y: 0,
         animated: true
       });
@@ -126,7 +112,7 @@ const handleEditProfile = () => {
   // Handle scroll events to show/hide left arrow
   const handleScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
-    setCanScrollLeft(scrollPosition > 10); // Show left arrow if scrolled right
+    setCanScrollLeft(scrollPosition > 10);
   };
 
   return (
@@ -139,6 +125,7 @@ const handleEditProfile = () => {
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent} // Added for proper spacing with BottomNavBar
       >
         {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
@@ -308,6 +295,9 @@ const handleEditProfile = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavBar />
     </SafeAreaView>
   );
 };
@@ -316,6 +306,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a2e',
+  },
+  scrollViewContent: {
+    paddingBottom: 70, // Add padding at the bottom to prevent content from being hidden behind the BottomNavBar
   },
   header: {
     justifyContent: 'center',
@@ -439,10 +432,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   bioContainer: {
-    backgroundColor: 'rgba(15, 52, 96, 0.5)', // Reduced opacity
+    backgroundColor: 'rgba(15, 52, 96, 0.5)',
     padding: responsiveWidth(15),
     borderRadius: responsiveWidth(10),
-    // Removed border
   },
   bioText: {
     fontSize: responsiveFont(16),
@@ -478,18 +470,12 @@ const styles = StyleSheet.create({
     marginTop: responsiveHeight(2),
     textAlign: 'center',
   },
-  // Updated Games Section styles
-  gamesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-  },
   gamesScrollContainer: {
-    paddingRight: responsiveWidth(20), // Extra padding at the end for better UX
+    paddingRight: responsiveWidth(20),
     paddingLeft: responsiveWidth(5),
   },
   smallGameCard: {
-    width: responsiveWidth(120), // Adjusted size
+    width: responsiveWidth(120),
     height: responsiveHeight(170),
     marginRight: responsiveWidth(12),
     marginBottom: responsiveHeight(10),
@@ -559,12 +545,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: responsiveHeight(5),
-  },
-  gameTag: {
-    fontSize: responsiveFont(10),
-    color: '#00ff88',
-    fontStyle: 'italic',
-    marginBottom: responsiveHeight(2),
   },
   gameName: {
     fontSize: responsiveFont(12),
