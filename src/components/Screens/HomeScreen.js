@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState, useRef, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -10,16 +10,21 @@ import {
   Modal, 
   SafeAreaView,
   StatusBar,
-  Dimensions
+  Dimensions,
+  Vibration,
+  Platform
 } from 'react-native';
 import { AuthContext } from '../context/authContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/Feather';
 import BottomNavBar from '../common/BottomNavBar';
 
 const { width, height } = Dimensions.get('window');
+
+const SWIPE_THRESHOLD = width * 0.25;
+const SWIPE_OUT_DURATION = 250;
 
 const HomeScreen = () => {
   const [state, setState] = useContext(AuthContext);
@@ -61,32 +66,93 @@ const HomeScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const swipe = useRef(new Animated.ValueXY()).current;
   const tilt = useRef(new Animated.Value(0)).current;
+  const cardOpacity = useRef(new Animated.Value(1)).current;
+  const cardScale = useRef(new Animated.Value(1)).current;
+  const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const tapTimestamp = useRef(0);
+
+  // Reset animations when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      resetCardAnimations();
+      return () => {};
+    }, [])
+  );
+
+  const resetCardAnimations = () => {
+    swipe.setValue({ x: 0, y: 0 });
+    tilt.setValue(0);
+    cardOpacity.setValue(1);
+    cardScale.setValue(1);
+    nextCardScale.setValue(0.9);
+  };
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: (_, gestureState) => {
+        // Store tap timestamp to differentiate between taps and swipes
+        tapTimestamp.current = Date.now();
+        return true;
+      },
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 5;
+        // Only handle as swipe if there's significant horizontal movement
+        const hasMovedEnough = Math.abs(gestureState.dx) > 10;
+        const isDraggingHorizontally = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+        const isQuickTap = Date.now() - tapTimestamp.current < 150;
+        return hasMovedEnough && isDraggingHorizontally && !isQuickTap;
       },
       onPanResponderMove: (_, { dx, dy }) => {
-        swipe.setValue({ x: dx, y: dy });
-        tilt.setValue(dx / 5);
+        // Update position and rotation based on drag
+        swipe.setValue({ x: dx, y: dy / 3 }); // Reduce vertical movement for better control
+        tilt.setValue(dx / 10); // More subtle rotation
+        
+        // Scale and fade animations based on swipe distance
+        const swipeDistance = Math.abs(dx);
+        const maxDistance = width * 0.5;
+        const progressRatio = Math.min(swipeDistance / maxDistance, 1);
+        
+        // Scale down current card slightly as it moves away
+        cardScale.setValue(1 - 0.05 * progressRatio);
+        
+        // Scale up next card as current card moves away
+        nextCardScale.setValue(0.9 + 0.1 * progressRatio);
       },
-      onPanResponderRelease: (_, { dx, dy, vx }) => {
+      onPanResponderRelease: (_, { dx, dy, vx, vy }) => {
         const direction = Math.sign(dx);
-        const isActionActive = Math.abs(dx) > 120 || Math.abs(vx) > 0.5;
-
+        const speed = Math.abs(vx);
+        const isActionActive = Math.abs(dx) > SWIPE_THRESHOLD || speed > 0.5;
+        
         if (isActionActive) {
           setIsTransitioning(true);
-          Animated.timing(swipe, {
-            toValue: { 
-              x: direction * (width + 100), 
-              y: dy 
-            },
-            duration: 200,
-            useNativeDriver: true
-          }).start(() => {
+          
+          // Vibrate for haptic feedback
+          if (Platform.OS === 'ios' || Platform.OS === 'android') {
+            Vibration.vibrate(50);
+          }
+
+          // Animate card exit
+          Animated.parallel([
+            Animated.timing(swipe, {
+              toValue: { 
+                x: direction * (width + 100), 
+                y: dy 
+              },
+              duration: SWIPE_OUT_DURATION,
+              useNativeDriver: true
+            }),
+            Animated.timing(cardOpacity, {
+              toValue: 0,
+              duration: SWIPE_OUT_DURATION,
+              useNativeDriver: true
+            }),
+            Animated.spring(nextCardScale, {
+              toValue: 1,
+              friction: 6,
+              tension: 40,
+              useNativeDriver: true
+            })
+          ]).start(() => {
             if (direction > 0) {
               handleLike();
             } else {
@@ -95,19 +161,56 @@ const HomeScreen = () => {
             handleSwipeComplete();
           });
         } else {
-          Animated.spring(swipe, {
-            toValue: { x: 0, y: 0 },
-            friction: 4,
-            useNativeDriver: true
-          }).start();
+          // Return card to center with spring physics for natural bounce
+          Animated.parallel([
+            Animated.spring(swipe, {
+              toValue: { x: 0, y: 0 },
+              friction: 7,
+              tension: 40,
+              useNativeDriver: true
+            }),
+            Animated.spring(tilt, {
+              toValue: 0,
+              friction: 7,
+              tension: 40,
+              useNativeDriver: true
+            }),
+            Animated.spring(cardScale, {
+              toValue: 1,
+              friction: 7,
+              tension: 40,
+              useNativeDriver: true
+            }),
+            Animated.spring(nextCardScale, {
+              toValue: 0.9,
+              friction: 7,
+              tension: 40,
+              useNativeDriver: true
+            })
+          ]).start();
         }
       },
       onPanResponderTerminate: () => {
-        Animated.spring(swipe, {
-          toValue: { x: 0, y: 0 },
-          friction: 4,
-          useNativeDriver: true
-        }).start();
+        Animated.parallel([
+          Animated.spring(swipe, {
+            toValue: { x: 0, y: 0 },
+            friction: 7,
+            tension: 40,
+            useNativeDriver: true
+          }),
+          Animated.spring(cardScale, {
+            toValue: 1,
+            friction: 7,
+            tension: 40,
+            useNativeDriver: true
+          }),
+          Animated.spring(nextCardScale, {
+            toValue: 0.9,
+            friction: 7,
+            tension: 40,
+            useNativeDriver: true
+          })
+        ]).start();
       }
     })
   ).current;
@@ -115,37 +218,76 @@ const HomeScreen = () => {
   const handleSwipeComplete = () => {
     const nextIndex = currentIndex < profiles.length - 1 ? currentIndex + 1 : 0;
     
+    // Reset animation values
     swipe.setValue({ x: 0, y: 0 });
     tilt.setValue(0);
+    cardOpacity.setValue(1);
+    cardScale.setValue(1);
+    nextCardScale.setValue(0.9);
     
+    // Slight delay for smoother transition
     setTimeout(() => {
       setCurrentIndex(nextIndex);
       setIsTransitioning(false);
-    }, 50);
+    }, 100);
   };
 
   const rotateCard = tilt.interpolate({
-    inputRange: [-100, 0, 100],
-    outputRange: ['-10deg', '0deg', '10deg'],
+    inputRange: [-width/2, 0, width/2],
+    outputRange: ['-12deg', '0deg', '12deg'],
+    extrapolate: 'clamp'
   });
 
   const animatedCardStyles = {
     transform: [
       { translateX: swipe.x },
       { translateY: swipe.y },
-      { rotate: rotateCard }
+      { rotate: rotateCard },
+      { scale: cardScale }
+    ],
+    opacity: cardOpacity
+  };
+
+  const nextCardAnimatedStyles = {
+    transform: [
+      { scale: nextCardScale }
     ]
   };
 
   const likeOpacity = swipe.x.interpolate({
-    inputRange: [0, 120],
+    inputRange: [0, SWIPE_THRESHOLD],
     outputRange: [0, 1],
     extrapolate: 'clamp'
   });
 
   const dislikeOpacity = swipe.x.interpolate({
-    inputRange: [-120, 0],
+    inputRange: [-SWIPE_THRESHOLD, 0],
     outputRange: [1, 0],
+    extrapolate: 'clamp'
+  });
+
+  // Dynamic colors for like/dislike badges
+  const likeBgOpacity = swipe.x.interpolate({
+    inputRange: [0, width/4, width/2],
+    outputRange: [0.5, 0.8, 0.9],
+    extrapolate: 'clamp'
+  });
+
+  const dislikeBgOpacity = swipe.x.interpolate({
+    inputRange: [-width/2, -width/4, 0],
+    outputRange: [0.9, 0.8, 0.5],
+    extrapolate: 'clamp'
+  });
+
+  const likeScale = swipe.x.interpolate({
+    inputRange: [0, SWIPE_THRESHOLD, width/2],
+    outputRange: [0.8, 1, 1.2],
+    extrapolate: 'clamp'
+  });
+
+  const dislikeScale = swipe.x.interpolate({
+    inputRange: [-width/2, -SWIPE_THRESHOLD, 0],
+    outputRange: [1.2, 1, 0.8],
     extrapolate: 'clamp'
   });
 
@@ -186,6 +328,25 @@ const HomeScreen = () => {
     navigation.navigate('Privacy');
   };
 
+  const renderNextProfile = () => {
+    if (currentIndex >= profiles.length - 1) return null;
+    
+    const nextProfile = profiles[currentIndex + 1];
+    
+    return (
+      <Animated.View style={[styles.card, styles.nextCard, nextCardAnimatedStyles]}>
+        <Image 
+          source={{ uri: nextProfile.image }} 
+          style={styles.profileImage}
+          resizeMode="cover"
+        />
+        <View style={styles.profileInfo}>
+          <Text style={styles.name}>{nextProfile.name}</Text>
+        </View>
+      </Animated.View>
+    );
+  };
+
   const renderCurrentProfile = () => {
     const profile = profiles[currentIndex];
     
@@ -222,18 +383,32 @@ const HomeScreen = () => {
           </View>
         </TouchableOpacity>
         
-        <Animated.View style={[styles.likeBadge, { opacity: likeOpacity }]}>
-          <View style={styles.likeContainer}>
-            <Icon name="done" size={50} color="#4CAF50" />
-            <Text style={styles.likeText}>LIKE</Text>
-          </View>
+        <Animated.View 
+          style={[
+            styles.likeBadge, 
+            { 
+              opacity: likeOpacity,
+              transform: [{ scale: likeScale }],
+              backgroundColor: `rgba(76, 175, 80, ${likeBgOpacity})` 
+            }
+          ]}
+        >
+          <Icon name="done" size={50} color="#FFF" />
+          <Text style={styles.likeText}>LIKE</Text>
         </Animated.View>
         
-        <Animated.View style={[styles.dislikeBadge, { opacity: dislikeOpacity }]}>
-          <View style={styles.dislikeContainer}>
-            <Icon name="close" size={50} color="#F44336" />
-            <Text style={styles.dislikeText}>REJECT</Text>
-          </View>
+        <Animated.View 
+          style={[
+            styles.dislikeBadge, 
+            { 
+              opacity: dislikeOpacity,
+              transform: [{ scale: dislikeScale }],
+              backgroundColor: `rgba(244, 67, 54, ${dislikeBgOpacity})`
+            }
+          ]}
+        >
+          <Icon name="close" size={50} color="#FFF" />
+          <Text style={styles.dislikeText}>REJECT</Text>
         </Animated.View>
       </Animated.View>
     );
@@ -244,11 +419,29 @@ const HomeScreen = () => {
 
     setIsTransitioning(true);
     
-    Animated.timing(swipe, {
-      toValue: { x: direction * (width + 100), y: 0 },
-      duration: 200,
-      useNativeDriver: true
-    }).start(() => {
+    // Vibrate for haptic feedback
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      Vibration.vibrate(50);
+    }
+    
+    Animated.parallel([
+      Animated.timing(swipe, {
+        toValue: { x: direction * (width + 100), y: 0 },
+        duration: SWIPE_OUT_DURATION,
+        useNativeDriver: true
+      }),
+      Animated.timing(cardOpacity, {
+        toValue: 0,
+        duration: SWIPE_OUT_DURATION,
+        useNativeDriver: true
+      }),
+      Animated.spring(nextCardScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 40,
+        useNativeDriver: true
+      })
+    ]).start(() => {
       if (direction > 0) {
         handleLike();
       } else {
@@ -285,7 +478,11 @@ const HomeScreen = () => {
           
           <View style={styles.cardContainer}>
             {profiles.length > 0 && currentIndex < profiles.length ? (
-              renderCurrentProfile()
+              <>
+                {/* Render next card underneath for stack effect */}
+                {renderNextProfile()}
+                {renderCurrentProfile()}
+              </>
             ) : (
               <View style={styles.noProfiles}>
                 <Text style={styles.noProfilesText}>No more profiles to show</Text>
@@ -304,6 +501,7 @@ const HomeScreen = () => {
               style={[styles.actionButton, styles.dislikeButton]}
               onPress={() => handleButtonSwipe(-1)}
               disabled={isTransitioning}
+              activeOpacity={0.7}
             >
               <Icon name="close" size={30} color="#FFF" />
             </TouchableOpacity>
@@ -312,6 +510,7 @@ const HomeScreen = () => {
               style={[styles.actionButton, styles.viewButton]}
               onPress={navigateToProfile}
               disabled={isTransitioning}
+              activeOpacity={0.7}
             >
               <Icon name="visibility" size={30} color="#FFF" />
             </TouchableOpacity>
@@ -320,6 +519,7 @@ const HomeScreen = () => {
               style={[styles.actionButton, styles.likeButton]}
               onPress={() => handleButtonSwipe(1)}
               disabled={isTransitioning}
+              activeOpacity={0.7}
             >
               <Icon name="done" size={30} color="#FFF" />
             </TouchableOpacity>
@@ -487,7 +687,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   card: {
-    width: width * 0.8,
+    position: 'absolute',
+    width: width * 0.85,
     height: height * 0.6,
     borderRadius: 15,
     backgroundColor: '#0f3460',
@@ -499,7 +700,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#FFD700',
-    zIndex: 1,
+  },
+  nextCard: {
+    opacity: 0.85,
+    borderColor: 'rgba(255, 215, 0, 0.7)',
   },
   touchableArea: {
     flex: 1,
@@ -556,21 +760,20 @@ const styles = StyleSheet.create({
   },
   likeBadge: {
     position: 'absolute',
-    top: '30%',
+    top: '25%',
     left: 20,
     zIndex: 2,
-  },
-  likeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(76, 175, 80, 0.7)',
     borderRadius: 20,
     padding: 10,
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   likeText: {
     color: '#FFF',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 20,
     marginLeft: 5,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: {width: 1, height: 1},
@@ -578,21 +781,20 @@ const styles = StyleSheet.create({
   },
   dislikeBadge: {
     position: 'absolute',
-    top: '30%',
+    top: '25%',
     right: 20,
     zIndex: 2,
-  },
-  dislikeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(244, 67, 54, 0.7)',
     borderRadius: 20,
     padding: 10,
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   dislikeText: {
     color: '#FFF',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 20,
     marginLeft: 5,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: {width: 1, height: 1},
