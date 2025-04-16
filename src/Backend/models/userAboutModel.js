@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const userAboutSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to the User model
-        required: true
-    },
+
     bio: {
         type: String,
         default: ""
@@ -48,6 +44,11 @@ const userAboutSchema = new mongoose.Schema({
     gamerSubscription: {
         type: String,
         default: ""
+    },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Reference to the User model
+        required: true
     }
 }, { timestamps: true });
 
