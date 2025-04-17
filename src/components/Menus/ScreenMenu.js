@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthContext } from "../context/authContext";
-
 // Import Screens - Fix any case sensitivity issues here
 import SplashScreen from '../screens/SplashScreen';
 import WelcomePage from '../screens/WelcomePage';
@@ -34,6 +33,43 @@ const ScreenMenu = () => {
               headerRight: () => <HeaderMenu />,
             }}
           />
+
+          <Stack.Screen
+            name="EditAbout"
+            component={EditAbout}
+            options={{
+              title: "Full Stack App",
+              headerRight: () => <HeaderMenu />,
+            }}
+          />
+
+<Stack.Screen
+            name="EditLookingFor"
+            component={EditLookingFor}
+            options={{
+              title: "Full Stack App",
+              headerRight: () => <HeaderMenu />,
+            }}
+          />
+
+<Stack.Screen
+            name="EditGames"
+            component={EditGames}
+            options={{
+              title: "Full Stack App",
+              headerRight: () => <HeaderMenu />,
+            }}
+          />
+
+<Stack.Screen
+            name="EditPackage"
+            component={EditPackage}
+            options={{
+              title: "Full Stack App",
+              headerRight: () => <HeaderMenu />,
+            }}
+          />
+
           <Stack.Screen
             name="Profile"
             component={ProfilePage}
