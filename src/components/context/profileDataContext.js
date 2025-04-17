@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //context
 const ProfileDataContext = createContext();
@@ -13,7 +14,24 @@ const ProfileDataProvider = ({ children }) => {
   const getProfileData = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("/userabout/get-profile");
+      // Get the auth data from AsyncStorage
+      const authData = await AsyncStorage.getItem('@auth');
+      if (!authData) {
+        console.log('No auth data found');
+        setLoading(false);
+        return;
+      }
+      
+      // Parse the auth data to get the token
+      const { token } = JSON.parse(authData);
+      
+      // Make the request with the token in the Authorization header
+      const { data } = await axios.get("/userabout/get-profile", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
       setLoading(false);
       setProfileData(data?.profileData);
     } catch (error) {
@@ -22,7 +40,7 @@ const ProfileDataProvider = ({ children }) => {
     }
   };
 
-  // inintal  posts
+  // initial posts
   useEffect(() => {
     getProfileData();
   }, []);
