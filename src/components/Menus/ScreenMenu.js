@@ -17,6 +17,8 @@ import HeaderMenu from '../Menus/HeaderMenu';
 import Chat from '../Screens/Chat';
 import Explore from '../Screens/Explore';
 import Settings from '../Screens/Settings';
+import Marketplace from '../Screens/Marketplace';
+import PrivacyPolicy from '../Screens/Privacy';
 
 const Stack = createNativeStackNavigator();
 
@@ -49,58 +51,56 @@ const ScreenMenu = () => {
             component={Settings}
               options={{ headerShown: false }}
           />
+           <Stack.Screen
+            name="Privacy"
+            component={PrivacyPolicy}
+              options={{ headerShown: false }}
+          />
 
+          <Stack.Screen
+            name="Marketplace"
+            component={Marketplace}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfile}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="EditAbout"
             component={EditAbout}
-            options={{
-              title: "Full Stack App",
-              headerRight: () => <HeaderMenu />,
-            }}
+            options={{ headerShown: false }}
           />
 
           <Stack.Screen
             name="EditLookingFor"
             component={EditLookingFor}
-            options={{
-              title: "Full Stack App",
-              headerRight: () => <HeaderMenu />,
-            }}
+            options={{ headerShown: false }}
           />
 
           <Stack.Screen
             name="EditGames"
             component={EditGames}
-            options={{
-              title: "Full Stack App",
-              headerRight: () => <HeaderMenu />,
-            }}
+            options={{ headerShown: false }}
           />
 
           <Stack.Screen
             name="EditPackage"
             component={EditPackage}
-            options={{
-              title: "Full Stack App",
-              headerRight: () => <HeaderMenu />,
-            }}
+            options={{ headerShown: false }}
           />
 
           <Stack.Screen
             name="Profile"
             component={ProfilePage}
-            options={{
-              headerBackTitle: "Back",
-              headerRight: () => <HeaderMenu />,
-            }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="Account"
             component={EditProfile}
-            options={{
-              headerBackTitle: "Back",
-              headerRight: () => <HeaderMenu />,
-            }}
+            options={{ headerShown: false }}
           />
         </>
       ) : (
