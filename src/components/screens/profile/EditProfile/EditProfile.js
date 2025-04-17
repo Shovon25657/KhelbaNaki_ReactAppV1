@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../../../context/authContext";
-// import FooterMenu from "../components/Menus/FooterMenu";
+import FooterMenu from "../../../Menus/FooterMenu";
 import axios from "axios";
 
 const EditProfile = () => {
@@ -102,7 +102,7 @@ const EditProfile = () => {
         </View>
       </ScrollView>
       <View style={{ flex: 1, justifyContent: "flex-end" }}>
-        {/* <FooterMenu /> */}
+         <FooterMenu />
       </View>
     </View>
   );

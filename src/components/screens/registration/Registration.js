@@ -112,7 +112,6 @@ const Registration = () => {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* <Text style={styles.title}>Sign Up</Text> */}
         
         <FormCard
           currentStep={currentStep}
@@ -124,6 +123,7 @@ const Registration = () => {
           isLastStep={currentStep === formSteps.length - 1}
           isLoading={isLoading}
         />
+        
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.signInText}>Already have an Account?</Text>

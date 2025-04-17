@@ -2,10 +2,6 @@ const mongoose = require('mongoose');
 
 const userAboutSchema = new mongoose.Schema({
 
-    bio: {
-        type: String,
-        default: ""
-    },
     educationQualification: {
         type: String,
         default: ""
@@ -30,18 +26,6 @@ const userAboutSchema = new mongoose.Schema({
         default: ""
     },
     occupation: {
-        type: String,
-        default: ""
-    },
-    lookingFor: {
-        type: String,
-        default: ""
-    },
-    bestAt: {
-        type: String,
-        default: ""
-    },
-    gamerSubscription: {
         type: String,
         default: ""
     },

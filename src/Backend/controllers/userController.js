@@ -134,7 +134,7 @@ const updateUserController = async (req, res) => {
             });
         }
 
-        // Hash the new password if provided
+        // Hash the new password 
         let hashedPassword;
         if (password) {
             hashedPassword = await hashPassword(password);
@@ -143,7 +143,6 @@ const updateUserController = async (req, res) => {
         // Prepare update object
         const updateData = {
             username: username || user.username,
-            // Add other fields if necessary, ensure they exist on the user model
         };
 
         // Only update password if a new one is provided
@@ -155,11 +154,10 @@ const updateUserController = async (req, res) => {
         const updatedUser = await usermodel.findOneAndUpdate(
             { email },
             updateData,
-            { new: true, runValidators: true } // Ensure model validations are run
+            { new: true, runValidators: true } 
         );
 
-        updatedUser.password = undefined; // Remove password from the response
-
+        updatedUser.password = undefined; 
         res.status(200).json({
             success: true,
             message: "Profile updated successfully.",

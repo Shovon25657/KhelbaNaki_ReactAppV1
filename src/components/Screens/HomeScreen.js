@@ -2,11 +2,12 @@ import React, { useContext } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { AuthContext } from '../context/authContext'; // Import the AuthContext
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import FooterMenu from '../Menus/FooterMenu'
+import { ProfileDataContext } from '../context/profileDataContext';
 
 const HomeScreen = () => {
   const [state, setState] = useContext(AuthContext); // Access global state from context
-  const navigation = useNavigation(); // To navigate between screens
+  const[profileData] = useContext(ProfileDataContext)
 
   // Function to handle logout
   const handleLogout = async () => {
@@ -16,19 +17,27 @@ const HomeScreen = () => {
 
       // Clear the user data and token in the global state
       setState({ ...state, user: null, token: '' });
-
+     
       // Navigate to Login screen after logout
-      navigation.navigate('Welcome'); // Adjust the screen name as per your navigation setup
       console.log('Logged out successfully');
+      if(state.token)
+        {
+          console.log('Token', state.token);
+        }
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
+
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to the Home Screen</Text>
+
+      <Text>{JSON.stringify( profileData )}</Text>
       <Button title="Logout" onPress={handleLogout} />
+      <FooterMenu/>
     </View>
   );
 };
@@ -36,9 +45,9 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    margin: 10,
+    justifyContent: "space-between",
+    marginTop: 40,
   },
   title: {
     fontSize: 24,

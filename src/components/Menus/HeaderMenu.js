@@ -1,18 +1,29 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import React, { useContext } from "react";
-import { AuthContext } from "../../context/authContext";
 import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthContext } from '../context/authContext'; // Import the AuthContext
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+
 
 const HeaderMenu = () => {
   const [state, setState] = useContext(AuthContext);
-  //logout
-  const handleLogout = async () => {
-    setState({ token: "", user: null });
-    await AsyncStorage.removeItem("@auth");
-    alert("logout Successfully");
-  };
 
+// Function to handle logout
+const handleLogout = async () => {
+  try {
+    // Remove token from AsyncStorage
+    await AsyncStorage.removeItem('@auth'); 
+
+    // Clear the user data and token in the global state
+    setState({ ...state, user: null, token: '' });
+
+    console.log('Logged out successfully');
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
   return (
     <View>
       <TouchableOpacity onPress={handleLogout}>

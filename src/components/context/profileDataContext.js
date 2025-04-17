@@ -2,20 +2,20 @@ import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
 //context
-const PostContext = createContext();
+const ProfileDataContext = createContext();
 
-const PostProvider = ({ children }) => {
+const ProfileDataProvider = ({ children }) => {
   //state
   const [loading, setLoading] = useState(false);
-  const [posts, setPosts] = useState([]);
+  const [profileData, setProfileData] = useState([]);
 
   //get posts
-  const getAllPosts = async () => {
+  const getProfileData = async () => {
     setLoading(true);
     try {
       const { data } = await axios.get("/userabout/get-profile");
       setLoading(false);
-      setPosts(data?.posts);
+      setProfileData(data?.profileData);
     } catch (error) {
       console.log(error);
       setLoading(false);
@@ -24,14 +24,14 @@ const PostProvider = ({ children }) => {
 
   // inintal  posts
   useEffect(() => {
-    getAllPosts();
+    getProfileData();
   }, []);
 
   return (
-    <PostContext.Provider value={[posts, setPosts, getAllPosts]}>
+    <ProfileDataContext.Provider value={[profileData, setProfileData, getProfileData]}>
       {children}
-    </PostContext.Provider>
+    </ProfileDataContext.Provider>
   );
 };
 
-export { PostContext, PostProvider };
+export { ProfileDataContext, ProfileDataProvider };
