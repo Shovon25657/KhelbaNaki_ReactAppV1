@@ -1,24 +1,26 @@
 import React, { useContext } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthContext } from "../context/authContext";
+
+
 // Import Screens - Fix any case sensitivity issues here
-import SplashScreen from '../Screens/SplashScreen';
-import WelcomePage from '../Screens/WelcomePage';
-import LoginPage from '../Screens/Loginpage'; // Fixed case
-import Registration from '../Screens/registration/Registration';
-import HomeScreen from '../Screens/HomeScreen';
-import ProfilePage from '../Screens/profile/Profile';
-import EditProfile from '../Screens/profile/EditProfile/EditProfile';
-import EditAbout from '../Screens/profile/EditProfile/EditAbout';
-import EditLookingFor from '../Screens/profile/EditProfile/EditLookingFor';
-import EditGames from '../Screens/profile/EditProfile/EditGames';
-import EditPackage from '../Screens/profile/EditProfile/EditPackage';
+import SplashScreen from '../screens/SplashScreen';
+import WelcomePage from '../screens/WelcomePage';
+import LoginPage from '../screens/Loginpage'; // Fixed case
+import Registration from '../screens/registration/Registration';
+import HomeScreen from '../screens/HomeScreen';
+import ProfilePage from '../screens/profile/Profile';
+import EditProfile from '../screens/profile/EditProfile/EditProfile';
+import EditAbout from '../screens/profile/EditProfile/EditAbout';
+import EditLookingFor from '../screens/profile/EditProfile/EditLookingFor';
+import EditGames from '../screens/profile/EditProfile/EditGames';
+import EditPackage from '../screens/profile/EditProfile/EditPackage';
 import HeaderMenu from '../Menus/HeaderMenu';
-import Chat from '../Screens/Chat';
-import Explore from '../Screens/Explore';
-import Settings from '../Screens/Settings';
-import Marketplace from '../Screens/Marketplace';
-import PrivacyPolicy from '../Screens/Privacy';
+import Chat from '../screens/Chat';
+import Explore from '../screens/Explore';
+import Settings from '../screens/Settings';
+import Marketplace from '../screens/Marketplace';
+import PrivacyPolicy from '../screens/Privacy';
 
 const Stack = createNativeStackNavigator();
 
