@@ -4,6 +4,7 @@ const userAboutModel = require("../models/userAboutModel");
 const userProfileModel = require("../models/userProfileModel");
 const JWT = require("jsonwebtoken");
 var { expressjwt: jwt } = require("express-jwt");
+const userGamesPlayedModel = require("../models/userGamesPlayedModel");
 
 // Add Games to User's GamesPlayed
 // const addGamesPlayedController = async (req, res) => {
@@ -72,10 +73,10 @@ const addGamesPlayedController = async ( req,res) => {
             });
         }
         
-        const { games} = req.body;
+        const { gamesPlayed} = req.body;
         
         //validate
-        if (!games || !Array.isArray(games) || games.length === 0) {
+        if (!gamesPlayed || !Array.isArray(gamesPlayed) || gamesPlayed.length === 0) {
           return res.status(500).send({
             sucess: false,
             message: "Please Provide All Fields",
@@ -83,13 +84,13 @@ const addGamesPlayedController = async ( req,res) => {
         }
 
   // Simulate a database check for an existing Data
-  const existingGamesData = await userAboutModel.findOne({ user: req.auth._id });
+  const existingGamesData = await userGamesPlayedModel.findOne({ user: req.auth._id });
         
   if (existingGamesData) {
     // Update existing games array (merge and avoid duplicates)
-    const updatedGames = [...new Set([...existingGamesData.gamesPlayed, ...games])];
+    const updatedGames = [...new Set([...existingGamesData.gamesPlayed, ...gamesPlayed])];
     
-    const updatedData = await userAboutModel.findByIdAndUpdate(
+    const updatedData = await userGamesPlayedModel.findByIdAndUpdate(
         existingGamesData._id,
         { gamesPlayed: updatedGames },
         { new: true }
@@ -102,10 +103,11 @@ const addGamesPlayedController = async ( req,res) => {
     });
 }
 
-        const post = await userProfileModel({
-          gamesPlayed: games,
-          user: req.auth._id
-        }).save();
+   //  Create new entry if doesn't exist
+     const newGamesData = await userGamesPlayedModel({
+             gamesPlayed: gamesPlayed ,
+             user: req.auth._id,
+         }).save();
 
         res.status(201).send({
             success: true,

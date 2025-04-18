@@ -17,7 +17,7 @@ const router = express.Router();
 // CREATE POST || POST
 //router.post("/create-about", requireSingIn, createAboutController);
 router.post("/create-profile", requireSingIn, createprofileController);
-router.post("/create-gamesplayed", addGamesPlayedController);
+router.post("/create-gamesplayed", requireSingIn, addGamesPlayedController);
 
 
 // CREATE GET || GET

@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
 const gamesPlayedSchema = new mongoose.Schema({
-    games: {
+    gamesPlayed: {
         type: [String], // This defines an array of strings
         default: []     // Default empty array
     },
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+       type: mongoose.Schema.Types.ObjectId,
         ref: 'User',    // Reference to the User model
         required: true
     }
