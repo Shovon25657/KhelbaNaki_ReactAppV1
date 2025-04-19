@@ -6,7 +6,7 @@ import SplashScreen from '../Screens/SplashScreen';
 import WelcomePage from '../Screens/WelcomePage';
 import LoginPage from '../Screens/Loginpage'; // Fixed case
 import Registration from '../Screens/registration/Registration';
-import HomeScreen from '../Screens/HomeScreen';
+import HomeScreen from '../Screens/home/HomeScreen';
 import ProfilePage from '../Screens/profile/Profile';
 import EditProfile from '../Screens/profile/EditProfile/EditProfile';
 import EditAbout from '../Screens/profile/EditProfile/EditAbout';
@@ -14,11 +14,13 @@ import EditLookingFor from '../Screens/profile/EditProfile/EditLookingFor';
 import EditGames from '../Screens/profile/EditProfile/EditGames';
 import EditPackage from '../Screens/profile/EditProfile/EditPackage';
 import HeaderMenu from '../Menus/HeaderMenu';
-import Chat from '../Screens/Chat';
+import Chat from '../Screens/chat/Chat';
 import Explore from '../Screens/Explore';
-import Settings from '../Screens/Settings';
+import Settings from '../Screens/home/Settings';
 import Marketplace from '../Screens/Marketplace';
-import PrivacyPolicy from '../Screens/Privacy';
+import PrivacyPolicy from '../Screens/home/Privacy';
+import ChatInterface from "../Screens/chat/ChatInterface";
+import CreateGroup from "../Screens/chat/CreateGroup";
 
 const Stack = createNativeStackNavigator();
 
@@ -89,6 +91,17 @@ const ScreenMenu = () => {
           <Stack.Screen
             name="EditPackage"
             component={EditPackage}
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="ChatInterface"
+            component={ChatInterface}
+            options={{ headerShown: false }}
+          />
+           <Stack.Screen
+            name="CreateGroup"
+            component={CreateGroup}
             options={{ headerShown: false }}
           />
 
