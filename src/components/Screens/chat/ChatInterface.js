@@ -29,7 +29,7 @@ const emojis = [
   '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
   '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
   '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
-  '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣'
+  '🥳', '😏', '😒', '😞', '😔', '😟', '🙁', '☹️', '😣'
 ];
 
 const quickMessages = [
@@ -368,6 +368,13 @@ const ChatInterface = ({ route, navigation }) => {
     Keyboard.dismiss();
   };
 
+  const handleOutsidePress = () => {
+    setShowMenu(false);
+    setShowMediaOptions(false);
+    setShowEmojiPicker(false);
+    setShowQuickMessages(false);
+  };
+
   const pickImage = async () => {
     setShowMediaOptions(false);
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -566,283 +573,287 @@ const ChatInterface = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.headerProfile}
-          onPress={() => navigateToProfile(userId)}
-        >
-          <Image source={{ uri: userAvatar }} style={styles.headerAvatar} />
-          <View style={styles.headerUserInfo}>
-            <Text style={styles.headerUserName}>{userName}</Text>
-            <Text style={[styles.headerUserStatus, { color: online ? '#4CAF50' : '#888' }]}>
-              {online ? 'Online' : 'Offline'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.actionButton} onPress={makeCall}>
-            <Ionicons name="call-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={makeVideoCall}>
-            <Ionicons name="videocam-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={toggleMenu}>
-            <FontAwesome name="ellipsis-v" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Menu Options */}
-      {showMenu && (
-        <Animated.View 
-          style={[
-            styles.menuOptionsContainer,
-            menuAnimatedStyle,
-          ]}
-        >
-          <TouchableOpacity 
-            style={styles.menuOption}
-            onPress={handleUnmatch}
-          >
-            <Ionicons name="person-remove" size={20} color="#ff4444" style={styles.menuOptionIcon} />
-            <Text style={styles.menuOptionText}>Unmatch this Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.menuOption}
-            onPress={handleDeleteConversation}
-          >
-            <Ionicons name="trash" size={20} color="#ff4444" style={styles.menuOptionIcon} />
-            <Text style={styles.menuOptionText}>Delete Conversation</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      {/* Confirmation Dialog Modal */}
-      {showConfirmation && (
-        <Modal transparent={true} visible={showConfirmation} animationType="fade">
-          <TouchableWithoutFeedback onPress={cancelAction}>
-            <View style={styles.confirmationOverlay}>
-              <TouchableWithoutFeedback>
-                <Animated.View style={[styles.confirmationContainer, confirmationAnimatedStyle]}>
-                  <Text style={styles.confirmationTitle}>
-                    {confirmationType === 'unmatch' 
-                      ? `Unmatch with ${userName}?` 
-                      : `Delete conversation with ${userName}?`
-                    }
-                  </Text>
-                  <Text style={styles.confirmationText}>
-                    {confirmationType === 'unmatch'
-                      ? "This action can't be undone and you won't be able to match with this user again."
-                      : "This will permanently delete your conversation history with this user."
-                    }
-                  </Text>
-                  <View style={styles.confirmationButtonsGrid}>
-                    <TouchableOpacity 
-                      style={[styles.confirmationButton, { backgroundColor: colorSet.cancel }]}
-                      onPress={cancelAction}
-                    >
-                      <Text style={styles.confirmationButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.confirmationButton, { backgroundColor: colorSet.action }]}
-                      onPress={confirmAction}
-                    >
-                      <Text style={styles.confirmationButtonText}>
-                        {confirmationType === 'unmatch' ? 'Unmatch' : 'Delete'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </Animated.View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-      )}
-
-      {/* Messages */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
-      >
-        <ScrollView 
-          ref={scrollViewRef}
-          style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
-          onContentSizeChange={scrollToBottom}
-          keyboardDismissMode="interactive"
-        >
-          {messages.map((message) => (
-            <View key={message.id}>
-              {renderMessage(message)}
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Media Options */}
-        {showMediaOptions && (
-          <Animated.View 
-            style={[
-              styles.mediaOptionsContainer,
-              mediaOptionsAnimatedStyle,
-              { bottom: keyboardHeight + 60 }
-            ]}
-          >
-            <View style={styles.mediaOptionsContent}>
-              <TouchableOpacity style={styles.mediaOption} onPress={pickImage}>
-                <View style={styles.mediaOptionIcon}>
-                  <Ionicons name="image" size={28} color="#4a80f0" />
-                </View>
-                <Text style={styles.mediaOptionText}>Photo Library</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mediaOption} onPress={takePhoto}>
-                <View style={styles.mediaOptionIcon}>
-                  <Ionicons name="camera" size={28} color="#4a80f0" />
-                </View>
-                <Text style={styles.mediaOptionText}>Camera</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mediaOption} onPress={sendFile}>
-                <View style={styles.mediaOptionIcon}>
-                  <MaterialIcons name="insert-drive-file" size={28} color="#4a80f0" />
-                </View>
-                <Text style={styles.mediaOptionText}>Document</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Quick Messages */}
-        {showQuickMessages && (
-          <Animated.View 
-            style={[
-              styles.quickMessagesContainer,
-              quickMessagesAnimatedStyle,
-              { bottom: keyboardHeight + 60 }
-            ]}
-          >
-            <View style={styles.quickMessagesGrid}>
-              {quickMessages.map((msg, index) => (
-                <TouchableOpacity 
-                  key={index} 
-                  style={[styles.quickMessageButton, { backgroundColor: msg.color }]}
-                  onPress={() => sendQuickMessage(msg.text)}
-                >
-                  <Ionicons name={msg.icon} size={20} color="#fff" style={styles.quickMessageIcon} />
-                  <Text style={styles.quickMessageText}>{msg.text}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Image Preview Modal */}
-        <Modal
-          transparent={true}
-          visible={showImagePreview}
-          onRequestClose={() => setShowImagePreview(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setShowImagePreview(false)}>
-            <ImageBackground 
-              source={{ uri: previewImage }} 
-              style={styles.imagePreviewContainer}
-              resizeMode="contain"
+      <TouchableWithoutFeedback onPress={handleOutsidePress}>
+        <View style={{ flex: 1 }}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.headerProfile}
+              onPress={() => navigateToProfile(userId)}
             >
-              <View style={styles.imagePreviewClose}>
-                <Ionicons name="close" size={30} color="#fff" />
+              <Image source={{ uri: userAvatar }} style={styles.headerAvatar} />
+              <View style={styles.headerUserInfo}>
+                <Text style={styles.headerUserName}>{userName}</Text>
+                <Text style={[styles.headerUserStatus, { color: online ? '#4CAF50' : '#888' }]}>
+                  {online ? 'Online' : 'Offline'}
+                </Text>
               </View>
-            </ImageBackground>
-          </TouchableWithoutFeedback>
-        </Modal>
+            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.actionButton} onPress={makeCall}>
+                <Ionicons name="call-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={makeVideoCall}>
+                <Ionicons name="videocam-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={toggleMenu}>
+                <FontAwesome name="ellipsis-v" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-        {/* Emoji Picker */}
-        {showEmojiPicker && (
-          <View style={styles.emojiPickerContainer}>
-            <ScrollView 
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.emojiPickerContent}
+          {/* Menu Options */}
+          {showMenu && (
+            <Animated.View 
+              style={[
+                styles.menuOptionsContainer,
+                menuAnimatedStyle,
+              ]}
             >
-              {emojis.map((emoji, index) => (
-                <TouchableOpacity 
-                  key={index} 
-                  style={styles.emojiButton}
-                  onPress={() => {
-                    handleEmojiSelect(emoji);
-                    setShowEmojiPicker(false);
-                  }}
-                >
-                  <Text style={styles.emoji}>{emoji}</Text>
-                </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.menuOption}
+                onPress={handleUnmatch}
+              >
+                <Ionicons name="person-remove" size={20} color="#ff4444" style={styles.menuOptionIcon} />
+                <Text style={styles.menuOptionText}>Unmatch this Profile</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.menuOption}
+                onPress={handleDeleteConversation}
+              >
+                <Ionicons name="trash" size={20} color="#ff4444" style={styles.menuOptionIcon} />
+                <Text style={styles.menuOptionText}>Delete Conversation</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          {/* Confirmation Dialog Modal */}
+          {showConfirmation && (
+            <Modal transparent={true} visible={showConfirmation} animationType="fade">
+              <TouchableWithoutFeedback onPress={cancelAction}>
+                <View style={styles.confirmationOverlay}>
+                  <TouchableWithoutFeedback>
+                    <Animated.View style={[styles.confirmationContainer, confirmationAnimatedStyle]}>
+                      <Text style={styles.confirmationTitle}>
+                        {confirmationType === 'unmatch' 
+                          ? `Unmatch with ${userName}?` 
+                          : `Delete conversation with ${userName}?`
+                        }
+                      </Text>
+                      <Text style={styles.confirmationText}>
+                        {confirmationType === 'unmatch'
+                          ? "This action can't be undone and you won't be able to match with this user again."
+                          : "This will permanently delete your conversation history with this user."
+                        }
+                      </Text>
+                      <View style={styles.confirmationButtonsGrid}>
+                        <TouchableOpacity 
+                          style={[styles.confirmationButton, { backgroundColor: colorSet.cancel }]}
+                          onPress={cancelAction}
+                        >
+                          <Text style={styles.confirmationButtonText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.confirmationButton, { backgroundColor: colorSet.action }]}
+                          onPress={confirmAction}
+                        >
+                          <Text style={styles.confirmationButtonText}>
+                            {confirmationType === 'unmatch' ? 'Unmatch' : 'Delete'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </Animated.View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
+          )}
+
+          {/* Messages */}
+          <KeyboardAvoidingView
+            behavior={'height'}
+            style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={0}
+          >
+            <ScrollView 
+              ref={scrollViewRef}
+              style={styles.messagesContainer}
+              contentContainerStyle={styles.messagesContent}
+              onContentSizeChange={scrollToBottom}
+              keyboardDismissMode="interactive"
+            >
+              {messages.map((message) => (
+                <View key={message.id}>
+                  {renderMessage(message)}
+                </View>
               ))}
             </ScrollView>
-          </View>
-        )}
 
-        {/* Message Input */}
-        <View style={[styles.inputContainer, { marginBottom: keyboardHeight > 0 ? keyboardHeight : 0 }]}>
-          <View style={styles.inputLeftButtons}>
-            <TouchableOpacity 
-              style={styles.attachmentButton}
-              onPress={toggleMediaOptions}
-            >
-              <Ionicons 
-                name="add" 
-                size={28} 
-                color={showMediaOptions ? '#4a80f0' : '#888'} 
+            {/* Message Input */}
+            <View style={[styles.inputContainer, { paddingBottom: keyboardHeight }]}>
+              <View style={styles.inputLeftButtons}>
+                <TouchableOpacity 
+                  style={styles.attachmentButton}
+                  onPress={toggleMediaOptions}
+                >
+                  <Ionicons 
+                    name="add" 
+                    size={28} 
+                    color={showMediaOptions ? '#4a80f0' : '#888'} 
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.quickMessageButton}
+                  onPress={toggleQuickMessages}
+                >
+                  <Ionicons 
+                    name="flash" 
+                    size={24} 
+                    color={showQuickMessages ? '#4a80f0' : '#888'} 
+                  />
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Type a message..."
+                placeholderTextColor="#888"
+                value={newMessage}
+                onChangeText={setNewMessage}
+                multiline
               />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.quickMessageButton}
-              onPress={toggleQuickMessages}
-            >
-              <Ionicons 
-                name="flash" 
-                size={24} 
-                color={showQuickMessages ? '#4a80f0' : '#888'} 
-              />
-            </TouchableOpacity>
-          </View>
-          <TextInput
-            style={styles.messageInput}
-            placeholder="Type a message..."
-            placeholderTextColor="#888"
-            value={newMessage}
-            onChangeText={setNewMessage}
-            multiline
-          />
-          <TouchableOpacity 
-            style={styles.emojiButton}
-            onPress={() => {
-              setShowEmojiPicker(!showEmojiPicker);
-              setShowMediaOptions(false);
-              setShowMenu(false);
-              setShowQuickMessages(false);
-              setShowConfirmation(false);
-            }}
-          >
-            <Ionicons 
-              name="happy-outline" 
-              size={24} 
-              color={showEmojiPicker ? '#4a80f0' : '#888'} 
-            />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.sendButton}
-            onPress={handleSendMessage}
-            disabled={newMessage.trim() === ''}
-          >
-            <Ionicons 
-              name="send" 
-              size={24} 
-              color={newMessage.trim() === '' ? '#888' : '#4a80f0'} 
-            />
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.emojiButton}
+                onPress={() => {
+                  setShowEmojiPicker(!showEmojiPicker);
+                  setShowMediaOptions(false);
+                  setShowMenu(false);
+                  setShowQuickMessages(false);
+                  setShowConfirmation(false);
+                }}
+              >
+                <Ionicons 
+                  name="happy-outline" 
+                  size={24} 
+                  color={showEmojiPicker ? '#4a80f0' : '#888'} 
+                />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.sendButton}
+                onPress={handleSendMessage}
+                disabled={newMessage.trim() === ''}
+              >
+                <Ionicons 
+                  name="send" 
+                  size={24} 
+                  color={newMessage.trim() === '' ? '#888' : '#4a80f0'} 
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Media Options */}
+            {showMediaOptions && (
+  <Animated.View 
+    style={[
+      styles.mediaOptionsContainer,
+      mediaOptionsAnimatedStyle,
+      { bottom: keyboardHeight + 60 }
+    ]}
+  >
+    <View style={styles.mediaOptionsContent}>
+      <TouchableOpacity style={styles.mediaOption} onPress={pickImage}>
+        <View style={styles.mediaOptionIcon}>
+          <Ionicons name="image" size={28} color="#4a80f0" />
         </View>
-      </KeyboardAvoidingView>
+        <Text style={styles.mediaOptionText}>Photo Library</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.mediaOption} onPress={takePhoto}>
+        <View style={styles.mediaOptionIcon}>
+          <Ionicons name="camera" size={28} color="#4a80f0" />
+        </View>
+        <Text style={styles.mediaOptionText}>Camera</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.mediaOption} onPress={sendFile}>
+        <View style={styles.mediaOptionIcon}>
+          <MaterialIcons name="insert-drive-file" size={28} color="#4a80f0" />
+        </View>
+        <Text style={styles.mediaOptionText}>Document</Text>
+      </TouchableOpacity>
+    </View>
+  </Animated.View>
+)}
+
+            {/* Quick Messages */}
+            {showQuickMessages && (
+              <Animated.View 
+                style={[
+                  styles.quickMessagesContainer,
+                  quickMessagesAnimatedStyle,
+                  { bottom: keyboardHeight + 60 }
+                ]}
+              >
+                <View style={styles.quickMessagesGrid}>
+                  {quickMessages.map((msg, index) => (
+                    <TouchableOpacity 
+                      key={index} 
+                      style={[styles.quickMessageButton, { backgroundColor: msg.color }]}
+                      onPress={() => sendQuickMessage(msg.text)}
+                    >
+                      <Ionicons name={msg.icon} size={20} color="#fff" style={styles.quickMessageIcon} />
+                      <Text style={styles.quickMessageText}>{msg.text}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <View style={[styles.emojiPickerContainer, { bottom: keyboardHeight + 60 }]}>
+                <ScrollView 
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.emojiPickerContent}
+                >
+                  {emojis.map((emoji, index) => (
+                    <TouchableOpacity 
+                      key={index} 
+                      style={styles.emojiButton}
+                      onPress={() => {
+                        handleEmojiSelect(emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                    >
+                      <Text style={styles.emoji}>{emoji}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Image Preview Modal */}
+            <Modal
+              transparent={true}
+              visible={showImagePreview}
+              onRequestClose={() => setShowImagePreview(false)}
+            >
+              <TouchableWithoutFeedback onPress={() => setShowImagePreview(false)}>
+                <ImageBackground 
+                  source={{ uri: previewImage }} 
+                  style={styles.imagePreviewContainer}
+                  resizeMode="contain"
+                >
+                  <View style={styles.imagePreviewClose}>
+                    <Ionicons name="close" size={30} color="#fff" />
+                  </View>
+                </ImageBackground>
+              </TouchableWithoutFeedback>
+            </Modal>
+          </KeyboardAvoidingView>
+        </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 };
@@ -1107,6 +1118,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   emojiPickerContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     height: 50,
     backgroundColor: '#252538',
     borderTopWidth: 1,
@@ -1155,7 +1169,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   emojiButton: {
-    padding: 8,
+    padding: 6,
   },
   sendButton: {
     padding: 8,
