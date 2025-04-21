@@ -15,7 +15,7 @@ import EditGames from '../Screens/profile/EditProfile/EditGames';
 import EditPackage from '../Screens/profile/EditProfile/EditPackage';
 import HeaderMenu from '../Menus/HeaderMenu';
 import Chat from '../Screens/chat/Chat';
-import Explore from '../Screens/Explore';
+import Explore from '../Screens/newsfeed/Explore';
 import Settings from '../Screens/home/Settings';
 import Marketplace from '../Screens/marketplace/Marketplace';
 import PrivacyPolicy from '../Screens/home/Privacy';
@@ -24,6 +24,7 @@ import CreateGroup from "../Screens/chat/CreateGroup";
 import PurchaseGig from "../Screens/marketplace/PurchaseGig";
 import BuyGig from "../Screens/marketplace/BuyGig";
 import MyLibrary from "../Screens/marketplace/MyLibrary";
+import FeedProfile from "../Screens/newsfeed/FeedProfile";
 
 
 const Stack = createNativeStackNavigator();
@@ -50,6 +51,12 @@ const ScreenMenu = () => {
           <Stack.Screen
             name="Explore"
             component={Explore}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="FeedProfile"
+            component={FeedProfile}
               options={{ headerShown: false }}
           />
           <Stack.Screen
