@@ -17,10 +17,13 @@ import HeaderMenu from '../Menus/HeaderMenu';
 import Chat from '../Screens/chat/Chat';
 import Explore from '../Screens/Explore';
 import Settings from '../Screens/home/Settings';
-import Marketplace from '../Screens/Marketplace';
+import Marketplace from '../Screens/marketplace/Marketplace';
 import PrivacyPolicy from '../Screens/home/Privacy';
 import ChatInterface from "../Screens/chat/ChatInterface";
 import CreateGroup from "../Screens/chat/CreateGroup";
+import PurchaseGig from "../Screens/marketplace/PurchaseGig";
+import BuyGig from "../Screens/marketplace/BuyGig";
+import MyLibrary from "../Screens/marketplace/MyLibrary";
 
 const Stack = createNativeStackNavigator();
 
@@ -62,6 +65,24 @@ const ScreenMenu = () => {
           <Stack.Screen
             name="Marketplace"
             component={Marketplace}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="PurchaseGig"
+            component={PurchaseGig}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="BuyGig"
+            component={BuyGig}
+              options={{ headerShown: false }}
+          />
+          
+          <Stack.Screen
+            name="MyLibrary"
+            component={MyLibrary}
               options={{ headerShown: false }}
           />
 
