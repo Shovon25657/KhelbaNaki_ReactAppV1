@@ -14,12 +14,12 @@ import {
   Vibration,
   Platform
 } from 'react-native';
-import { AuthContext } from '../context/authContext';
+import { AuthContext } from '../../context/authContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/Feather';
-import BottomNavBar from '../common/BottomNavBar';
+import BottomNavBar from '../../common/BottomNavBar';
 
 const { width, height } = Dimensions.get('window');
 

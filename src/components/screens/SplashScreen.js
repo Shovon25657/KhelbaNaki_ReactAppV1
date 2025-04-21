@@ -1,38 +1,12 @@
-import React, { useEffect } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Animated } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SplashScreen = () => {
-  const navigation = useNavigation();
-// Add these to the component
-const fadeAnim = React.useRef(new Animated.Value(0)).current;
-
-useEffect(() => {
-  Animated.timing(fadeAnim, {
-    toValue: 1,
-    duration: 1000,
-    useNativeDriver: true,
-  }).start();
-}, []);
   
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Welcome'); // Or 'Home' if using auth check here
-    }, 2000); // 2 seconds splash duration
 
-    return () => clearTimeout(timer);
-  }, [navigation]);
 
-  return (
-    <Animated.View style={styles.container}>
-      <Image 
-        source={require('../../../assets/ryan.png')} // Replace with your logo path
-        style={styles.logo}
-        resizeMode="contain"
-      />
-    </Animated.View>
-  );
+  return null; // This will never be reached due to the navigation trigger
 };
 
 const styles = StyleSheet.create({
@@ -40,11 +14,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgb(43, 7, 100)',
+    backgroundColor: '#16213e',
   },
-  logo: {
-    width: 200,
-    height: 200,
+  loadingText: {
+    marginTop: 20,
+    color: '#fff',
+    fontSize: 18,
   },
 });
 

@@ -14,8 +14,10 @@ const FormCard = ({
 }) => {
   return (
     <View style={styles.card}>
-      <Text style={styles.stepIndicator}>Step {currentStep + 1} of {fields.length}</Text>
-      
+      <Text style={styles.stepIndicator}>
+        Step {currentStep + 1} of {fields.length}
+      </Text>
+
       {fields[currentStep].inputs.map((input, index) => (
         <EmptyField
           key={index}
@@ -32,20 +34,24 @@ const FormCard = ({
           <TouchableOpacity 
             style={[styles.button, styles.prevButton]} 
             onPress={handlePrev}
+            disabled={isLoading}
           >
             <Text style={styles.buttonText}>Previous</Text>
           </TouchableOpacity>
         )}
         
         <TouchableOpacity 
-          style={[styles.button, styles.nextButton]} 
+          style={[
+            styles.button, 
+            styles.nextButton,
+            isLoading && styles.disabledButton
+          ]} 
           onPress={handleNext}
           disabled={isLoading}
         >
-        // In FormCard.js, modify the button text line:
-<Text style={styles.buttonText}>
-  {isLastStep ?  'Register' : 'Next'}
-</Text>
+          <Text style={styles.buttonText}>
+            {isLoading ? 'Processing...' : (isLastStep ? 'Register' : 'Next')}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -66,11 +72,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
     marginBottom: 15,
+    fontSize: 16,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 15,
+    gap: 10,
   },
   button: {
     flex: 1,
@@ -80,14 +88,18 @@ const styles = StyleSheet.create({
   },
   prevButton: {
     backgroundColor: '#4a4a4a',
-    marginRight: 10,
   },
   nextButton: {
     backgroundColor: 'rgb(111, 77, 236)',
   },
+  disabledButton: {
+    backgroundColor: '#6e6e6e',
+    opacity: 0.7,
+  },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

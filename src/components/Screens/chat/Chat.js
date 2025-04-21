@@ -1,0 +1,255 @@
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  TextInput, 
+  ScrollView, 
+  Image
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import BottomNavBar from '../../common/BottomNavBar';
+
+const Chat = ({ navigation }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [chats, setChats] = useState([
+    {
+      id: 1,
+      name: 'Alex Johnson',
+      lastMessage: 'Hey, are we still on for the tournament?',
+      time: '2h ago',
+      unread: true,
+      avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+      online: true
+    },
+    {
+      id: 2,
+      name: 'Sarah Miller',
+      lastMessage: 'I found a great strategy for the new map',
+      time: '5h ago',
+      unread: false,
+      avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+      online: false
+    },
+    {
+      id: 3,
+      name: 'Team Alpha',
+      lastMessage: 'Michael: Let me know when you guys are online',
+      time: '1d ago',
+      unread: true,
+      avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+      online: true
+    },
+    {
+      id: 4,
+      name: 'David Wilson',
+      lastMessage: 'Thanks for the tips!',
+      time: '2d ago',
+      unread: false,
+      avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+      online: false
+    },
+    {
+      id: 5,
+      name: 'Emma Thompson',
+      lastMessage: 'GG! We should play again sometime',
+      time: '3d ago',
+      unread: false,
+      avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+      online: true
+    },
+  ]);
+
+  const filteredChats = chats.filter(chat =>
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleChatPress = (chat) => {
+    navigation.navigate('ChatInterface', { 
+      chatId: chat.id,
+      userName: chat.name,
+      userAvatar: chat.avatar,
+      online: chat.online
+    });
+  };
+
+  const handleCreateGroup = () => {
+    // Navigate to group creation screen
+    navigation.navigate('CreateGroup');
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Messages</Text>
+        <TouchableOpacity 
+          style={styles.newGroupButton}
+          onPress={handleCreateGroup}
+        >
+          <Ionicons name="people-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search for friends..."
+          placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      {/* Chat List */}
+      <ScrollView style={styles.chatList}>
+        {filteredChats.map((chat) => (
+          <TouchableOpacity 
+            key={chat.id} 
+            style={styles.chatItem}
+            onPress={() => handleChatPress(chat)}
+          >
+            <View style={styles.avatarContainer}>
+              <Image source={{ uri: chat.avatar }} style={styles.avatar} />
+              {chat.online && <View style={styles.onlineIndicator} />}
+            </View>
+            <View style={styles.chatContent}>
+              <View style={styles.chatHeader}>
+                <Text style={styles.chatName}>{chat.name}</Text>
+                <Text style={styles.chatTime}>{chat.time}</Text>
+              </View>
+              <Text 
+                style={[
+                  styles.chatMessage,
+                  chat.unread && styles.unreadMessage
+                ]}
+                numberOfLines={1}
+              >
+                {chat.lastMessage}
+              </Text>
+            </View>
+            {chat.unread && <View style={styles.unreadBadge} />}
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <BottomNavBar />
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0f0f1a',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#252538',
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  newGroupButton: {
+    padding: 5,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#252538',
+    borderRadius: 20,
+    marginHorizontal: 15,
+    marginVertical: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+  },
+  chatList: {
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+  chatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#252538',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: '#0f0f1a',
+  },
+  chatContent: {
+    flex: 1,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  chatName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  chatTime: {
+    fontSize: 12,
+    color: '#888',
+  },
+  chatMessage: {
+    fontSize: 14,
+    color: '#aaa',
+  },
+  unreadMessage: {
+    color: '#fff',
+    fontWeight: '500',
+  },
+  unreadBadge: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#4a80f0',
+    marginLeft: 10,
+  },
+});
+
+export default Chat;

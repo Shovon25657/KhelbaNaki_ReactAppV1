@@ -55,7 +55,7 @@ const LoginPage = () => {
           setState({ ...state, user: data?.user, token: data?.token });
           await AsyncStorage.setItem('@auth', JSON.stringify(data));
           Alert.alert('Success', 'Login successful!');
-          navigation.navigate('EditProfile');
+          navigation.navigate('Home');
         }
       } catch (error) {
         Alert.alert('Error', 'Invalid email or password');
@@ -190,7 +190,7 @@ const LoginPage = () => {
           if (showForgotPassword) {
             setShowForgotPassword(false);
           } else {
-            navigation.navigate('Registration');
+            navigation.navigate('Register');
           }
         }}>
           <Text style={styles.signUpText}>

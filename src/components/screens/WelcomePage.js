@@ -193,7 +193,7 @@ const WelcomeScreen = () => {
 
             <AnimatedButton  
             
-            onPress={() => navigation.navigate('Registration')}
+            onPress={() => navigation.navigate('Register')}
             title='Sign Up' />
     
         </View>
