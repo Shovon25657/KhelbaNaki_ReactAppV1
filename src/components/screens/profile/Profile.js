@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
 
   icons: {
     size:responsiveFont(16) ,
-    color:'rgba(252, 252, 252, 0.18)' 
+    color:'rgba(169, 209, 244, 0.82)' 
   },
 
   statusContainer: {
