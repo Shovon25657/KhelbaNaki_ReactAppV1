@@ -12,9 +12,9 @@ const requireSingIn = jwt({
 // Register Controller
 const registerController = async (req, res) => {
     try {
-        const { username, gamingname, dob, email, password } = req.body;
+        const { username,  dob, email, password } = req.body;
 
-        if (!username || !gamingname || !dob || !email || !password) {
+        if (!username || !dob || !email || !password) {
             return res.status(400).json({ message: "Please fill all fields!" });
         }
 
@@ -33,7 +33,6 @@ const registerController = async (req, res) => {
 
         const user = new usermodel({
             username,
-            gamingname,
             dob,
             email,
             password: hashedPassword, // Save the hashed password

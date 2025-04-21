@@ -1,11 +1,9 @@
 import React, { useContext } from "react";
-import { View, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
 import { AuthContext } from "../context/authContext";
+import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
 
-// Import your screens
+// Import Screens (all your imports remain the same)
 import SplashScreen from '../Screens/SplashScreen';
 import WelcomePage from '../Screens/WelcomePage';
 import LoginPage from '../Screens/Loginpage';
@@ -13,38 +11,28 @@ import Registration from '../Screens/registration/Registration';
 import HomeScreen from '../Screens/home/HomeScreen';
 import ProfilePage from '../Screens/profile/Profile';
 import EditProfile from '../Screens/profile/EditProfile/EditProfile';
-// ... other imports
+import EditAbout from '../Screens/profile/EditProfile/EditAbout';
+import EditLookingFor from '../Screens/profile/EditProfile/EditLookingFor';
+import EditGames from '../Screens/profile/EditProfile/EditGames';
+import EditPackage from '../Screens/profile/EditProfile/EditPackage';
+import HeaderMenu from '../Menus/HeaderMenu';
+import Chat from '../Screens/chat/Chat';
+import Explore from '../Screens/Explore';
+import Settings from '../Screens/home/Settings';
+import Marketplace from '../Screens/marketplace/Marketplace';
+import PrivacyPolicy from '../Screens/home/Privacy';
+import ChatInterface from "../Screens/chat/ChatInterface";
+import CreateGroup from "../Screens/chat/CreateGroup";
+import PurchaseGig from "../Screens/marketplace/PurchaseGig";
+import BuyGig from "../Screens/marketplace/BuyGig";
+import MyLibrary from "../Screens/marketplace/MyLibrary";
 
-// Import your footer menu component
-import FooterMenu from '../Menus/FooterMenu';
-
-// Use SharedElement stack for animations
+// Use SharedElement stack navigator for smart animations
 const Stack = createSharedElementStackNavigator();
-
-// Main app container with fixed footer
-const AppContainer = ({ children, showFooter = true }) => {
-  return (
-    <View style={styles.container}>
-      <View style={styles.contentContainer}>
-        {children}
-      </View>
-      {showFooter && <FooterMenu />}
-    </View>
-  );
-};
 
 const ScreenMenu = () => {
   const [state] = useContext(AuthContext);
   const authenticatedUser = state?.user && state?.token;
-
-  // Helper function to wrap screen component with AppContainer
-  const wrapWithContainer = (Component, showFooter = true) => {
-    return (props) => (
-      <AppContainer showFooter={showFooter}>
-        <Component {...props} />
-      </AppContainer>
-    );
-  };
 
   return (
     <Stack.Navigator 
@@ -52,8 +40,8 @@ const ScreenMenu = () => {
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
-        // This makes only the content area animate, not the footer
-        cardStyleInterpolator: ({ current, layouts }) => {
+        // Default transition configuration
+        cardStyleInterpolator: ({ current, next, layouts }) => {
           return {
             cardStyle: {
               transform: [
@@ -69,20 +57,23 @@ const ScreenMenu = () => {
                 outputRange: [0, 1],
               }),
             },
+            overlayStyle: {
+              opacity: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.5],
+              }),
+            },
           };
         },
       }}
     >
       {authenticatedUser ? (
         <>
-          <Stack.Screen 
-            name="Home" 
-            component={wrapWithContainer(HomeScreen)} 
-          />
+          <Stack.Screen name="Home" component={HomeScreen} />
           
           <Stack.Screen 
             name="Chat" 
-            component={wrapWithContainer(Chat)}
+            component={Chat} 
             sharedElements={(route) => {
               return ['chat-header-icon'];
             }}
@@ -90,22 +81,22 @@ const ScreenMenu = () => {
 
           <Stack.Screen 
             name="Explore" 
-            component={wrapWithContainer(Explore)}
+            component={Explore} 
           />
           
           <Stack.Screen 
             name="Settings" 
-            component={wrapWithContainer(Settings)}
+            component={Settings} 
           />
           
           <Stack.Screen 
             name="Privacy" 
-            component={wrapWithContainer(PrivacyPolicy)}
+            component={PrivacyPolicy} 
           />
 
           <Stack.Screen 
             name="Marketplace" 
-            component={wrapWithContainer(Marketplace)}
+            component={Marketplace}
             sharedElements={(route) => {
               return ['marketplace-header', 'marketplace-search'];
             }}
@@ -113,68 +104,95 @@ const ScreenMenu = () => {
 
           <Stack.Screen 
             name="PurchaseGig" 
-            component={wrapWithContainer(PurchaseGig)}
+            component={PurchaseGig}
             sharedElements={(route) => {
               const { gigId } = route.params;
               return [`gig-image-${gigId}`, `gig-title-${gigId}`];
+            }}
+            options={{
+              cardStyleInterpolator: ({ current, layouts }) => {
+                return {
+                  cardStyle: {
+                    transform: [
+                      {
+                        translateY: current.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [layouts.screen.height, 0],
+                        }),
+                      },
+                    ],
+                  },
+                };
+              },
             }}
           />
 
           <Stack.Screen 
             name="BuyGig" 
-            component={wrapWithContainer(BuyGig)}
+            component={BuyGig}
+            options={{
+              cardStyleInterpolator: ({ current, layouts }) => {
+                return {
+                  cardStyle: {
+                    transform: [
+                      {
+                        translateY: current.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [layouts.screen.height, 0],
+                        }),
+                      },
+                    ],
+                  },
+                };
+              },
+            }}
           />
           
-          <Stack.Screen 
-            name="MyLibrary" 
-            component={wrapWithContainer(MyLibrary)}
-          />
+          <Stack.Screen name="MyLibrary" component={MyLibrary} />
 
           <Stack.Screen 
             name="EditProfile" 
-            component={wrapWithContainer(EditProfile)}
+            component={EditProfile}
+            options={{
+              cardStyleInterpolator: ({ current, layouts }) => {
+                return {
+                  cardStyle: {
+                    transform: [
+                      {
+                        translateY: current.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [layouts.screen.height, 0],
+                        }),
+                      },
+                    ],
+                  },
+                };
+              },
+            }}
             sharedElements={(route) => {
               return ['profile-picture', 'profile-name', 'edit-button'];
             }}
           />
           
-          <Stack.Screen 
-            name="EditAbout" 
-            component={wrapWithContainer(EditAbout)}
-          />
-          
-          <Stack.Screen 
-            name="EditLookingFor" 
-            component={wrapWithContainer(EditLookingFor)}
-          />
-          
-          <Stack.Screen 
-            name="EditGames" 
-            component={wrapWithContainer(EditGames)}
-          />
-          
-          <Stack.Screen 
-            name="EditPackage" 
-            component={wrapWithContainer(EditPackage)}
-          />
+          <Stack.Screen name="EditAbout" component={EditAbout} />
+          <Stack.Screen name="EditLookingFor" component={EditLookingFor} />
+          <Stack.Screen name="EditGames" component={EditGames} />
+          <Stack.Screen name="EditPackage" component={EditPackage} />
 
           <Stack.Screen 
             name="ChatInterface" 
-            component={wrapWithContainer(ChatInterface)}
+            component={ChatInterface}
             sharedElements={(route) => {
               const { chatId } = route.params || {};
               return chatId ? [`chat-avatar-${chatId}`, `chat-name-${chatId}`] : [];
             }}
           />
           
-          <Stack.Screen 
-            name="CreateGroup" 
-            component={wrapWithContainer(CreateGroup)}
-          />
+          <Stack.Screen name="CreateGroup" component={CreateGroup} />
 
           <Stack.Screen 
             name="Profile" 
-            component={wrapWithContainer(ProfilePage)}
+            component={ProfilePage}
             sharedElements={(route) => {
               const { userId } = route.params || {};
               return [
@@ -185,17 +203,13 @@ const ScreenMenu = () => {
             }}
           />
           
-          <Stack.Screen 
-            name="Account" 
-            component={wrapWithContainer(EditProfile)}
-          />
+          <Stack.Screen name="Account" component={EditProfile} />
         </>
       ) : (
         <>
-          {/* For auth screens, don't show the footer */}
           <Stack.Screen 
             name="Welcome" 
-            component={wrapWithContainer(WelcomePage, false)}
+            component={WelcomePage}
             options={{
               cardStyleInterpolator: ({ current }) => ({
                 cardStyle: {
@@ -205,28 +219,12 @@ const ScreenMenu = () => {
             }}
           />
           
-          <Stack.Screen 
-            name="Login" 
-            component={wrapWithContainer(LoginPage, false)}
-          />
-          
-          <Stack.Screen 
-            name="Register" 
-            component={wrapWithContainer(Registration, false)}
-          />
+          <Stack.Screen name="Login" component={LoginPage} />
+          <Stack.Screen name="Register" component={Registration} />
         </>
       )}
     </Stack.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-});
 
 export default ScreenMenu;

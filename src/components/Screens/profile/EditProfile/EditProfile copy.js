@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { ProfileDataContext } from '../../../context/profileDataContext';
+import { AuthContext } from '../../../context/authContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,70 +37,124 @@ const statusOptions = [
 ];
 
 const EditProfile = ({ navigation, route }) => {
+
+//global state
+const [state, setState] = useContext(AuthContext);
+const { user, token } = state;
+const [profileData, setProfileData, getProfileData] = useContext(ProfileDataContext);
+
+
+
+
+
+
+
+//handle update user data
+const handleUpdate = async () => {
+  try {
+    setLoading(true);
+    const { data } = await axios.put("/auth/update-user", {
+      username,
+      password,
+      email
+    } );
+    setLoading(false);
+    let UD = JSON.stringify(data);
+    setState({ ...state, user: UD?.updatedUser });
+    alert(data && data.message);
+  } 
+  
+  catch (error) {
+    alert(error.response.data.message);
+    setLoading(false);
+    console.log(error);
+  }
+};
+
+
+
+
+
   // Default images
   const defaultProfile = require('../../../../../assets/profile1.jpg');
   const defaultCover = require('../../../../../assets/profile3.jpg');
 
-  const initialUser = route.params?.user || {
-    name: '',
-    age: '',
-    bio: '',
-    about: [],
-    lookingFor: [],
-    bestAt: [],
-    plan: { name: '', features: [] },
-    profileImage: defaultProfile,
-    coverImage: defaultCover,
-    status: 'Online'
-  };
+  //local state
+  const [gamingname, setName] = useState(profileData?.gamingname || '');
+  const [bio, setBio] = useState(profileData?.bio || '');
+  const [age, setAge] = useState(profileData?.age || '');
+  const [profileImage, setProfileImage] = useState(profileData?.profileImage || defaultProfile);
+  const [coverImage, setCoverImage] = useState(profileData?.coverImage || defaultCover);
+  const [currentStatus, setCurrentStatus] = useState(profileData?.status || 'Online');
 
-  const [user, setUser] = useState(initialUser);
-  const [name, setName] = useState(initialUser.name);
-  const [age, setAge] = useState(initialUser.age?.toString() || '');
-  const [bio, setBio] = useState(initialUser.bio);
-  const [profileImage, setProfileImage] = useState(initialUser.profileImage);
-  const [coverImage, setCoverImage] = useState(initialUser.coverImage);
+  // const [user, setUser] = useState(initialUser);
+ //  const [gamingname, setName] = useState(profileData.gamingname);
+ // const [bio, setBio] = useState(profileData && profileData[0]?.bio || '');
+ // const [age, setAge] = useState(profileData && profileData[0]?.age || '');
+ // const [profileImage, setProfileImage] = useState(profileData.profileImage);
+ // const [coverImage, setCoverImage] = useState(profileData.coverImage);
   const [isEditing, setIsEditing] = useState({ bio: false });
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(initialUser.status || 'Online');
-  const [wordCount, setWordCount] = useState(initialUser.bio ? initialUser.bio.split(/\s+/).length : 0);
+  // const [currentStatus, setCurrentStatus] = useState(profileData.status || 'Online');
+  const [wordCount, setWordCount] = useState(profileData.bio ? initialUser.bio.split(/\s+/).length : 0);
+
+
+
+// Right after the EditProfile component declaration
+const initialUser = {
+  bio: '',
+  age: '',
+  profileImage: defaultProfile,
+  coverImage: defaultCover,
+  status: 'Online',
+  about: [],
+  lookingFor: [],
+  bestAt: [],
+  plan: { name: '', features: [] }
+};
+
+
+
+
+useEffect(() => {
+  if (profileData && profileData.length > 0) {
+    setBio(profileData[0].bio || '');
+    setAge(profileData[0].age || '');
+    // Update other fields as needed
+  }
+}, [profileData]);
+
+
 
   // Image Picker Functions
-  const pickProfileImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'We need access to your photos to change your profile picture.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+  const uploadImage = async (imageUri, isCover = false) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      name: 'image.jpg',
+      type: 'image/jpeg'
     });
-
-    if (!result.canceled) {
-      setProfileImage({ uri: result.assets[0].uri });
+  
+    try {
+      const { data } = await axios.post(`/upload/${isCover ? 'cover' : 'profile'}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return data.url;
+    } catch (error) {
+      console.error("Upload error:", error);
+      return null;
     }
   };
-
-  const pickCoverImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'We need access to your photos to change your cover photo.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [3, 1],
-      quality: 0.8,
-    });
-
+  
+  // Update pickProfileImage and pickCoverImage to handle uploads
+  const pickProfileImage = async () => {
+    // ... existing picker code
     if (!result.canceled) {
-      setCoverImage({ uri: result.assets[0].uri });
+      const uploadedUrl = await uploadImage(result.assets[0].uri);
+      if (uploadedUrl) setProfileImage({ uri: uploadedUrl });
     }
   };
 
@@ -112,19 +168,30 @@ const EditProfile = ({ navigation, route }) => {
   };
 
   // Save Profile Function
-  const handleSaveProfile = () => {
-    const updatedUser = {
-      ...user,
-      name: name,
-      age: parseInt(age) || 0,
-      bio: bio,
-      profileImage: profileImage,
-      coverImage: coverImage,
-      status: currentStatus
-    };
-
-    navigation.navigate('Profile', { updatedUser });
+  const handleSaveProfile = async () => {
+    try {
+      const updatedProfile = {
+        gamingname,
+        bio,
+        age: parseInt(age) || 0,
+        profileImage, // Assuming these are URLs; adjust for file uploads
+        coverImage,
+        status: currentStatus,
+      };
+  
+      const { data } = await axios.post("/userabout//create-profile", updatedProfile, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      setProfileData(data.updatedProfile);
+      Alert.alert("Success", "Profile updated successfully!");
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert("Error", error.response?.data?.message || "Failed to update profile");
+    }
   };
+
+
 
   // Select status function
   const selectStatus = (status) => {
@@ -132,11 +199,10 @@ const EditProfile = ({ navigation, route }) => {
     setShowStatusModal(false);
   };
 
-  // Navigation Functions
-  const navigateToEditAbout = () => navigation.navigate('EditAbout', { about: user.about });
-  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
-  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
-  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
+  const navigateToEditAbout = () => navigation.navigate('EditAbout', { about: profileData.about });
+const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: profileData.lookingFor });
+const navigateToEditGames = () => navigation.navigate('EditGames', { games: profileData.bestAt });
+const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: profileData.plan });
 
   // Render status option item
   const renderStatusItem = ({ item }) => (
@@ -190,7 +256,7 @@ const EditProfile = ({ navigation, route }) => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cover Photo Section */}
+        {/* Cover Photo Section
         <View style={styles.coverContainer}>
           <Image 
             source={coverImage} 
@@ -205,7 +271,7 @@ const EditProfile = ({ navigation, route }) => {
             <Text style={styles.changeButtonText}>Change Cover</Text>
           </TouchableOpacity>
           
-          {/* Profile Photo Section */}
+          {/* Profile Photo Section 
           <View style={styles.profilePhotoContainer}>
             <Image 
               source={profileImage} 
@@ -219,14 +285,14 @@ const EditProfile = ({ navigation, route }) => {
               <Feather name="camera" size={responsiveFont(16)} color="#fff" />
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
             <TextInput
               style={styles.nameInput}
-              value={name}
+              value={gamingname}
               onChangeText={setName}
               placeholder="Your Name"
               placeholderTextColor="#aaa"
@@ -264,7 +330,7 @@ const EditProfile = ({ navigation, route }) => {
                 <Feather 
                   name={isEditing.bio ? "check" : "edit-2"} 
                   size={responsiveFont(18)} 
-                  style={styles.icons}
+                  color="#00ff88" 
                 />
               </TouchableOpacity>
             </View>
@@ -291,18 +357,16 @@ const EditProfile = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>About</Text>
             <TouchableOpacity onPress={navigateToEditAbout}>
-              <Feather name="edit-2"
-              size={responsiveFont(18)} 
-              style={styles.icons} />
+              <Feather name="edit-2" size={responsiveFont(18)} color="#00ff88" />
             </TouchableOpacity>
           </View>
           <View style={styles.gridContainer}>
-            {user.about.map((item, index) => (
+          {(user?.about || []).map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 
                   name={item.icon} 
-                  size={responsiveFont(18)} 
-                  style={styles.icons}
+                  size={responsiveFont(16)} 
+                  color="#00ff88" 
                 />
                 <Text style={styles.smallGridLabel}>{item.label}</Text>
                 <Text style={styles.smallGridValue}>{item.value}</Text>
@@ -316,18 +380,16 @@ const EditProfile = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Looking For</Text>
             <TouchableOpacity onPress={navigateToEditLookingFor}>
-              <Feather name="edit-2" 
-               size={responsiveFont(18)} 
-               style={styles.icons} />
+              <Feather name="edit-2" size={responsiveFont(18)} color="#00ff88" />
             </TouchableOpacity>
           </View>
           <View style={styles.gridContainer}>
-            {user.lookingFor.map((item, index) => (
+          {(user?.lookingFor || []).map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 
                   name={item.icon} 
-                  size={responsiveFont(18)} 
-                  style={styles.icons} 
+                  size={responsiveFont(16)} 
+                  color="#00ff88" 
                 />
                 <Text style={styles.smallGridLabel}>{item.label}</Text>
                 <Text style={styles.smallGridValue}>{item.value}</Text>
@@ -341,13 +403,11 @@ const EditProfile = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Games Played</Text>
             <TouchableOpacity onPress={navigateToEditGames}>
-              <Feather name="edit-2" 
-              size={responsiveFont(18)} 
-                  style={styles.icons}/>
+              <Feather name="edit-2" size={responsiveFont(18)} color="#00ff88" />
             </TouchableOpacity>
           </View>
           <View style={styles.gamesContainer}>
-            {user.bestAt.map((game, index) => (
+          {(user?.bestAt || []).map((item, index) => (
               <View key={index} style={styles.smallGameCard}>
                 {game.isFavorite && (
                   <View style={styles.favoriteBadge}>
@@ -381,9 +441,7 @@ const EditProfile = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <Text style={styles.sectionTitle}>Gamer Subscription</Text>
             <TouchableOpacity onPress={navigateToEditPackage}>
-              <Feather name="edit-2" 
-               size={responsiveFont(18)} 
-               style={styles.icons} />
+              <Feather name="edit-2" size={responsiveFont(18)} color="#00ff88" />
             </TouchableOpacity>
           </View>
           <View style={styles.planCard}>
@@ -393,10 +451,10 @@ const EditProfile = ({ navigation, route }) => {
                 size={responsiveFont(24)} 
                 color="#FFD700" 
               />
-              <Text style={styles.planName}>{user.plan.name}</Text>
+              <Text style={styles.planName}>{user?.plan?.name || 'Free Plan'}</Text>
             </View>
             <View style={styles.planFeatures}>
-              {user.plan.features.map((feature, index) => (
+            {(user?.plan?.features || []).map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
                   <View style={styles.bulletPoint} />
                   <Text style={styles.featureText}>{feature}</Text>
@@ -439,40 +497,33 @@ const EditProfile = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  scrollViewContent: {
-    paddingBottom: 70, // Add padding at the bottom to prevent content from being hidden behind the BottomNavBar
+    backgroundColor: '#1a1a2e',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: responsiveHeight(15),
-    paddingVertical: responsiveHeight(15),
-    backgroundColor: 'rgb(14, 3, 52)',
+    paddingHorizontal: responsiveWidth(10),
+    backgroundColor: '#16213e',
     borderBottomWidth: 1,
     borderBottomColor: '#0f3460',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-
-  headerTitle: {
-      fontSize: responsiveFont(20),
-      fontWeight: 'bold',
-     color: '#fff',
-     fontFami: 'Roboto',
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-    },
-
-
   backButton: {
     padding: responsiveWidth(5),
   },
-
+  headerTitle: {
+    fontSize: responsiveFont(20),
+    fontWeight: 'bold',
+    color: '#00ff88',
+    fontFamily: 'Roboto',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   saveButton: {
-    backgroundColor: 'rgb(6, 185, 234)',
-    paddingHorizontal: responsiveWidth(16),
+    backgroundColor: '#00ff88',
+    paddingHorizontal: responsiveWidth(15),
     paddingVertical: responsiveHeight(8),
     borderRadius: responsiveWidth(20),
   },
@@ -510,27 +561,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginLeft: responsiveWidth(5),
   },
-   profilePhotoContainer: {
-      position: 'absolute',
-      bottom: -responsiveHeight(50),
-      left: responsiveWidth(20),
-      width: responsiveWidth(100),
-      height: responsiveWidth(100),
-      borderRadius: responsiveWidth(50),
-      borderWidth: 4,
-      borderColor: '#062452',
-      overflow: 'hidden',
-      backgroundColor: 'rgb(164, 167, 170)',
-      shadowColor: '#062452',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.8,
-      shadowRadius: 10,
-      elevation: 10,
-    },
-    profilePhoto: {
-      width: '100%',
-      height: '100%',
-    },
+  profilePhotoContainer: {
+    position: 'absolute',
+    bottom: -responsiveHeight(50),
+    left: responsiveWidth(20),
+    width: responsiveWidth(100),
+    height: responsiveWidth(100),
+    borderRadius: responsiveWidth(50),
+    borderWidth: 4,
+    borderColor: '#00ff88',
+    overflow: 'hidden',
+    backgroundColor: '#16213e',
+    shadowColor: '#00ff88',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  profilePhoto: {
+    width: '100%',
+    height: '100%',
+  },
   changeProfileButton: {
     position: 'absolute',
     bottom: responsiveHeight(5),
@@ -559,12 +610,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: responsiveHeight(5),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.65)',
+    borderBottomColor: '#00ff88',
     marginRight: responsiveWidth(10),
   },
   ageContainer: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.65)',
+    borderBottomColor: '#00ff88',
     width: responsiveWidth(60),
   },
   ageInput: {
@@ -592,7 +643,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   section: {
-    backgroundColor: 'rgba(47, 7, 226, 0.05)',
+    backgroundColor: '#16213e',
     paddingHorizontal: responsiveWidth(20),
     paddingVertical: responsiveHeight(15),
     marginBottom: responsiveHeight(10),
@@ -600,15 +651,6 @@ const styles = StyleSheet.create({
     marginHorizontal: responsiveWidth(10),
     borderWidth: 1,
     borderColor: '#0f3460',
-  },
-
-  sectionTitle: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-    marginBottom: responsiveHeight(15),
-    color: 'rgb(1, 225, 255)',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   sectionTitleContainer: {
     flexDirection: 'row',
@@ -622,22 +664,28 @@ const styles = StyleSheet.create({
   },
   wordCountText: {
     fontSize: responsiveFont(12),
-    color: 'rgba(1, 225, 255, 0.49)',
+    color: '#aaa',
     marginRight: responsiveWidth(10),
   },
   editButton: {
     padding: responsiveWidth(5),
   },
-
+  sectionTitle: {
+    fontSize: responsiveFont(18),
+    fontWeight: 'bold',
+    color: '#00ff88',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   bioContainer: {
-    backgroundColor: 'rgba(15, 51, 96, 0.5)',
+    backgroundColor: 'rgba(15, 52, 96, 0.5)',
     padding: responsiveWidth(15),
     borderRadius: responsiveWidth(10),
   },
   bioText: {
     fontSize: responsiveFont(16),
     lineHeight: responsiveFont(24),
-   color: '#fff',
+    color: '#fff',
     textAlign: 'center',
   },
   bioInput: {
@@ -658,15 +706,15 @@ const styles = StyleSheet.create({
     width: responsiveWidth(90),
     alignItems: 'center',
     padding: responsiveWidth(8),
-    backgroundColor: 'rgba(14, 113, 226, 0.03)',
+    backgroundColor: '#0f3460',
     borderRadius: responsiveWidth(10),
     marginBottom: responsiveHeight(10),
-    borderWidth: .5,
-    borderColor: 'rgba(14, 113, 226, 0.42)',
+    borderWidth: 1,
+    borderColor: '#00ff88',
   },
   smallGridLabel: {
     fontSize: responsiveFont(10),
-   color: 'rgba(206, 201, 201, 0.7)',
+    color: '#00ff88',
     marginTop: responsiveHeight(4),
     textAlign: 'center',
   },
@@ -677,27 +725,20 @@ const styles = StyleSheet.create({
     marginTop: responsiveHeight(2),
     textAlign: 'center',
   },
-
-  icons: {
-    size:responsiveFont(16) ,
-    color:'rgba(169, 209, 244, 0.82)' 
-  },
-
   gamesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
   },
-   smallGameCard: {
-    width: responsiveWidth(140),
+  smallGameCard: {
+    width: responsiveWidth(120),
     height: responsiveHeight(170),
-    marginRight: responsiveWidth(12),
     marginBottom: responsiveHeight(10),
-    backgroundColor: 'rgba(42, 16, 216, 0.42)',
+    backgroundColor: '#0f3460',
     borderRadius: responsiveWidth(10),
     overflow: 'hidden',
-    borderWidth: .5,
-    borderColor: 'rgba(14, 113, 226, 0.42)',
+    borderWidth: 1,
+    borderColor: '#00ff88',
   },
   smallGameImage: {
     width: '100%',
@@ -721,10 +762,9 @@ const styles = StyleSheet.create({
     top: responsiveHeight(5),
     right: responsiveWidth(5),
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-   color: '#fff',
+    color: '#00ff88',
     fontSize: responsiveFont(10),
     fontWeight: 'bold',
-    
     paddingHorizontal: responsiveWidth(8),
     paddingVertical: responsiveHeight(3),
     borderRadius: responsiveWidth(10),
@@ -745,19 +785,19 @@ const styles = StyleSheet.create({
   gameName: {
     fontSize: responsiveFont(12),
     fontWeight: 'bold',
-   color: '#fff',
+    color: '#fff',
   },
   levelText: {
     fontSize: responsiveFont(10),
-   color: '#fff',
+    color: '#00ff88',
     marginLeft: responsiveWidth(3),
   },
   planCard: {
-    backgroundColor: 'rgba(22, 179, 211, 0.04)',
+    backgroundColor: '#0f3460',
     borderRadius: responsiveWidth(15),
     padding: responsiveWidth(15),
-    borderWidth: 1,
-    borderColor: 'rgba(22, 179, 211, 0.42)',
+    borderWidth: 2,
+    borderColor: '#00ff88',
   },
   planHeader: {
     flexDirection: 'row',
@@ -767,8 +807,11 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
-   color: '#fff',
+    color: '#FFD700',
     marginLeft: responsiveWidth(10),
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   planFeatures: {
     paddingLeft: responsiveWidth(5),
@@ -781,14 +824,14 @@ const styles = StyleSheet.create({
   bulletPoint: {
     width: responsiveWidth(6),
     height: responsiveWidth(6),
-    borderRadius: responsiveWidth(10),
-    backgroundColor: 'rgb(252, 252, 252)',
+    borderRadius: responsiveWidth(3),
+    backgroundColor: '#00ff88',
     marginTop: responsiveHeight(5),
     marginRight: responsiveWidth(8),
   },
   featureText: {
     fontSize: responsiveFont(14),
-   color: '#fff',
+    color: '#fff',
     flex: 1,
   },
   // Modal styles
@@ -800,16 +843,16 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: responsiveWidth(300),
-    backgroundColor: 'rgb(1, 2, 23)',
+    backgroundColor: '#16213e',
     borderRadius: responsiveWidth(15),
     padding: responsiveWidth(20),
-    borderWidth: 1,
-    borderColor: '#0f3460',
+    borderWidth: 2,
+    borderColor: '#00ff88',
   },
   modalTitle: {
     fontSize: responsiveFont(20),
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#00ff88',
     marginBottom: responsiveHeight(20),
     textAlign: 'center',
   },
@@ -835,14 +878,14 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   closeButton: {
-    backgroundColor: 'rgb(77, 20, 232)',
+    backgroundColor: '#00ff88',
     padding: responsiveWidth(12),
     borderRadius: responsiveWidth(10),
     marginTop: responsiveHeight(10),
     alignItems: 'center',
   },
   closeButtonText: {
-    color: '#fff',
+    color: '#16213e',
     fontWeight: 'bold',
     fontSize: responsiveFont(16),
   },
