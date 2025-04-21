@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, TextInput, FlatList, Modal, Alert, Animated } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, TextInput, FlatList, Modal, Animated, Easing } from 'react-native';
 import { Ionicons, FontAwesome, MaterialIcons, Feather, AntDesign, Entypo } from '@expo/vector-icons';
 import BottomNavBar from '../../common/BottomNavBar';
 import * as ImagePicker from 'expo-image-picker';
@@ -17,10 +17,12 @@ const Explore = ({ navigation }) => {
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
   const [unfollowUser, setUnfollowUser] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Sample data for posts
-  const trendingPosts = [
+  // Sample data for posts with state management
+  const [trendingPosts, setTrendingPosts] = useState([
     {
       id: '1',
       username: 'ProGamer99',
@@ -53,9 +55,9 @@ const Explore = ({ navigation }) => {
       isLiked: true,
       isFollowing: false
     }
-  ];
+  ]);
 
-  const recentPosts = [
+  const [recentPosts, setRecentPosts] = useState([
     {
       id: '3',
       username: 'EsportsPro',
@@ -84,9 +86,9 @@ const Explore = ({ navigation }) => {
       isLiked: false,
       isFollowing: false
     }
-  ];
+  ]);
 
-  const followingPosts = [
+  const [followingPosts, setFollowingPosts] = useState([
     {
       id: '5',
       username: 'GamerFriend1',
@@ -115,7 +117,7 @@ const Explore = ({ navigation }) => {
       isLiked: false,
       isFollowing: true
     }
-  ];
+  ]);
 
   // Sample notifications data
   const notifications = [
@@ -124,6 +126,24 @@ const Explore = ({ navigation }) => {
     { id: '3', type: 'follow', username: 'NewGamer123', time: '1h ago' },
     { id: '4', type: 'share', username: 'ShareMaster', postId: '2', time: '2h ago' },
   ];
+
+  // Show notification with animation
+  const showNotification = (message) => {
+    setNotificationMessage(message);
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setNotificationMessage(null));
+  };
 
   const animateButton = () => {
     Animated.sequence([
@@ -154,48 +174,70 @@ const Explore = ({ navigation }) => {
   };
 
   const handleLike = (postId) => {
-    const updatedPosts = getCurrentPosts().map(post => {
-      if (post.id === postId) {
-        return {
-          ...post,
-          isLiked: !post.isLiked,
-          likes: post.isLiked ? post.likes - 1 : post.likes + 1
-        };
-      }
-      return post;
-    });
-    updatePosts(updatedPosts);
+    const updatePosts = (posts, setPosts) => {
+      const updatedPosts = posts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            isLiked: !post.isLiked,
+            likes: post.isLiked ? post.likes - 1 : post.likes + 1
+          };
+        }
+        return post;
+      });
+      setPosts(updatedPosts);
+    };
+
+    updatePosts(trendingPosts, setTrendingPosts);
+    updatePosts(recentPosts, setRecentPosts);
+    updatePosts(followingPosts, setFollowingPosts);
   };
 
   const handleFollow = (postId) => {
-    const post = getCurrentPosts().find(p => p.id === postId);
-    if (post.isFollowing) {
-      setUnfollowUser(post.username);
-      setShowUnfollowModal(true);
-    } else {
-      const updatedPosts = getCurrentPosts().map(p => {
-        if (p.id === postId) {
-          return { ...p, isFollowing: true };
-        }
-        return p;
-      });
-      updatePosts(updatedPosts);
-    }
+    const updatePosts = (posts, setPosts) => {
+      const post = posts.find(p => p.id === postId);
+      if (post.isFollowing) {
+        setUnfollowUser(post.username);
+        setShowUnfollowModal(true);
+      } else {
+        const updatedPosts = posts.map(p => {
+          if (p.id === postId) {
+            return { ...p, isFollowing: true };
+          }
+          return p;
+        });
+        setPosts(updatedPosts);
+        showNotification(`You followed ${post.username}`);
+      }
+    };
+
+    updatePosts(trendingPosts, setTrendingPosts);
+    updatePosts(recentPosts, setRecentPosts);
+    updatePosts(followingPosts, setFollowingPosts);
   };
 
   const confirmUnfollow = () => {
-    const updatedPosts = getCurrentPosts().map(post => {
-      if (post.username === unfollowUser) {
-        return { ...post, isFollowing: false };
-      }
-      return post;
-    });
-    updatePosts(updatedPosts);
+    const updatePosts = (posts, setPosts) => {
+      const updatedPosts = posts.map(post => {
+        if (post.username === unfollowUser) {
+          return { ...post, isFollowing: false };
+        }
+        return post;
+      });
+      setPosts(updatedPosts);
+    };
+
+    updatePosts(trendingPosts, setTrendingPosts);
+    updatePosts(recentPosts, setRecentPosts);
+    updatePosts(followingPosts, setFollowingPosts);
+    
     setShowUnfollowModal(false);
+    showNotification(`You unfollowed ${unfollowUser}`);
   };
 
   const handleComment = (postId) => {
-    const post = getCurrentPosts().find(p => p.id === postId);
+    const findPost = (posts) => posts.find(p => p.id === postId);
+    const post = findPost(trendingPosts) || findPost(recentPosts) || findPost(followingPosts);
     setCurrentPostComments(post.comments);
     setShowComments(true);
   };
@@ -211,14 +253,20 @@ const Explore = ({ navigation }) => {
     setCurrentPostComments(updatedComments);
     setNewComment('');
     
-    // Update the post's comments in the main posts array
-    const updatedPosts = getCurrentPosts().map(post => {
-      if (post.comments === currentPostComments) {
-        return { ...post, comments: updatedComments };
-      }
-      return post;
-    });
-    updatePosts(updatedPosts);
+    // Update the post's comments in all posts arrays
+    const updatePosts = (posts, setPosts) => {
+      const updatedPosts = posts.map(post => {
+        if (post.comments === currentPostComments) {
+          return { ...post, comments: updatedComments };
+        }
+        return post;
+      });
+      setPosts(updatedPosts);
+    };
+
+    updatePosts(trendingPosts, setTrendingPosts);
+    updatePosts(recentPosts, setRecentPosts);
+    updatePosts(followingPosts, setFollowingPosts);
   };
 
   const handleShare = (postId) => {
@@ -227,11 +275,7 @@ const Explore = ({ navigation }) => {
 
   const confirmShare = () => {
     setShowShareModal(false);
-    Alert.alert(
-      "Shared!",
-      "Your post has been shared to your profile.",
-      [{ text: "OK" }]
-    );
+    showNotification("Your post has been shared to your profile");
     setShareCaption('');
   };
 
@@ -252,11 +296,15 @@ const Explore = ({ navigation }) => {
       isFollowing: false
     };
     
-    const updatedPosts = [newPost, ...getCurrentPosts()];
-    updatePosts(updatedPosts);
+    // Add to all feeds
+    setTrendingPosts([newPost, ...trendingPosts]);
+    setRecentPosts([newPost, ...recentPosts]);
+    setFollowingPosts([newPost, ...followingPosts]);
+    
     setNewPostText('');
     setSelectedImage(null);
     setShowNewPost(false);
+    showNotification("Your post has been published");
   };
 
   const getCurrentPosts = () => {
@@ -265,20 +313,6 @@ const Explore = ({ navigation }) => {
       case 'recent': return recentPosts;
       case 'following': return followingPosts;
       default: return trendingPosts;
-    }
-  };
-
-  const updatePosts = (updatedPosts) => {
-    switch (activeTab) {
-      case 'trending': 
-        // In a real app, you would update state here
-        break;
-      case 'recent': 
-        // In a real app, you would update state here
-        break;
-      case 'following': 
-        // In a real app, you would update state here
-        break;
     }
   };
 
@@ -391,6 +425,7 @@ const Explore = ({ navigation }) => {
         
         <TouchableOpacity onPress={() => setShowNotifications(true)}>
           <Ionicons name="notifications" size={24} color="#FFF" />
+          <View style={styles.notificationBadge} />
         </TouchableOpacity>
       </View>
       
@@ -439,6 +474,13 @@ const Explore = ({ navigation }) => {
           <Ionicons name="add" size={28} color="#FFF" style={styles.plusIcon} />
         </TouchableOpacity>
       </Animated.View>
+      
+      {/* Notification Toast */}
+      {notificationMessage && (
+        <Animated.View style={[styles.notificationToast, { opacity: fadeAnim }]}>
+          <Text style={styles.notificationToastText}>{notificationMessage}</Text>
+        </Animated.View>
+      )}
       
       {/* New Post Modal */}
       <Modal
@@ -671,6 +713,15 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
   },
+  notificationBadge: {
+    position: 'absolute',
+    right: -5,
+    top: -5,
+    backgroundColor: '#FF3B30',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -718,6 +769,19 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  notificationToast: {
+    position: 'absolute',
+    bottom: 100,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  notificationToastText: {
+    color: '#FFF',
+    fontSize: 14,
   },
   modalContainer: {
     flex: 1,
