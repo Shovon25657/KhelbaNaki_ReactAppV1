@@ -248,7 +248,7 @@ const Profile = ({ navigation }) => {
                 <Feather 
                   name="chevron-left" 
                   size={responsiveFont(20)} 
-                  color="#00ff88" 
+                  color="rgb(232, 230, 230)" 
                 />
               </TouchableOpacity>
             )}
@@ -262,7 +262,7 @@ const Profile = ({ navigation }) => {
               <Feather 
                 name="chevron-right" 
                 size={responsiveFont(20)} 
-                color="#00ff88" 
+                color="rgb(232, 230, 230)" 
               />
             </TouchableOpacity>
           </View>
@@ -492,14 +492,14 @@ const styles = StyleSheet.create({
     right: responsiveWidth(10),
     top: '50%',
     transform: [{ translateY: -responsiveHeight(15) }],
-    backgroundColor: 'rgba(0, 255, 136, 0.2)',
+    backgroundColor: 'rgba(214, 229, 222, 0.2)',
     borderRadius: responsiveWidth(15),
     width: responsiveWidth(30),
     height: responsiveWidth(30),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#00ff88',
+    borderColor: 'rgba(214, 229, 222, 0.2)',
     zIndex: 2,
   },
   scrollIndicatorLeft: {
