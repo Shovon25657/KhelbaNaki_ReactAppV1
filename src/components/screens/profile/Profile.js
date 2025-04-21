@@ -168,10 +168,8 @@ const Profile = ({ navigation }) => {
           <View style={styles.gridContainer}>
             {user.about.map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
-                <FontAwesome5 
+                <FontAwesome5 style={styles.icons}
                   name={item.icon} 
-                  size={responsiveFont(16)} 
-                  color="#00ff88" 
                 />
                 <Text style={styles.smallGridLabel}>{item.label}</Text>
                 <Text style={styles.smallGridValue}>{item.value}</Text>
@@ -186,10 +184,8 @@ const Profile = ({ navigation }) => {
           <View style={styles.gridContainer}>
             {user.lookingFor.map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
-                <FontAwesome5 
+                <FontAwesome5 style={styles.icons}
                   name={item.icon} 
-                  size={responsiveFont(16)} 
-                  color="#00ff88" 
                 />
                 <Text style={styles.smallGridLabel}>{item.label}</Text>
                 <Text style={styles.smallGridValue}>{item.value}</Text>
@@ -202,7 +198,7 @@ const Profile = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Games Played</Text>
           <View style={{ position: 'relative' }}>
-            <ScrollView 
+            <ScrollView  
               ref={gamesScrollRef}
               horizontal={true} 
               showsHorizontalScrollIndicator={false}
@@ -305,7 +301,7 @@ const Profile = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   scrollViewContent: {
     paddingBottom: 70, // Add padding at the bottom to prevent content from being hidden behind the BottomNavBar
@@ -314,7 +310,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: responsiveHeight(15),
-    backgroundColor: '#16213e',
+    backgroundColor: 'rgb(14, 3, 52)',
     borderBottomWidth: 1,
     borderBottomColor: '#0f3460',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
@@ -322,8 +318,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: responsiveFont(20),
     fontWeight: 'bold',
-    color: '#00ff88',
-    fontFamily: 'Roboto',
+   color: '#fff',
+   fontFami: 'Roboto',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -333,12 +329,12 @@ const styles = StyleSheet.create({
   coverContainer: {
     position: 'relative',
     height: responsiveHeight(200),
-    backgroundColor: '#0f3460',
+   
   },
   coverPhoto: {
     width: '100%',
     height: '100%',
-    opacity: 0.8,
+    opacity: 1,
   },
   profilePhotoContainer: {
     position: 'absolute',
@@ -348,10 +344,9 @@ const styles = StyleSheet.create({
     height: responsiveWidth(100),
     borderRadius: responsiveWidth(50),
     borderWidth: 4,
-    borderColor: '#00ff88',
+    borderColor: '#062452',
     overflow: 'hidden',
-    backgroundColor: '#16213e',
-    shadowColor: '#00ff88',
+    shadowColor: '#062452',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 10,
@@ -372,11 +367,16 @@ const styles = StyleSheet.create({
   name: {
     fontSize: responsiveFont(26),
     fontWeight: 'bold',
-    color: '#fff',
-    textShadowColor: 'rgba(0, 255, 136, 0.5)',
+   color: '#fff',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
+
+  icons: {
+    size:responsiveFont(16) ,
+    color:'rgba(252, 252, 252, 0.18)' 
+  },
+
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -386,26 +386,23 @@ const styles = StyleSheet.create({
     width: responsiveWidth(10),
     height: responsiveWidth(10),
     borderRadius: responsiveWidth(5),
-    backgroundColor: '#00ff88',
+    backgroundColor: 'rgb(32, 151, 58)',
     marginRight: responsiveWidth(5),
   },
   status: {
     fontSize: responsiveFont(14),
-    color: '#00ff88',
+   color: 'rgb(32, 151, 58)',
     fontStyle: 'italic',
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e94560',
+    
     paddingHorizontal: responsiveWidth(15),
     paddingVertical: responsiveHeight(8),
     borderRadius: responsiveWidth(20),
     shadowColor: '#e94560',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 5,
-    elevation: 5,
+   
   },
   editButtonText: {
     fontSize: responsiveFont(14),
@@ -414,7 +411,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   section: {
-    backgroundColor: '#16213e',
+    backgroundColor: 'rgba(47, 7, 226, 0.05)',
     paddingHorizontal: responsiveWidth(20),
     paddingVertical: responsiveHeight(15),
     marginBottom: responsiveHeight(10),
@@ -427,19 +424,19 @@ const styles = StyleSheet.create({
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
     marginBottom: responsiveHeight(15),
-    color: '#00ff88',
+   color: 'rgb(1, 225, 255)',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   bioContainer: {
-    backgroundColor: 'rgba(15, 52, 96, 0.5)',
+    // backgroundColor: 'rgba(15, 52, 96, 0.5)',
     padding: responsiveWidth(15),
     borderRadius: responsiveWidth(10),
   },
   bioText: {
     fontSize: responsiveFont(16),
     lineHeight: responsiveFont(24),
-    color: '#fff',
+   color: '#fff',
     textAlign: 'center',
   },
   gridContainer: {
@@ -451,15 +448,15 @@ const styles = StyleSheet.create({
     width: responsiveWidth(90),
     alignItems: 'center',
     padding: responsiveWidth(8),
-    backgroundColor: '#0f3460',
+    backgroundColor: 'rgba(14, 113, 226, 0.03)',
     borderRadius: responsiveWidth(10),
     marginBottom: responsiveHeight(10),
-    borderWidth: 1,
-    borderColor: '#00ff88',
+    borderWidth: .5,
+    borderColor: 'rgba(14, 113, 226, 0.42)',
   },
   smallGridLabel: {
     fontSize: responsiveFont(10),
-    color: '#00ff88',
+   color: 'rgba(206, 201, 201, 0.7)',
     marginTop: responsiveHeight(4),
     textAlign: 'center',
   },
@@ -479,11 +476,11 @@ const styles = StyleSheet.create({
     height: responsiveHeight(170),
     marginRight: responsiveWidth(12),
     marginBottom: responsiveHeight(10),
-    backgroundColor: '#0f3460',
+    backgroundColor: 'rgba(42, 16, 216, 0.42)',
     borderRadius: responsiveWidth(10),
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#00ff88',
+    borderWidth: .5,
+    borderColor: 'rgba(14, 113, 226, 0.42)',
   },
   smallGameImage: {
     width: '100%',
@@ -526,9 +523,10 @@ const styles = StyleSheet.create({
     top: responsiveHeight(5),
     right: responsiveWidth(5),
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    color: '#00ff88',
+   color: '#fff',
     fontSize: responsiveFont(10),
     fontWeight: 'bold',
+    
     paddingHorizontal: responsiveWidth(8),
     paddingVertical: responsiveHeight(3),
     borderRadius: responsiveWidth(10),
@@ -549,19 +547,19 @@ const styles = StyleSheet.create({
   gameName: {
     fontSize: responsiveFont(12),
     fontWeight: 'bold',
-    color: '#fff',
+   color: '#fff',
   },
   levelText: {
     fontSize: responsiveFont(10),
-    color: '#00ff88',
+   color: '#fff',
     marginLeft: responsiveWidth(3),
   },
   planCard: {
-    backgroundColor: '#0f3460',
+    backgroundColor: 'rgba(22, 179, 211, 0.04)',
     borderRadius: responsiveWidth(15),
     padding: responsiveWidth(15),
-    borderWidth: 2,
-    borderColor: '#00ff88',
+    borderWidth: 1,
+    borderColor: 'rgba(22, 179, 211, 0.42)',
   },
   planHeader: {
     flexDirection: 'row',
@@ -571,11 +569,8 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
-    color: '#FFD700',
+   color: '#fff',
     marginLeft: responsiveWidth(10),
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
   },
   planFeatures: {
     paddingLeft: responsiveWidth(5),
@@ -588,14 +583,14 @@ const styles = StyleSheet.create({
   bulletPoint: {
     width: responsiveWidth(6),
     height: responsiveWidth(6),
-    borderRadius: responsiveWidth(3),
-    backgroundColor: '#00ff88',
+    borderRadius: responsiveWidth(10),
+    backgroundColor: 'rgb(252, 252, 252)',
     marginTop: responsiveHeight(5),
     marginRight: responsiveWidth(8),
   },
   featureText: {
     fontSize: responsiveFont(14),
-    color: '#fff',
+   color: '#fff',
     flex: 1,
   },
 });
