@@ -2,25 +2,25 @@ import React, { useContext } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthContext } from "../context/authContext";
 // Import Screens - Fix any case sensitivity issues here
-import SplashScreen from '../screens/SplashScreen';
-import WelcomePage from '../screens/WelcomePage';
-import LoginPage from '../screens/Loginpage'; // Fixed case
-import Registration from '../screens/registration/Registration';
-import HomeScreen from '../screens/home/HomeScreen';
-import ProfilePage from '../screens/profile/Profile';
-import EditProfile from '../screens/profile/EditProfile/EditProfile';
-import EditAbout from '../screens/profile/EditProfile/EditAbout';
-import EditLookingFor from '../screens/profile/EditProfile/EditLookingFor';
-import EditGames from '../screens/profile/EditProfile/EditGames';
-import EditPackage from '../screens/profile/EditProfile/EditPackage';
+import SplashScreen from '../Screens//SplashScreen';
+import WelcomePage from '../Screens/WelcomePage';
+import LoginPage from '../Screens/Loginpage'; // Fixed case
+import Registration from '../Screens/registration/Registration';
+import HomeScreen from '../Screens/home/HomeScreen';
+import ProfilePage from '../Screens/profile/Profile';
+import EditProfile from '../Screens/profile/EditProfile/EditProfile';
+import EditAbout from '../Screens/profile/EditProfile/EditAbout';
+import EditLookingFor from '../Screens/profile/EditProfile/EditLookingFor';
+import EditGames from '../Screens/profile/EditProfile/EditGames';
+import EditPackage from '../Screens/profile/EditProfile/EditPackage';
 import HeaderMenu from '../Menus/HeaderMenu';
-import Chat from '../screens/chat/Chat';
-import Explore from '../screens/Explore';
-import Settings from '../screens/home/Settings';
-import Marketplace from '../screens/Marketplace';
-import PrivacyPolicy from '../screens/home/Privacy';
-import ChatInterface from "../screens/chat/ChatInterface";
-import CreateGroup from "../screens/chat/CreateGroup";
+import Chat from '../Screens/chat/Chat';
+import Explore from '../Screens/Explore';
+import Settings from '../Screens/home/Settings';
+import Marketplace from '../Screens/Marketplace';
+import PrivacyPolicy from '../Screens/home/Privacy';
+import ChatInterface from "../Screens/chat/ChatInterface";
+import CreateGroup from "../Screens/chat/CreateGroup";
 
 const Stack = createNativeStackNavigator();
 
