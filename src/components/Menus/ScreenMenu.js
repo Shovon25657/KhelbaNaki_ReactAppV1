@@ -24,6 +24,7 @@ import CreateGroup from "../Screens/chat/CreateGroup";
 import PurchaseGig from "../Screens/marketplace/PurchaseGig";
 import BuyGig from "../Screens/marketplace/BuyGig";
 import MyLibrary from "../Screens/marketplace/MyLibrary";
+import MarketSearch from "../Screens/marketplace/MarketSearch";
 
 const Stack = createNativeStackNavigator();
 
@@ -77,6 +78,12 @@ const ScreenMenu = () => {
           <Stack.Screen
             name="BuyGig"
             component={BuyGig}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="MarketSearch"
+            component={MarketSearch}
               options={{ headerShown: false }}
           />
           
