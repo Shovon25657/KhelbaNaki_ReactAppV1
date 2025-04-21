@@ -5,23 +5,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
 
 // Import Screens
-import SplashScreen from './screens/SplashScreen';
-import WelcomePage from './screens/WelcomePage';
-import LoginPage from './screens/Loginpage';
-import Registration from './screens/registration/Registration';
-import HomeScreen from './screens/HomeScreen';
-import ProfilePage from './screens/Profile';
-import EditProfile from './screens/EditProfile';
+import SplashScreen from './Screens/SplashScreen';
+import WelcomePage from './Screens/WelcomePage';
+import LoginPage from './Screens/Loginpage';
+import Registration from './Screens/registration/Registration';
+import HomeScreen from './Screens/HomeScreen';
+import ProfilePage from './Screens/Profile';
+import EditProfile from './Screens/EditProfile';
 import { AuthProvider } from './context/authContext';
-import EditAbout from './screens/EditAbout';
-import EditLookingFor from './screens/EditLookingFor';
-import EditGames from './screens/EditGames';
-import EditPackage from './screens/EditPackage';
-import SettingsScreen from './screens/Settings';
-import PrivacyPolicy from './screens/Privacy';
-import Explore from './screens/Explore';
-import Marketplace from './screens/Marketplace';
-import Chat from './screens/Chat';
+import EditAbout from './Screens/EditAbout';
+import EditLookingFor from './Screens/EditLookingFor';
+import EditGames from './Screens/EditGames';
+import EditPackage from './Screens/EditPackage';
+import SettingsScreen from './Screens/Settings';
+import PrivacyPolicy from './Screens/Privacy';
+import Explore from './Screens/Explore';
+import Marketplace from './Screens/Marketplace';
+import Chat from './Screens/Chat';
 
 // Create Stack Navigator
 const Stack = createStackNavigator();
