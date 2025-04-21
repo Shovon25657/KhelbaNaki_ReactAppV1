@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
     height: 75,
     backgroundColor: 'transparent',
     paddingBottom: 10,
+    paddingTop: 10,
     paddingHorizontal: 10,
     position: 'relative',
   },
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 75,
-    backgroundColor: '#FFFFFF',
+     backgroundColor: 'rgba(14, 3, 52, 0.01)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
   },
   activeIconContainer: {
     backgroundColor: '#5E72E4',
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   inactiveNavText: {
-    color: '#6B7280',
+    color: 'rgba(161, 161, 161, 0)',
   }
 });
 

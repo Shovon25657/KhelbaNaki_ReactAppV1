@@ -1,131 +1,232 @@
 import React, { useContext } from "react";
+import { View, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
 import { AuthContext } from "../context/authContext";
 
+// Import your screens
+import SplashScreen from '../Screens/SplashScreen';
+import WelcomePage from '../Screens/WelcomePage';
+import LoginPage from '../Screens/Loginpage';
+import Registration from '../Screens/registration/Registration';
+import HomeScreen from '../Screens/home/HomeScreen';
+import ProfilePage from '../Screens/profile/Profile';
+import EditProfile from '../Screens/profile/EditProfile/EditProfile';
+// ... other imports
 
-// Import Screens - Fix any case sensitivity issues here
-import SplashScreen from '../screens/SplashScreen';
-import WelcomePage from '../screens/WelcomePage';
-import LoginPage from '../screens/Loginpage'; // Fixed case
-import Registration from '../screens/registration/Registration';
-import HomeScreen from '../screens/HomeScreen';
-import ProfilePage from '../screens/profile/Profile';
-import EditProfile from '../screens/profile/EditProfile/EditProfile';
-import EditAbout from '../screens/profile/EditProfile/EditAbout';
-import EditLookingFor from '../screens/profile/EditProfile/EditLookingFor';
-import EditGames from '../screens/profile/EditProfile/EditGames';
-import EditPackage from '../screens/profile/EditProfile/EditPackage';
-import HeaderMenu from '../Menus/HeaderMenu';
-import Chat from '../screens/Chat';
-import Explore from '../screens/Explore';
-import Settings from '../screens/Settings';
-import Marketplace from '../screens/Marketplace';
-import PrivacyPolicy from '../screens/Privacy';
+// Import your footer menu component
+import FooterMenu from '../Menus/FooterMenu';
 
-const Stack = createNativeStackNavigator();
+// Use SharedElement stack for animations
+const Stack = createSharedElementStackNavigator();
+
+// Main app container with fixed footer
+const AppContainer = ({ children, showFooter = true }) => {
+  return (
+    <View style={styles.container}>
+      <View style={styles.contentContainer}>
+        {children}
+      </View>
+      {showFooter && <FooterMenu />}
+    </View>
+  );
+};
 
 const ScreenMenu = () => {
   const [state] = useContext(AuthContext);
   const authenticatedUser = state?.user && state?.token;
 
+  // Helper function to wrap screen component with AppContainer
+  const wrapWithContainer = (Component, showFooter = true) => {
+    return (props) => (
+      <AppContainer showFooter={showFooter}>
+        <Component {...props} />
+      </AppContainer>
+    );
+  };
+
   return (
-    <Stack.Navigator initialRouteName="Welcome">
+    <Stack.Navigator 
+      initialRouteName="Welcome"
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+        // This makes only the content area animate, not the footer
+        cardStyleInterpolator: ({ current, layouts }) => {
+          return {
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+              opacity: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 1],
+              }),
+            },
+          };
+        },
+      }}
+    >
       {authenticatedUser ? (
         <>
-          <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-              options={{ headerShown: false }}
+          <Stack.Screen 
+            name="Home" 
+            component={wrapWithContainer(HomeScreen)} 
           />
-          <Stack.Screen
-            name="Chat"
-            component={Chat}
-              options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name="Explore"
-            component={Explore}
-              options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Settings"
-            component={Settings}
-              options={{ headerShown: false }}
-          />
-           <Stack.Screen
-            name="Privacy"
-            component={PrivacyPolicy}
-              options={{ headerShown: false }}
+          
+          <Stack.Screen 
+            name="Chat" 
+            component={wrapWithContainer(Chat)}
+            sharedElements={(route) => {
+              return ['chat-header-icon'];
+            }}
           />
 
-          <Stack.Screen
-            name="Marketplace"
-            component={Marketplace}
-              options={{ headerShown: false }}
+          <Stack.Screen 
+            name="Explore" 
+            component={wrapWithContainer(Explore)}
+          />
+          
+          <Stack.Screen 
+            name="Settings" 
+            component={wrapWithContainer(Settings)}
+          />
+          
+          <Stack.Screen 
+            name="Privacy" 
+            component={wrapWithContainer(PrivacyPolicy)}
           />
 
-          <Stack.Screen
-            name="EditProfile"
-            component={EditProfile}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="EditAbout"
-            component={EditAbout}
-            options={{ headerShown: false }}
+          <Stack.Screen 
+            name="Marketplace" 
+            component={wrapWithContainer(Marketplace)}
+            sharedElements={(route) => {
+              return ['marketplace-header', 'marketplace-search'];
+            }}
           />
 
-          <Stack.Screen
-            name="EditLookingFor"
-            component={EditLookingFor}
-            options={{ headerShown: false }}
+          <Stack.Screen 
+            name="PurchaseGig" 
+            component={wrapWithContainer(PurchaseGig)}
+            sharedElements={(route) => {
+              const { gigId } = route.params;
+              return [`gig-image-${gigId}`, `gig-title-${gigId}`];
+            }}
           />
 
-          <Stack.Screen
-            name="EditGames"
-            component={EditGames}
-            options={{ headerShown: false }}
+          <Stack.Screen 
+            name="BuyGig" 
+            component={wrapWithContainer(BuyGig)}
+          />
+          
+          <Stack.Screen 
+            name="MyLibrary" 
+            component={wrapWithContainer(MyLibrary)}
           />
 
-          <Stack.Screen
-            name="EditPackage"
-            component={EditPackage}
-            options={{ headerShown: false }}
+          <Stack.Screen 
+            name="EditProfile" 
+            component={wrapWithContainer(EditProfile)}
+            sharedElements={(route) => {
+              return ['profile-picture', 'profile-name', 'edit-button'];
+            }}
+          />
+          
+          <Stack.Screen 
+            name="EditAbout" 
+            component={wrapWithContainer(EditAbout)}
+          />
+          
+          <Stack.Screen 
+            name="EditLookingFor" 
+            component={wrapWithContainer(EditLookingFor)}
+          />
+          
+          <Stack.Screen 
+            name="EditGames" 
+            component={wrapWithContainer(EditGames)}
+          />
+          
+          <Stack.Screen 
+            name="EditPackage" 
+            component={wrapWithContainer(EditPackage)}
           />
 
-          <Stack.Screen
-            name="Profile"
-            component={ProfilePage}
-            options={{ headerShown: false }}
+          <Stack.Screen 
+            name="ChatInterface" 
+            component={wrapWithContainer(ChatInterface)}
+            sharedElements={(route) => {
+              const { chatId } = route.params || {};
+              return chatId ? [`chat-avatar-${chatId}`, `chat-name-${chatId}`] : [];
+            }}
           />
-          <Stack.Screen
-            name="Account"
-            component={EditProfile}
-            options={{ headerShown: false }}
+          
+          <Stack.Screen 
+            name="CreateGroup" 
+            component={wrapWithContainer(CreateGroup)}
+          />
+
+          <Stack.Screen 
+            name="Profile" 
+            component={wrapWithContainer(ProfilePage)}
+            sharedElements={(route) => {
+              const { userId } = route.params || {};
+              return [
+                `user-avatar-${userId}`,
+                `user-name-${userId}`,
+                `user-bio-${userId}`
+              ];
+            }}
+          />
+          
+          <Stack.Screen 
+            name="Account" 
+            component={wrapWithContainer(EditProfile)}
           />
         </>
       ) : (
         <>
-          <Stack.Screen
-            name="Welcome"
-            component={WelcomePage}
-            options={{ headerShown: false }}
+          {/* For auth screens, don't show the footer */}
+          <Stack.Screen 
+            name="Welcome" 
+            component={wrapWithContainer(WelcomePage, false)}
+            options={{
+              cardStyleInterpolator: ({ current }) => ({
+                cardStyle: {
+                  opacity: current.progress,
+                },
+              }),
+            }}
           />
-          <Stack.Screen
-            name="Login"
-            component={LoginPage}
-            options={{ headerShown: false }}
+          
+          <Stack.Screen 
+            name="Login" 
+            component={wrapWithContainer(LoginPage, false)}
           />
-          <Stack.Screen
-            name="Register"
-            component={Registration}
-            options={{ headerShown: false }}
+          
+          <Stack.Screen 
+            name="Register" 
+            component={wrapWithContainer(Registration, false)}
           />
         </>
       )}
     </Stack.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+});
 
 export default ScreenMenu;
