@@ -17,7 +17,7 @@ import EditGames from '../Screens/profile/EditProfile/EditGames';
 import EditPackage from '../Screens/profile/EditProfile/EditPackage';
 import HeaderMenu from '../Menus/HeaderMenu';
 import Chat from '../Screens/chat/Chat';
-import Explore from '../Screens/Explore';
+import Explore from '../Screens/newsfeed/Explore';
 import Settings from '../Screens/home/Settings';
 import Marketplace from '../Screens/marketplace/Marketplace';
 import PrivacyPolicy from '../Screens/home/Privacy';
@@ -26,6 +26,8 @@ import CreateGroup from "../Screens/chat/CreateGroup";
 import PurchaseGig from "../Screens/marketplace/PurchaseGig";
 import BuyGig from "../Screens/marketplace/BuyGig";
 import MyLibrary from "../Screens/marketplace/MyLibrary";
+import FeedProfile from "../Screens/newsfeed/FeedProfile";
+
 
 // Use SharedElement stack navigator for smart animations
 const Stack = createSharedElementStackNavigator();
@@ -79,10 +81,46 @@ const ScreenMenu = () => {
             }}
           />
 
-          <Stack.Screen 
-            name="Explore" 
-            component={Explore} 
+          <Stack.Screen
+            name="Explore"
+            component={Explore}
+              options={{ headerShown: false }}
           />
+
+          <Stack.Screen
+            name="FeedProfile"
+            component={FeedProfile}
+              options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Settings"
+            component={Settings}
+              options={{ headerShown: false }}
+          />
+           <Stack.Screen
+            name="Privacy"
+            component={PrivacyPolicy}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="Marketplace"
+            component={Marketplace}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="PurchaseGig"
+            component={PurchaseGig}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="BuyGig"
+            component={BuyGig}
+              options={{ headerShown: false }}
+          />
+
           
           <Stack.Screen 
             name="Settings" 
