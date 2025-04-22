@@ -12,6 +12,10 @@ import {
   TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import person1 from '../../../../assets/Alex.jpg';
+import person2 from '../../../../assets/Angry_Avater.jpg';
+import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
+import person4 from '../../../../assets/group_photo.jpg';
 
 const CreateGroup = ({ navigation }) => {
   const [groupName, setGroupName] = useState('');
@@ -23,12 +27,10 @@ const CreateGroup = ({ navigation }) => {
   
   // Sample friends data
   const [friends, setFriends] = useState([
-    { id: 1, name: 'Alex Johnson', avatar: 'https://randomuser.me/api/portraits/men/1.jpg', selected: false },
-    { id: 2, name: 'Sarah Miller', avatar: 'https://randomuser.me/api/portraits/women/1.jpg', selected: false },
-    { id: 3, name: 'David Wilson', avatar: 'https://randomuser.me/api/portraits/men/2.jpg', selected: false },
-    { id: 4, name: 'Emma Thompson', avatar: 'https://randomuser.me/api/portraits/women/2.jpg', selected: false },
-    { id: 5, name: 'Michael Brown', avatar: 'https://randomuser.me/api/portraits/men/3.jpg', selected: false },
-    { id: 6, name: 'Jessica Davis', avatar: 'https://randomuser.me/api/portraits/women/3.jpg', selected: false },
+    { id: 1, name: 'Alex Johnson', avatar: person1, selected: false },
+    { id: 2, name: 'Sarah Miller', avatar: person2, selected: false },
+    { id: 3, name: 'David Wilson', avatar:  person3, selected: false },
+    { id: 4, name: 'Emma Thompson', avatar: person4 , selected: false },
   ]);
 
   // Filter friends based on search query
@@ -134,7 +136,7 @@ const CreateGroup = ({ navigation }) => {
           >
             {selectedFriends.map(friend => (
               <View key={friend.id} style={styles.selectedFriend}>
-                <Image source={{ uri: friend.avatar }} style={styles.selectedAvatar} />
+                <Image source={ friend.avatar } style={styles.selectedAvatar} />
                 <Text style={styles.selectedName} numberOfLines={1}>{friend.name}</Text>
                 <TouchableOpacity 
                   style={styles.removeButton}
@@ -157,7 +159,7 @@ const CreateGroup = ({ navigation }) => {
             style={styles.friendItem}
             onPress={() => toggleFriendSelection(friend.id)}
           >
-            <Image source={{ uri: friend.avatar }} style={styles.avatar} />
+            <Image source={friend.avatar } style={styles.avatar} />
             <Text style={styles.friendName}>{friend.name}</Text>
             <View style={[
               styles.checkbox,

@@ -11,7 +11,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavBar from '../../common/BottomNavBar';
-
+import person1 from '../../../../assets/Alex.jpg';
+import person2 from '../../../../assets/Angry_Avater.jpg';
+import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
+import person4 from '../../../../assets/group_photo.jpg';
 const Chat = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [chats, setChats] = useState([
@@ -21,7 +24,7 @@ const Chat = ({ navigation }) => {
       lastMessage: 'Hey, are we still on for the tournament?',
       time: '2h ago',
       unread: true,
-      avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+      avatar: person1,
       online: true
     },
     {
@@ -30,7 +33,7 @@ const Chat = ({ navigation }) => {
       lastMessage: 'I found a great strategy for the new map',
       time: '5h ago',
       unread: false,
-      avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+      avatar: person2,
       online: false
     },
     {
@@ -39,7 +42,7 @@ const Chat = ({ navigation }) => {
       lastMessage: 'Michael: Let me know when you guys are online',
       time: '1d ago',
       unread: true,
-      avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+      avatar: person3,
       online: true
     },
     {
@@ -48,18 +51,10 @@ const Chat = ({ navigation }) => {
       lastMessage: 'Thanks for the tips!',
       time: '2d ago',
       unread: false,
-      avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+      avatar: person4,
       online: false
     },
-    {
-      id: 5,
-      name: 'Emma Thompson',
-      lastMessage: 'GG! We should play again sometime',
-      time: '3d ago',
-      unread: false,
-      avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-      online: true
-    },
+
   ]);
 
   const filteredChats = chats.filter(chat =>
@@ -117,7 +112,7 @@ const Chat = ({ navigation }) => {
             onPress={() => handleChatPress(chat)}
           >
             <View style={styles.avatarContainer}>
-              <Image source={{ uri: chat.avatar }} style={styles.avatar} />
+              <Image source={ chat.avatar } style={styles.avatar} />
               {chat.online && <View style={styles.onlineIndicator} />}
             </View>
             <View style={styles.chatContent}>

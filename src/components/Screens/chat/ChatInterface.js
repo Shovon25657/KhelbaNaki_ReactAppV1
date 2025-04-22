@@ -23,6 +23,7 @@ import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
+
 const { width, height } = Dimensions.get('window');
 
 const emojis = [
@@ -493,7 +494,7 @@ const ChatInterface = ({ route, navigation }) => {
         {!isCurrentUser && (
           <TouchableOpacity onPress={() => navigateToProfile(message.senderId)}>
             <Image 
-              source={{ uri: userAvatar }} 
+              source={userAvatar } 
               style={styles.messageAvatar}
             />
           </TouchableOpacity>
@@ -508,7 +509,7 @@ const ChatInterface = ({ route, navigation }) => {
               setShowImagePreview(true);
             }}>
               <Image 
-                source={{ uri: message.uri }} 
+                source={ message.uri } 
                 style={styles.messageImage}
               />
               <Text style={styles.messageTime}>{message.time}</Text>
@@ -584,7 +585,7 @@ const ChatInterface = ({ route, navigation }) => {
               style={styles.headerProfile}
               onPress={() => navigateToProfile(userId)}
             >
-              <Image source={{ uri: userAvatar }} style={styles.headerAvatar} />
+              <Image source={userAvatar } style={styles.headerAvatar} />
               <View style={styles.headerUserInfo}>
                 <Text style={styles.headerUserName}>{userName}</Text>
                 <Text style={[styles.headerUserStatus, { color: online ? '#4CAF50' : '#888' }]}>
@@ -759,7 +760,7 @@ const ChatInterface = ({ route, navigation }) => {
     style={[
       styles.mediaOptionsContainer,
       mediaOptionsAnimatedStyle,
-      { bottom: keyboardHeight + 60 }
+      { bottom: keyboardHeight }
     ]}
   >
     <View style={styles.mediaOptionsContent}>
@@ -791,7 +792,7 @@ const ChatInterface = ({ route, navigation }) => {
                 style={[
                   styles.quickMessagesContainer,
                   quickMessagesAnimatedStyle,
-                  { bottom: keyboardHeight + 60 }
+                  { bottom: keyboardHeight+60 }
                 ]}
               >
                 <View style={styles.quickMessagesGrid}>
@@ -841,7 +842,7 @@ const ChatInterface = ({ route, navigation }) => {
             >
               <TouchableWithoutFeedback onPress={() => setShowImagePreview(false)}>
                 <ImageBackground 
-                  source={{ uri: previewImage }} 
+                  source={ previewImage } 
                   style={styles.imagePreviewContainer}
                   resizeMode="contain"
                 >
@@ -939,7 +940,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   messagesContent: {
-    paddingBottom: 20,
+    paddingBottom: '2%',
   },
   messageContainer: {
     flexDirection: 'row',
@@ -965,7 +966,7 @@ const styles = StyleSheet.create({
   },
   myMessageContent: {
     backgroundColor: '#4a80f0',
-    borderBottomRightRadius: 2,
+    borderBottomRightRadius: 0,
   },
   theirMessageContent: {
     backgroundColor: '#252538',
@@ -1003,7 +1004,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    zIndex: 10,
   },
   mediaOptionsContent: {
     flexDirection: 'row',

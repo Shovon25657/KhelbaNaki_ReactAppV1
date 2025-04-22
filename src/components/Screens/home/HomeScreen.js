@@ -21,6 +21,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/Feather';
 import BottomNavBar from '../../common/BottomNavBar';
 import person1 from '../../../../assets/Alex.jpg';
+import person2 from '../../../../assets/Angry_Avater.jpg';
+import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,14 +54,14 @@ const HomeScreen = () => {
       name: 'PixelQueen',
       age: 24,
       games: ['League of Legends', 'Overwatch', 'Dota 2'],
-      image: person1
+      image: person2
     },
     {
       id: 3,
       name: 'HeadshotHunter',
       age: 26,
       games: ['Call of Duty', 'PUBG', 'CS:GO'],
-      image: person1
+      image: person3
     },
     {
       id: 4,
@@ -513,14 +515,14 @@ const HomeScreen = () => {
               <Icon name="close" size={30} color="#FFF" />
             </TouchableOpacity>
             
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={[styles.actionButton, styles.viewButton]}
               onPress={navigateToProfile}
               disabled={isTransitioning}
               activeOpacity={0.7}
             >
               <Icon name="visibility" size={30} color="#FFF" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             
             <TouchableOpacity 
               style={[styles.actionButton, styles.likeButton]}
@@ -823,7 +825,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     padding: 10,
     paddingBottom: 15,
     marginBottom: 20,
@@ -840,15 +842,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 5,
     elevation: 5,
-    borderWidth: 2,
-    borderColor: '#FFF',
     marginHorizontal: 5,
   },
   dislikeButton: {
-    backgroundColor: 'rgba(203, 202, 195, 0.2)',
   },
   viewButton: {
-    backgroundColor: '#2196F3',
+ 
   },
   likeButton: {
     backgroundColor: '#4CAF50',
@@ -888,13 +887,12 @@ const styles = StyleSheet.create({
   slideInMenu: {
     width: width * 0.65,
     height: '100%',
-    backgroundColor: '#16213e',
-    borderRightWidth: 2,
-    borderRightColor: '#FFD700',
+    backgroundColor: 'rgba(1, 1, 27, 0.9)',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(53, 16, 172, 0.5)',
   },
   slideInMenuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   slideInMenuCloseButton: {
     alignSelf: 'flex-end',
@@ -903,12 +901,12 @@ const styles = StyleSheet.create({
   slideInMenuHeader: {
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#FFD700',
+    borderBottomColor: '   rgba(0,0,0,0.5)',
     marginHorizontal: 20,
     marginBottom: 20,
   },
   slideInMenuHeaderText: {
-    color: '#FFD700',
+    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -921,7 +919,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 215, 0, 0.2)',
+    borderBottomColor: 'rgba(143, 142, 140, 0.2)',
   },
   slideInMenuItemText: {
     color: '#FFF',
@@ -936,7 +934,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 215, 0, 0.2)',
+    borderTopColor: 'rgba(108, 107, 101, 0.2)',
     paddingTop: 20,
   },
   slideInPrivacyButton: {

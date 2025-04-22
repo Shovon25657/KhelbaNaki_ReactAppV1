@@ -3,19 +3,20 @@ const { requireSingIn } = require("../controllers/userController");
 const {
   createprofileController,
   getProfileDataController,
+  createAboutController,
   getAllAboutContoller,
   getUserAboutController,
   deleteAboutController,
   updateAboutController,
   getAboutDataController,
 } = require("../controllers/userAboutController");
-const { addGamesPlayedController, getGamesPlayedController, removeGameController } = require("../controllers/userGamesPlayedController");
+const { addGamesPlayedController, getGamesPlayedController, removeGameController,  } = require("../controllers/userGamesPlayedController");
 
 //router object
 const router = express.Router();
 
 // CREATE POST || POST
-//router.post("/create-about", requireSingIn, createAboutController);
+router.post("/create-about", requireSingIn, createAboutController);
 router.post("/create-profile", requireSingIn, createprofileController);
 router.post("/create-gamesplayed", requireSingIn, addGamesPlayedController);
 
