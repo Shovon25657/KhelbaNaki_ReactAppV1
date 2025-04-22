@@ -195,20 +195,21 @@ const Explore = ({ navigation }) => {
 
   const handleFollow = (postId) => {
     const updatePosts = (posts, setPosts) => {
-      const post = posts.find(p => p.id === postId);
-      if (post.isFollowing) {
-        setUnfollowUser(post.username);
-        setShowUnfollowModal(true);
-      } else {
-        const updatedPosts = posts.map(p => {
-          if (p.id === postId) {
-            return { ...p, isFollowing: true };
+      const updatedPosts = posts.map(post => {
+        if (post.id === postId) {
+          const isFollowing = post.isFollowing || false;
+          if (isFollowing) {
+            setUnfollowUser(post.username);
+            setShowUnfollowModal(true);
+            return post; // Return unchanged post as we'll handle the unfollow in confirmUnfollow
+          } else {
+            showNotification(`You followed ${post.username}`);
+            return { ...post, isFollowing: true };
           }
-          return p;
-        });
-        setPosts(updatedPosts);
-        showNotification(`You followed ${post.username}`);
-      }
+        }
+        return post;
+      });
+      setPosts(updatedPosts);
     };
 
     updatePosts(trendingPosts, setTrendingPosts);
