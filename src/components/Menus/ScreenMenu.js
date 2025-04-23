@@ -122,69 +122,12 @@ const ScreenMenu = () => {
           />
 
           
-          <Stack.Screen 
-            name="Settings" 
-            component={Settings} 
-          />
           
-          <Stack.Screen 
-            name="Privacy" 
-            component={PrivacyPolicy} 
-          />
+          
+         
 
-          <Stack.Screen 
-            name="Marketplace" 
-            component={Marketplace}
-            sharedElements={(route) => {
-              return ['marketplace-header', 'marketplace-search'];
-            }}
-          />
+          
 
-          <Stack.Screen 
-            name="PurchaseGig" 
-            component={PurchaseGig}
-            sharedElements={(route) => {
-              const { gigId } = route.params;
-              return [`gig-image-${gigId}`, `gig-title-${gigId}`];
-            }}
-            options={{
-              cardStyleInterpolator: ({ current, layouts }) => {
-                return {
-                  cardStyle: {
-                    transform: [
-                      {
-                        translateY: current.progress.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [layouts.screen.height, 0],
-                        }),
-                      },
-                    ],
-                  },
-                };
-              },
-            }}
-          />
-
-          <Stack.Screen 
-            name="BuyGig" 
-            component={BuyGig}
-            options={{
-              cardStyleInterpolator: ({ current, layouts }) => {
-                return {
-                  cardStyle: {
-                    transform: [
-                      {
-                        translateY: current.progress.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [layouts.screen.height, 0],
-                        }),
-                      },
-                    ],
-                  },
-                };
-              },
-            }}
-          />
           
           <Stack.Screen name="MyLibrary" component={MyLibrary} />
 

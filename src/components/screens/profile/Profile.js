@@ -12,8 +12,8 @@ import {
   SafeAreaView
 } from 'react-native';
 import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import profilePhoto from '../../../../assets/profile1.jpg';
-import coverPhoto from '../../../../assets/profile3.jpg';
+import profilePhoto from '../../../../assets/Alex.jpg';
+import coverPhoto from '../../../../assets/sova_image.jpg';
 import game1 from '../../../../assets/game1.png';
 import game2 from '../../../../assets/game2.png';
 import game3 from '../../../../assets/game3.png';
@@ -31,7 +31,7 @@ const Profile = ({ navigation }) => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
 
   const [user, setUser] = useState({
-    name: 'Jessica',
+    name: 'KMS',
     age: 28,
     bio: 'Professional gamer and streamer. Love playing FPS and strategy games. Looking for teammates who communicate well!',
     about: [
