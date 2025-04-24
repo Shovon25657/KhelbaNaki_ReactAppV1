@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Animated, PanResponder, Dimensions, Vibration, Platform, Text, View } from 'react-native';
 
+
 const { width } = Dimensions.get('window');
 
 const SWIPE_THRESHOLD = width * 0.25;
@@ -196,44 +197,60 @@ const CardSwiper = ({
 };
 
 const styles = {
-  likeBadge: {
-    position: 'absolute',
-    top: '25%',
-    left: 20,
-    zIndex: 2,
-    backgroundColor: 'rgba(76, 175, 80, 0.8)',
-    padding: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(203, 202, 195, 0.2)',
-  },
-  likeText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: {width: 1, height: 1},
-    textShadowRadius: 3,
-  },
-  dislikeBadge: {
-    position: 'absolute',
-    top: '25%',
-    right: 20,
-    zIndex: 2,
-    backgroundColor: 'rgba(244, 67, 54, 0.8)',
-    padding: 10,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#FFF',
-  },
-  dislikeText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: {width: 1, height: 1},
-    textShadowRadius: 3,
-  }
+    likeBadge: {
+        position: 'absolute',
+        top: '22%',
+        left: 20,
+        zIndex: 2,
+        backgroundColor: 'rgba(76, 175, 80, 0.15)', // soft green tint
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(76, 175, 80, 0.5)',
+        backdropFilter: 'blur(6px)', // for web, ignored on native
+        shadowColor: '#4CAF50',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      
+      likeText: {
+        color: '#4CAF50',
+        fontWeight: '700',
+        fontSize: 18,
+        textShadowColor: 'rgba(0, 0, 0, 0.25)',
+        textShadowOffset: { width: 0.5, height: 0.5 },
+        textShadowRadius: 1,
+      },
+      
+      dislikeBadge: {
+        position: 'absolute',
+        top: '22%',
+        right: 20,
+        zIndex: 2,
+        backgroundColor: 'rgba(244, 67, 54, 0.15)', // soft red tint
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(244, 67, 54, 0.5)',
+        backdropFilter: 'blur(6px)', // for web, ignored on native
+        shadowColor: '#F44336',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      
+      dislikeText: {
+        color: '#F44336',
+        fontWeight: '700',
+        fontSize: 18,
+        textShadowColor: 'rgba(0, 0, 0, 0.25)',
+        textShadowOffset: { width: 0.5, height: 0.5 },
+        textShadowRadius: 1,
+      },
+      
 };
 
 export default CardSwiper;
