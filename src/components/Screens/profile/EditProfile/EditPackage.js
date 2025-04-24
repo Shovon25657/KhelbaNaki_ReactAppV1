@@ -86,16 +86,11 @@ const EditPackage = ({ navigation, route }) => {
   const renderPackage = ({ item }) => (
     <TouchableOpacity
       style={[
-        styles.packageCard,
-        { 
-          backgroundColor: '#16213e',
-          borderColor: item.color,
-          borderWidth: selectedPackage.id === item.id ? 3 : 1
-        }
+        styles.packageCard
       ]}
       onPress={() => handleSelectPackage(item)}
     >
-      <View style={[styles.packageHeader, { backgroundColor: item.color }]}>
+      <View style={styles.packageHeader}>
         <Text style={styles.packageName}>{item.name}</Text>
         <Text style={styles.packagePrice}>${item.price}/month</Text>
       </View>
@@ -108,7 +103,7 @@ const EditPackage = ({ navigation, route }) => {
         ))}
       </View>
       <TouchableOpacity 
-        style={[styles.selectButton, { backgroundColor: item.color }]}
+        style={styles.selectButton}
         onPress={() => handleSelectPackage(item)}
       >
         <Text style={styles.selectButtonText}>
@@ -208,13 +203,14 @@ const EditPackage = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   safeArea: {
+  
     flex: 1,
-    backgroundColor: '#1a1a2e'
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1a2e'
-  },
+    backgroundColor: 'rgb(1, 12, 20)',
+},
+container: {
+  flex: 1,
+  paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 10 : 20,
+},
   headerContainer: {
     paddingTop: 10, // Additional padding below status bar
     paddingHorizontal: 20
@@ -240,7 +236,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#b892ff',
+    color: '#fff',
     marginBottom: 25,
     textAlign: 'center',
     paddingHorizontal: 20,
@@ -255,13 +251,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5
+    borderWidth: 1,
+    borderColor: '#0f3460',
   },
   packageHeader: {
+    backgroundColor: 'rgb(26, 9, 97)',
     padding: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -270,12 +264,12 @@ const styles = StyleSheet.create({
   packageName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#16213e'
+    color: '#fff'
   },
   packagePrice: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#16213e'
+    color: '#fff'
   },
   featuresContainer: {
     padding: 15
@@ -286,14 +280,15 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   featureText: {
-    color: '#e6e6e6',
+    color: '#fff',
     fontSize: 16,
     marginLeft: 10
   },
   selectButton: {
     padding: 15,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    backgroundColor: 'rgb(0, 255, 174)',
   },
   selectButtonText: {
     color: '#16213e',
@@ -311,13 +306,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#16213e',
     borderRadius: 15,
     padding: 25,
-    borderWidth: 2,
-    borderColor: '#6e44ff'
+    borderWidth: 1,
+    borderColor: '#0f3460',
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#00ff88',
+    color: '#fff',
     marginBottom: 20,
     textAlign: 'center'
   },
@@ -325,16 +320,16 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#6e44ff'
+    borderColor: '#0f3460',
   },
   summaryTitle: {
-    color: '#b892ff',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: 14,
     marginBottom: 5
   },
   summaryName: {
-    color: '#fff',
-    fontSize: 20,
+    color: 'rgba(255, 255, 255, 0.87)',
+    fontSize: 17,
     fontWeight: 'bold',
     marginBottom: 5
   },
@@ -347,14 +342,14 @@ const styles = StyleSheet.create({
     marginBottom: 25
   },
   paymentTitle: {
-    color: '#b892ff',
+    color: '#fff',
     fontSize: 16,
     marginBottom: 15
   },
   cardInput: {
-    backgroundColor: 'rgba(30, 30, 60, 0.7)',
+    backgroundColor: 'rgba(30, 30, 60, 0.39)',
     borderWidth: 1,
-    borderColor: '#6e44ff',
+    borderColor: '#0f3460',
     borderRadius: 8,
     padding: 15,
     marginBottom: 15
@@ -365,9 +360,10 @@ const styles = StyleSheet.create({
   },
   cardDetailInput: {
     width: '48%',
-    backgroundColor: 'rgba(30, 30, 60, 0.7)',
+    backgroundColor: 'rgba(30, 30, 60, 0.39)',
     borderWidth: 1,
-    borderColor: '#6e44ff',
+    borderColor: '#0f3460',
+    borderRadius: 8,
     borderRadius: 8,
     padding: 15
   },

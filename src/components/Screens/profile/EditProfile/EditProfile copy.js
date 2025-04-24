@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { ProfileDataContext } from '../../../context/profileDataContext';
+import { AuthContext } from '../../../context/authContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,70 +37,124 @@ const statusOptions = [
 ];
 
 const EditProfile = ({ navigation, route }) => {
+
+//global state
+const [state, setState] = useContext(AuthContext);
+const { user, token } = state;
+const [profileData, setProfileData, getProfileData] = useContext(ProfileDataContext);
+
+
+
+
+
+
+
+//handle update user data
+const handleUpdate = async () => {
+  try {
+    setLoading(true);
+    const { data } = await axios.put("/auth/update-user", {
+      username,
+      password,
+      email
+    } );
+    setLoading(false);
+    let UD = JSON.stringify(data);
+    setState({ ...state, user: UD?.updatedUser });
+    alert(data && data.message);
+  } 
+  
+  catch (error) {
+    alert(error.response.data.message);
+    setLoading(false);
+    console.log(error);
+  }
+};
+
+
+
+
+
   // Default images
-  const defaultProfile = require('../../../assets/profile1.jpg');
-  const defaultCover = require('../../../assets/profile3.jpg');
+  const defaultProfile = require('../../../../../assets/profile1.jpg');
+  const defaultCover = require('../../../../../assets/profile3.jpg');
 
-  const initialUser = route.params?.user || {
-    name: '',
-    age: '',
-    bio: '',
-    about: [],
-    lookingFor: [],
-    bestAt: [],
-    plan: { name: '', features: [] },
-    profileImage: defaultProfile,
-    coverImage: defaultCover,
-    status: 'Online'
-  };
+  //local state
+  const [gamingname, setName] = useState(profileData?.gamingname || '');
+  const [bio, setBio] = useState(profileData?.bio || '');
+  const [age, setAge] = useState(profileData?.age || '');
+  const [profileImage, setProfileImage] = useState(profileData?.profileImage || defaultProfile);
+  const [coverImage, setCoverImage] = useState(profileData?.coverImage || defaultCover);
+  const [currentStatus, setCurrentStatus] = useState(profileData?.status || 'Online');
 
-  const [user, setUser] = useState(initialUser);
-  const [name, setName] = useState(initialUser.name);
-  const [age, setAge] = useState(initialUser.age?.toString() || '');
-  const [bio, setBio] = useState(initialUser.bio);
-  const [profileImage, setProfileImage] = useState(initialUser.profileImage);
-  const [coverImage, setCoverImage] = useState(initialUser.coverImage);
+  // const [user, setUser] = useState(initialUser);
+ //  const [gamingname, setName] = useState(profileData.gamingname);
+ // const [bio, setBio] = useState(profileData && profileData[0]?.bio || '');
+ // const [age, setAge] = useState(profileData && profileData[0]?.age || '');
+ // const [profileImage, setProfileImage] = useState(profileData.profileImage);
+ // const [coverImage, setCoverImage] = useState(profileData.coverImage);
   const [isEditing, setIsEditing] = useState({ bio: false });
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(initialUser.status || 'Online');
-  const [wordCount, setWordCount] = useState(initialUser.bio ? initialUser.bio.split(/\s+/).length : 0);
+  // const [currentStatus, setCurrentStatus] = useState(profileData.status || 'Online');
+  const [wordCount, setWordCount] = useState(profileData.bio ? initialUser.bio.split(/\s+/).length : 0);
+
+
+
+// Right after the EditProfile component declaration
+const initialUser = {
+  bio: '',
+  age: '',
+  profileImage: defaultProfile,
+  coverImage: defaultCover,
+  status: 'Online',
+  about: [],
+  lookingFor: [],
+  bestAt: [],
+  plan: { name: '', features: [] }
+};
+
+
+
+
+useEffect(() => {
+  if (profileData && profileData.length > 0) {
+    setBio(profileData[0].bio || '');
+    setAge(profileData[0].age || '');
+    // Update other fields as needed
+  }
+}, [profileData]);
+
+
 
   // Image Picker Functions
-  const pickProfileImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'We need access to your photos to change your profile picture.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+  const uploadImage = async (imageUri, isCover = false) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      name: 'image.jpg',
+      type: 'image/jpeg'
     });
-
-    if (!result.canceled) {
-      setProfileImage({ uri: result.assets[0].uri });
+  
+    try {
+      const { data } = await axios.post(`/upload/${isCover ? 'cover' : 'profile'}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return data.url;
+    } catch (error) {
+      console.error("Upload error:", error);
+      return null;
     }
   };
-
-  const pickCoverImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'We need access to your photos to change your cover photo.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [3, 1],
-      quality: 0.8,
-    });
-
+  
+  // Update pickProfileImage and pickCoverImage to handle uploads
+  const pickProfileImage = async () => {
+    // ... existing picker code
     if (!result.canceled) {
-      setCoverImage({ uri: result.assets[0].uri });
+      const uploadedUrl = await uploadImage(result.assets[0].uri);
+      if (uploadedUrl) setProfileImage({ uri: uploadedUrl });
     }
   };
 
@@ -112,19 +168,30 @@ const EditProfile = ({ navigation, route }) => {
   };
 
   // Save Profile Function
-  const handleSaveProfile = () => {
-    const updatedUser = {
-      ...user,
-      name: name,
-      age: parseInt(age) || 0,
-      bio: bio,
-      profileImage: profileImage,
-      coverImage: coverImage,
-      status: currentStatus
-    };
-
-    navigation.navigate('Profile', { updatedUser });
+  const handleSaveProfile = async () => {
+    try {
+      const updatedProfile = {
+        gamingname,
+        bio,
+        age: parseInt(age) || 0,
+        profileImage, // Assuming these are URLs; adjust for file uploads
+        coverImage,
+        status: currentStatus,
+      };
+  
+      const { data } = await axios.post("/userabout//create-profile", updatedProfile, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      setProfileData(data.updatedProfile);
+      Alert.alert("Success", "Profile updated successfully!");
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert("Error", error.response?.data?.message || "Failed to update profile");
+    }
   };
+
+
 
   // Select status function
   const selectStatus = (status) => {
@@ -132,11 +199,10 @@ const EditProfile = ({ navigation, route }) => {
     setShowStatusModal(false);
   };
 
-  // Navigation Functions
-  const navigateToEditAbout = () => navigation.navigate('EditAbout', { about: user.about });
-  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
-  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
-  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
+  const navigateToEditAbout = () => navigation.navigate('EditAbout', { about: profileData.about });
+const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: profileData.lookingFor });
+const navigateToEditGames = () => navigation.navigate('EditGames', { games: profileData.bestAt });
+const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: profileData.plan });
 
   // Render status option item
   const renderStatusItem = ({ item }) => (
@@ -190,7 +256,7 @@ const EditProfile = ({ navigation, route }) => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cover Photo Section */}
+        {/* Cover Photo Section
         <View style={styles.coverContainer}>
           <Image 
             source={coverImage} 
@@ -205,7 +271,7 @@ const EditProfile = ({ navigation, route }) => {
             <Text style={styles.changeButtonText}>Change Cover</Text>
           </TouchableOpacity>
           
-          {/* Profile Photo Section */}
+          {/* Profile Photo Section 
           <View style={styles.profilePhotoContainer}>
             <Image 
               source={profileImage} 
@@ -219,14 +285,14 @@ const EditProfile = ({ navigation, route }) => {
               <Feather name="camera" size={responsiveFont(16)} color="#fff" />
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
             <TextInput
               style={styles.nameInput}
-              value={name}
+              value={gamingname}
               onChangeText={setName}
               placeholder="Your Name"
               placeholderTextColor="#aaa"
@@ -295,7 +361,7 @@ const EditProfile = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.gridContainer}>
-            {user.about.map((item, index) => (
+          {(user?.about || []).map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 
                   name={item.icon} 
@@ -318,7 +384,7 @@ const EditProfile = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.gridContainer}>
-            {user.lookingFor.map((item, index) => (
+          {(user?.lookingFor || []).map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 
                   name={item.icon} 
@@ -341,7 +407,7 @@ const EditProfile = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.gamesContainer}>
-            {user.bestAt.map((game, index) => (
+          {(user?.bestAt || []).map((item, index) => (
               <View key={index} style={styles.smallGameCard}>
                 {game.isFavorite && (
                   <View style={styles.favoriteBadge}>
@@ -385,10 +451,10 @@ const EditProfile = ({ navigation, route }) => {
                 size={responsiveFont(24)} 
                 color="#FFD700" 
               />
-              <Text style={styles.planName}>{user.plan.name}</Text>
+              <Text style={styles.planName}>{user?.plan?.name || 'Free Plan'}</Text>
             </View>
             <View style={styles.planFeatures}>
-              {user.plan.features.map((feature, index) => (
+            {(user?.plan?.features || []).map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
                   <View style={styles.bulletPoint} />
                   <Text style={styles.featureText}>{feature}</Text>

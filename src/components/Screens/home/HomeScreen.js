@@ -14,14 +14,23 @@ import {
   Vibration,
   Platform
 } from 'react-native';
-import { AuthContext } from '../context/authContext';
+import { AuthContext } from '../../context/authContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/Feather';
-import BottomNavBar from '../common/BottomNavBar';
+import BottomNavBar from '../../common/BottomNavBar';
+import person1 from '../../../../assets/Alex.jpg';
+import person2 from '../../../../assets/Angry_Avater.jpg';
+import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
 
 const { width, height } = Dimensions.get('window');
+
+
+// Responsive sizing functions
+const responsiveWidth = (size) => (width / 375) * size;
+const responsiveHeight = (size) => (height / 812) * size;
+const responsiveFont = (size) => (width / 375) * size;
 
 const SWIPE_THRESHOLD = width * 0.25;
 const SWIPE_OUT_DURATION = 250;
@@ -38,28 +47,28 @@ const HomeScreen = () => {
       name: 'xXProGamerXx',
       age: 28,
       games: ['Fortnite', 'Valorant', 'Apex Legends'],
-      image: 'https://randomuser.me/api/portraits/men/1.jpg'
+      image: person1
     },
     {
       id: 2,
       name: 'PixelQueen',
       age: 24,
       games: ['League of Legends', 'Overwatch', 'Dota 2'],
-      image: 'https://randomuser.me/api/portraits/women/1.jpg'
+      image: person2
     },
     {
       id: 3,
       name: 'HeadshotHunter',
       age: 26,
       games: ['Call of Duty', 'PUBG', 'CS:GO'],
-      image: 'https://randomuser.me/api/portraits/men/2.jpg'
+      image: person3
     },
     {
       id: 4,
       name: 'NoobSlayer',
       age: 25,
       games: ['Rocket League', 'FIFA', 'NBA 2K'],
-      image: 'https://randomuser.me/api/portraits/women/2.jpg'
+      image: person1
     },
   ]);
 
@@ -336,7 +345,7 @@ const HomeScreen = () => {
     return (
       <Animated.View style={[styles.card, styles.nextCard, nextCardAnimatedStyles]}>
         <Image 
-          source={{ uri: nextProfile.image }} 
+          source={nextProfile.image } 
           style={styles.profileImage}
           resizeMode="cover"
         />
@@ -361,7 +370,7 @@ const HomeScreen = () => {
           style={styles.touchableArea}
         >
           <Image 
-            source={{ uri: profile.image }} 
+            source={profile.image } 
             style={styles.profileImage}
             resizeMode="cover"
           />
@@ -506,14 +515,14 @@ const HomeScreen = () => {
               <Icon name="close" size={30} color="#FFF" />
             </TouchableOpacity>
             
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={[styles.actionButton, styles.viewButton]}
               onPress={navigateToProfile}
               disabled={isTransitioning}
               activeOpacity={0.7}
             >
               <Icon name="visibility" size={30} color="#FFF" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             
             <TouchableOpacity 
               style={[styles.actionButton, styles.likeButton]}
@@ -642,11 +651,11 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   mainContainer: {
     flex: 1,
-    marginBottom: 60, // Add margin to prevent content from being hidden behind the BottomNavBar
+    marginBottom: 0, // Add margin to prevent content from being hidden behind the BottomNavBar
   },
   container: {
     flex: 1,
@@ -657,25 +666,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#16213e',
-    borderBottomWidth: 2,
-    borderBottomColor: '#FFD700',
+    backgroundColor: 'rgb(14, 3, 52)',
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
+  
+  headerTitle: {
+    fontSize: responsiveFont(20),
+    fontWeight: 'bold',
+   color: '#fff',
+   fontFami: 'Roboto',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+
+
   menuButton: {
     padding: 5,
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    textAlign: 'center',
-    flex: 1,
-    fontFamily: 'Arial',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: {width: 1, height: 1},
-    textShadowRadius: 3,
-    letterSpacing: 1,
-  },
+
   thunderButton: {
     padding: 5,
   },
@@ -683,37 +693,50 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
-    marginTop: 5,
+    marginBottom: '2%',
+    marginTop: '2%',
   },
   card: {
     position: 'absolute',
     width: width * 0.85,
     height: height * 0.6,
     borderRadius: 15,
-    backgroundColor: '#0f3460',
+    backgroundColor: 'rgb(4, 1, 21)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 10,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    // Changed from space-around to flex-start
+    justifyContent: 'flex-start', 
+    borderWidth: 1,
+    borderColor: 'rgba(86, 57, 246, 0.28)',
   },
   nextCard: {
     opacity: 0.85,
-    borderColor: 'rgba(255, 215, 0, 0.7)',
-  },
+    borderColor: 'rgba(86, 57, 246, 0.28)',
+    },
   touchableArea: {
     flex: 1,
   },
   profileImage: {
+    position: 'absolute',
     width: '100%',
-    height: '65%',
+    height: '100%',
   },
   profileInfo: {
+    position: 'absolute', // Add absolute positioning
+    bottom: 0, // Stick to bottom
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 6, 0.33)',
     padding: 15,
+    borderTopWidth: 1,
+    borderColor: 'rgba(86, 57, 246, 0.15)',
+    // Add these for better text alignment
+    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
   },
   name: {
     fontSize: 20,
@@ -733,7 +756,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   gamesTitle: {
-    color: '#FFD700',
+    color: '#fff',
     fontSize: 14,
     marginBottom: 8,
     fontWeight: 'bold',
@@ -744,17 +767,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   gameBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(203, 202, 195, 0.2)',
     borderRadius: 12,
     paddingVertical: 5,
     paddingHorizontal: 10,
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: 'rgba(203, 202, 195, 0.68)',
   },
   gameText: {
-    color: '#FFD700',
+    color: 'rgb(255, 255, 255)',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -767,15 +790,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 20,
     padding: 10,
-    borderWidth: 2,
-    borderColor: '#FFF',
+    borderWidth: 1,
+    borderColor: 'rgba(203, 202, 195, 0.2)',
   },
   likeText: {
     color: '#FFF',
     fontWeight: 'bold',
     fontSize: 20,
     marginLeft: 5,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: 'rgba(24, 22, 22, 0.75)',
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 3,
   },
@@ -802,32 +825,29 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     padding: 10,
     paddingBottom: 15,
     marginBottom: 20,
     gap: 15,
   },
   actionButton: {
-    width: 65,
-    height: 65,
+    width: 40,
+    height: 40,
     borderRadius: 32.5,
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.5,
     shadowRadius: 5,
     elevation: 5,
-    borderWidth: 2,
-    borderColor: '#FFF',
     marginHorizontal: 5,
   },
   dislikeButton: {
-    backgroundColor: '#F44336',
   },
   viewButton: {
-    backgroundColor: '#2196F3',
+ 
   },
   likeButton: {
     backgroundColor: '#4CAF50',
@@ -867,13 +887,12 @@ const styles = StyleSheet.create({
   slideInMenu: {
     width: width * 0.65,
     height: '100%',
-    backgroundColor: '#16213e',
-    borderRightWidth: 2,
-    borderRightColor: '#FFD700',
+    backgroundColor: 'rgba(1, 1, 27, 0.9)',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(53, 16, 172, 0.5)',
   },
   slideInMenuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   slideInMenuCloseButton: {
     alignSelf: 'flex-end',
@@ -882,12 +901,12 @@ const styles = StyleSheet.create({
   slideInMenuHeader: {
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#FFD700',
+    borderBottomColor: '   rgba(0,0,0,0.5)',
     marginHorizontal: 20,
     marginBottom: 20,
   },
   slideInMenuHeaderText: {
-    color: '#FFD700',
+    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -900,7 +919,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 215, 0, 0.2)',
+    borderBottomColor: 'rgba(143, 142, 140, 0.2)',
   },
   slideInMenuItemText: {
     color: '#FFF',
@@ -915,7 +934,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 215, 0, 0.2)',
+    borderTopColor: 'rgba(108, 107, 101, 0.2)',
     paddingTop: 20,
   },
   slideInPrivacyButton: {

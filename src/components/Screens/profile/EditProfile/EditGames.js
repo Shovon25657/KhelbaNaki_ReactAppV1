@@ -20,6 +20,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
+const responsiveWidth = (size) => (width / 375) * size;
+const responsiveHeight = (size) => (height / 812) * size;
+const responsiveFont = (size) => (width / 375) * size;
+
 const EditGames = ({ navigation, route }) => {
   const initialGames = route.params?.games || [];
   const [games, setGames] = useState(initialGames);
@@ -583,8 +587,9 @@ const EditGames = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
-    backgroundColor: '#1a1a2e',
+  
+      flex: 1,
+      backgroundColor: 'rgb(1, 12, 20)',
   },
   container: {
     flex: 1,
@@ -717,7 +722,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   addButton: {
-    backgroundColor: '#00ff88',
+    backgroundColor: 'rgb(17, 240, 169)',
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
@@ -749,12 +754,22 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   backButtonStyle: {
-    backgroundColor: '#6e44ff',
-    shadowColor: '#6e44ff',
+      backgroundColor: 'rgb(200, 10, 67)',
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      borderRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
   },
   saveButtonStyle: {
-    backgroundColor: '#00ff88',
-    shadowColor: '#00ff88',
+    backgroundColor: '#6e44ff',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionButtonText: {
     color: '#fff',
@@ -777,8 +792,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#16213e',
     borderRadius: 16,
     padding: 20,
-    borderWidth: 2,
-    borderColor: '#e74c3c',
+    borderWidth: 1,
+    borderColor: 'rgba(242, 0, 0, 0.45)',
   },
   errorHeader: {
     flexDirection: 'row',
@@ -804,7 +819,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorButton: {
-    backgroundColor: '#e74c3c',
+    backgroundColor: 'rgba(238, 5, 5, 0.7)',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -860,83 +875,128 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.5,
   },
-  // Unsaved Changes Popup Styles
-  unsavedContainer: {
-    width: width * 0.9,
-    backgroundColor: '#16213e',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 2,
-    borderColor: '#6e44ff',
-  },
-  unsavedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 15,
-  },
-  unsavedTitle: {
-    color: '#f39c12',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  unsavedText: {
-    color: '#e6e6e6',
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  unsavedGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  unsavedButton: {
-    width: '100%',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  discardButton: {
-    backgroundColor: '#e74c3c',
-    borderWidth: 2,
-    borderColor: '#e74c3c',
-  },
-  saveChangesButton: {
-    backgroundColor: '#00ff88',
-    borderWidth: 2,
-    borderColor: '#00ff88',
-  },
-  continueButton: {
-    backgroundColor: '#6e44ff',
-    borderWidth: 2,
-    borderColor: '#6e44ff',
-  },
-  unsavedButtonIcon: {
-    marginRight: 10,
-  },
-  unsavedButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
+ // Unsaved Changes Popup Styles
+ errorOverlay: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+},
+unsavedContainer: {
+  width: width * 0.9,
+  backgroundColor: '#16213e',
+  borderRadius: 16,
+  padding: 20,
+  borderWidth: 1,
+  borderColor: '#0f3460',
+},
+unsavedHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 15,
+},
+unsavedTitle: {
+  color: '#f39c12',
+  fontSize: 20,
+  fontWeight: 'bold',
+  marginLeft: 10,
+},
+unsavedText: {
+  color: '#fff',
+  fontSize: 16,
+  marginBottom: 20,
+  textAlign: 'center',
+  lineHeight: 24,
+},
+unsavedGrid: {
+  flexDirection: 'column',
+},
+unsavedButton: {
+  width: '100%',
+  borderRadius: 12,
+  padding: 8,
+  marginBottom: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+discardButton: {
+  backgroundColor: '#e74c3c',
+},
+saveChangesButton: {
+  backgroundColor: '#6e44ff',
+
+},
+continueButton: {
+
+  borderWidth: 1,
+  borderColor: '#6e44ff',
+},
+unsavedButtonIcon: {
+  marginRight: 10,
+},
+unsavedButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 16,
+}, 
+ // Modal styles
+ modalOverlay: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.86)',
+},
+modalContainer: {
+  width: responsiveWidth(300),
+  backgroundColor: 'rgb(1, 2, 23)',
+  borderRadius: responsiveWidth(15),
+  padding: responsiveWidth(20),
+  borderWidth: 1,
+  borderColor: '#0f3460',
+},
+modalTitle: {
+  fontSize: responsiveFont(20),
+  fontWeight: 'bold',
+  color: '#fff',
+  marginBottom: responsiveHeight(20),
+  textAlign: 'center',
+},
+statusList: {
+  paddingBottom: responsiveHeight(10),
+},
+statusOption: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: responsiveHeight(12),
+  paddingHorizontal: responsiveWidth(15),
+  marginBottom: responsiveHeight(5),
+  backgroundColor: '#0f3460',
+  borderRadius: responsiveWidth(10),
+},
+statusOptionText: {
+  fontSize: responsiveFont(16),
+  color: '#fff',
+  marginLeft: responsiveWidth(10),
+  flex: 1,
+},
+statusCheck: {
+  marginLeft: 'auto',
+},
+closeButton: {
+  backgroundColor: 'rgb(77, 20, 232)',
+  padding: responsiveWidth(12),
+  borderRadius: responsiveWidth(10),
+  marginTop: responsiveHeight(10),
+  alignItems: 'center',
+},
+closeButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: responsiveFont(16),
+},
+
   modalOutside: {
     position: 'absolute',
     top: 0,
@@ -944,24 +1004,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  modalContainer: {
-    width: width * 0.85,
-    maxHeight: height * 0.7,
-    backgroundColor: '#16213e',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#6e44ff',
-    overflow: 'hidden',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#e6e6e6',
-    textAlign: 'center',
-    marginBottom: 20,
-    paddingTop: 20,
-    letterSpacing: 0.5,
-  },
+  
+
   optionsContainer: {
     paddingHorizontal: 20,
     paddingBottom: 15,

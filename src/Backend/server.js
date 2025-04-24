@@ -26,6 +26,7 @@ app.use(cors());
 
 // root route
 app.use('/api/v1/auth', require('./routes/userRoute'));
+app.use('/api/v1/userabout', require('./routes/userAboutRoute'));
 
 const PORT = process.env.PORT || 8080; // Use environment variable or default to 5000
 

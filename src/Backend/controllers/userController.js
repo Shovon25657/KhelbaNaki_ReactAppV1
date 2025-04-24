@@ -1,13 +1,20 @@
 const JWT = require("jsonwebtoken");
 const usermodel = require("../models/userModel");
 const { hashPassword, verifyPassword } = require("../helpers/authHelper");
+var { expressjwt: jwt } = require("express-jwt");
+
+//middleware
+const requireSingIn = jwt({
+  secret: process.env.JWT_SECRET_KEY,
+  algorithms: ["HS256"],
+});
 
 // Register Controller
 const registerController = async (req, res) => {
     try {
-        const { username, gamingname, dob, email, password } = req.body;
+        const { username,  dob, email, password } = req.body;
 
-        if (!username || !gamingname || !dob || !email || !password) {
+        if (!username || !dob || !email || !password) {
             return res.status(400).json({ message: "Please fill all fields!" });
         }
 
@@ -26,7 +33,6 @@ const registerController = async (req, res) => {
 
         const user = new usermodel({
             username,
-            gamingname,
             dob,
             email,
             password: hashedPassword, // Save the hashed password
@@ -94,7 +100,84 @@ const loginController = async (req, res) => {
     }
 };
 
+
+
+
+
+const updateUserController = async (req, res) => {
+    try {
+        const { username, password, email, role } = req.body;
+
+        // Validate required fields
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required to update the user.",
+            });
+        }
+
+        // Find the user by email
+        const user = await usermodel.findOne({ email });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found.",
+            });
+        }
+
+        // Validate password length if provided
+        if (password && password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 6 characters long.",
+            });
+        }
+
+        // Hash the new password 
+        let hashedPassword;
+        if (password) {
+            hashedPassword = await hashPassword(password);
+        }
+
+        // Prepare update object
+        const updateData = {
+            username: username || user.username,
+        };
+
+        // Only update password if a new one is provided
+        if (password) {
+            updateData.password = hashedPassword;
+        }
+
+        // Perform the update
+        const updatedUser = await usermodel.findOneAndUpdate(
+            { email },
+            updateData,
+            { new: true, runValidators: true } 
+        );
+
+        updatedUser.password = undefined; 
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully.",
+            updatedUser,
+        });
+    } catch (error) {
+        console.error("Error in user update:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error updating user profile.",
+            error: error.message,
+        });
+    }
+};
+
+
+
+
 module.exports = {
+    requireSingIn,
     registerController,
     loginController,
+    updateUserController
 };

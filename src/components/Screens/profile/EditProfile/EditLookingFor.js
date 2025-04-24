@@ -19,6 +19,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
+
+const responsiveWidth = (size) => (width / 375) * size;
+const responsiveHeight = (size) => (height / 812) * size;
+const responsiveFont = (size) => (width / 375) * size;
+
 const EditLookingFor = ({ navigation, route }) => {
   const initialLookingFor = route.params?.lookingFor || {};
   const [lookingFor, setLookingFor] = useState(initialLookingFor);
@@ -178,7 +183,7 @@ const EditLookingFor = ({ navigation, route }) => {
         <View style={styles.buttonRow}>
           <Animated.View style={[styles.buttonContainer, { transform: [{ scale: backPulseAnim }] }]}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.backButtonStyle]} 
+              style={[styles.actionButton, styles.backButton]} 
               onPress={handleBack}
               activeOpacity={0.7}
             >
@@ -189,7 +194,7 @@ const EditLookingFor = ({ navigation, route }) => {
 
           <Animated.View style={[styles.buttonContainer, { transform: [{ scale: savePulseAnim }] }]}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.saveButtonStyle]} 
+              style={[styles.actionButton, styles.saveButton]} 
               onPress={handleSave}
               activeOpacity={0.7}
             >
@@ -359,7 +364,7 @@ const EditLookingFor = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   scrollContainer: {
     padding: 20,
@@ -368,15 +373,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // Changed back to space-between
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 25,
-    marginTop: 10,
+    
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Added to take available space
   },
   gameIcon: {
     marginRight: 10,
@@ -385,13 +389,12 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     color: '#e6e6e6',
-    textShadowColor: 'rgba(110, 68, 255, 0.5)',
+    textShadowColor: 'rgba(44, 18, 138, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
   helpButton: {
     padding: 5,
-    marginLeft: 10, // Added some spacing
   },
   section: {
     marginBottom: 25,
@@ -400,32 +403,57 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 10,
     fontWeight: '600',
-    color: '#b892ff',
+    color: 'rgb(1, 225, 255)',
     letterSpacing: 0.5,
   },
   input: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#6e44ff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
     padding: 15,
     borderRadius: 12,
-    backgroundColor: 'rgba(30, 30, 60, 0.7)',
+   // backgroundColor: 'rgba(30, 30, 60, 0.7)',
   },
   selectedText: {
-    color: '#e6e6e6',
+    color: '#fff',
     fontSize: 16,
     fontWeight: '500',
   },
   placeholderText: {
-    color: '#888',
+    color: 'rgba(142, 142, 142, 0.7)',
     fontSize: 16,
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 30,
+  },
+
+  saveButtonContainer: {
+  },
+  backButtonContainer: {
+  },
+
+  saveButton: {
+    backgroundColor: '#6e44ff',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButton: {
+    backgroundColor: 'rgb(200, 10, 67)',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+
   },
   buttonContainer: {
     width: '48%',
@@ -442,14 +470,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-  backButtonStyle: {
-    backgroundColor: '#e74c3c',
-    shadowColor: '#e74c3c',
-  },
-  saveButtonStyle: {
-    backgroundColor: '#6e44ff',
-    shadowColor: '#6e44ff',
-  },
+ 
   actionButtonText: {
     color: '#fff',
     fontWeight: 'bold',
@@ -464,15 +485,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   unsavedContainer: {
     width: width * 0.9,
     backgroundColor: '#16213e',
     borderRadius: 16,
     padding: 20,
-    borderWidth: 2,
-    borderColor: '#6e44ff',
+    borderWidth: 1,
+    borderColor: '#0f3460',
   },
   unsavedHeader: {
     flexDirection: 'row',
@@ -487,7 +508,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   unsavedText: {
-    color: '#e6e6e6',
+    color: '#fff',
     fontSize: 16,
     marginBottom: 20,
     textAlign: 'center',
@@ -499,30 +520,22 @@ const styles = StyleSheet.create({
   unsavedButton: {
     width: '100%',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    padding: 8,
+    marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   discardButton: {
     backgroundColor: '#e74c3c',
-    borderWidth: 2,
-    borderColor: '#e74c3c',
   },
   saveChangesButton: {
-    backgroundColor: '#00ff88',
-    borderWidth: 2,
-    borderColor: '#00ff88',
+    backgroundColor: '#6e44ff',
+  
   },
   continueButton: {
-    backgroundColor: '#6e44ff',
-    borderWidth: 2,
+
+    borderWidth: 1,
     borderColor: '#6e44ff',
   },
   unsavedButtonIcon: {
@@ -533,13 +546,62 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
+  // Modal styles
+ modalOverlay: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.86)',
+},
+modalContainer: {
+  width: responsiveWidth(300),
+  backgroundColor: 'rgb(1, 2, 23)',
+  borderRadius: responsiveWidth(15),
+  padding: responsiveWidth(20),
+  borderWidth: 1,
+  borderColor: '#0f3460',
+},
+modalTitle: {
+  fontSize: responsiveFont(20),
+  fontWeight: 'bold',
+  color: '#fff',
+  marginBottom: responsiveHeight(20),
+  textAlign: 'center',
+},
+statusList: {
+  paddingBottom: responsiveHeight(10),
+},
+statusOption: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: responsiveHeight(12),
+  paddingHorizontal: responsiveWidth(15),
+  marginBottom: responsiveHeight(5),
+  backgroundColor: '#0f3460',
+  borderRadius: responsiveWidth(10),
+},
+statusOptionText: {
+  fontSize: responsiveFont(16),
+  color: '#fff',
+  marginLeft: responsiveWidth(10),
+  flex: 1,
+},
+statusCheck: {
+  marginLeft: 'auto',
+},
+closeButton: {
+  backgroundColor: 'rgb(77, 20, 232)',
+  padding: responsiveWidth(12),
+  borderRadius: responsiveWidth(10),
+  marginTop: responsiveHeight(10),
+  alignItems: 'center',
+},
+closeButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: responsiveFont(16),
+},
+
   modalOutside: {
     position: 'absolute',
     top: 0,
@@ -547,24 +609,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  modalContainer: {
-    width: width * 0.85,
-    maxHeight: height * 0.7,
-    backgroundColor: '#16213e',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#6e44ff',
-    overflow: 'hidden',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#e6e6e6',
-    textAlign: 'center',
-    marginBottom: 20,
-    paddingTop: 20,
-    letterSpacing: 0.5,
-  },
+  
+
   optionsContainer: {
     paddingHorizontal: 20,
     paddingBottom: 15,
@@ -662,5 +708,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
+
 
 export default EditLookingFor;
