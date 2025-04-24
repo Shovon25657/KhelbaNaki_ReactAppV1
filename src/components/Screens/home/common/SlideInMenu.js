@@ -10,6 +10,7 @@ const SlideInMenu = ({
   menuItems,
   onLogout,
   onPrivacyPolicy,
+  onLuminaries,
   headerText = 'MENU'
 }) => {
   if (!visible) return null;
@@ -39,6 +40,15 @@ const SlideInMenu = ({
               <Text style={styles.slideInMenuItemText}>{item.label}</Text>
             </TouchableOpacity>
           ))}
+          
+          {/* Add Luminaries menu item */}
+          <TouchableOpacity 
+            style={styles.slideInMenuItem}
+            onPress={onLuminaries}
+          >
+            <Icon name="people" size={24} color="#FFD700" />
+            <Text style={styles.slideInMenuItemText}>LUMINARIES</Text>
+          </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.slideInMenuItem}

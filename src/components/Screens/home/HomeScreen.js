@@ -27,6 +27,7 @@ import ActionButtons from '../../Screens/home/common/ActionButtons';
 import SlideInMenu from '../../Screens/home/common/SlideInMenu';
 import ConfirmationModal from '../../Screens/home/common/ConfirmationModal';
 import Header from '../../Screens/home/common/Header';
+import Luminaries from '../../Screens/home/Luminaries';
 
 const { width, height } = Dimensions.get('window');
 
@@ -108,6 +109,11 @@ const HomeScreen = () => {
   const handleLogout = () => {
     setShowLogoutModal(true);
     setShowSideMenu(false);
+  };
+
+  const navigateToLuminaries = () => {
+    setShowSideMenu(false);
+    navigation.navigate('Luminaries');
   };
 
   const confirmLogout = async () => {
@@ -228,6 +234,7 @@ const HomeScreen = () => {
           menuItems={menuItems}
           onLogout={handleLogout}
           onPrivacyPolicy={navigateToPrivacyPolicy}
+          onLuminaries={navigateToLuminaries} 
         />
 
         <ConfirmationModal
