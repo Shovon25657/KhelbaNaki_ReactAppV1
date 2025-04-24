@@ -70,6 +70,7 @@ const HomeScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const swipeRef = useRef(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -98,11 +99,10 @@ const HomeScreen = () => {
       Vibration.vibrate(50);
     }
     
-    setTimeout(() => {
-      direction > 0 ? handleLike() : handleDislike();
-      handleSwipeComplete();
-      setIsTransitioning(false);
-    }, 300);
+    // Trigger swipe animation programmatically
+    if (swipeRef.current) {
+      swipeRef.current.triggerSwipe(direction);
+    }
   };
 
   const handleLogout = () => {
@@ -191,11 +191,13 @@ const HomeScreen = () => {
               <>
                 {renderNextProfile()}
                 <CardSwiper
+                  ref={swipeRef}
                   onSwipeLeft={handleDislike}
                   onSwipeRight={handleLike}
                   onSwipeComplete={handleSwipeComplete}
                   currentIndex={currentIndex}
                   nextCardScale={nextCardScale}
+                  onAnimationComplete={() => setIsTransitioning(false)}
                 >
                   {renderProfileCard()}
                 </CardSwiper>

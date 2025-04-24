@@ -1,25 +1,32 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Animated, PanResponder, Dimensions, Vibration, Platform, Text, View } from 'react-native';
-
 
 const { width } = Dimensions.get('window');
 
 const SWIPE_THRESHOLD = width * 0.25;
 const SWIPE_OUT_DURATION = 250;
 
-const CardSwiper = ({ 
+const CardSwiper = forwardRef(({ 
   children, 
   onSwipeLeft, 
   onSwipeRight, 
   onSwipeComplete,
   currentIndex,
-  nextCardScale
-}) => {
+  nextCardScale,
+  onAnimationComplete
+}, ref) => {
   const swipe = useRef(new Animated.ValueXY()).current;
   const tilt = useRef(new Animated.Value(0)).current;
   const cardOpacity = useRef(new Animated.Value(1)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
   const tapTimestamp = useRef(0);
+
+  // Expose functions via ref
+  useImperativeHandle(ref, () => ({
+    triggerSwipe: (direction) => {
+      performSwipe(direction);
+    }
+  }));
 
   // Reset animation values when currentIndex changes
   useEffect(() => {
@@ -28,6 +35,35 @@ const CardSwiper = ({
     cardOpacity.setValue(1);
     cardScale.setValue(1);
   }, [currentIndex]);
+
+  const performSwipe = (direction) => {
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      Vibration.vibrate(50);
+    }
+
+    Animated.parallel([
+      Animated.timing(swipe, {
+        toValue: { x: direction * (width + 100), y: 0 },
+        duration: SWIPE_OUT_DURATION,
+        useNativeDriver: true
+      }),
+      Animated.timing(cardOpacity, {
+        toValue: 0,
+        duration: SWIPE_OUT_DURATION,
+        useNativeDriver: true
+      }),
+      Animated.spring(nextCardScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 40,
+        useNativeDriver: true
+      })
+    ]).start(() => {
+      direction > 0 ? onSwipeRight() : onSwipeLeft();
+      onSwipeComplete();
+      if (onAnimationComplete) onAnimationComplete();
+    });
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -58,31 +94,7 @@ const CardSwiper = ({
         const isActionActive = Math.abs(dx) > SWIPE_THRESHOLD || speed > 0.5;
         
         if (isActionActive) {
-          if (Platform.OS === 'ios' || Platform.OS === 'android') {
-            Vibration.vibrate(50);
-          }
-
-          Animated.parallel([
-            Animated.timing(swipe, {
-              toValue: { x: direction * (width + 100), y: dy },
-              duration: SWIPE_OUT_DURATION,
-              useNativeDriver: true
-            }),
-            Animated.timing(cardOpacity, {
-              toValue: 0,
-              duration: SWIPE_OUT_DURATION,
-              useNativeDriver: true
-            }),
-            Animated.spring(nextCardScale, {
-              toValue: 1,
-              friction: 6,
-              tension: 40,
-              useNativeDriver: true
-            })
-          ]).start(() => {
-            direction > 0 ? onSwipeRight() : onSwipeLeft();
-            onSwipeComplete();
-          });
+          performSwipe(direction);
         } else {
           resetCardPosition();
         }
@@ -194,7 +206,7 @@ const CardSwiper = ({
       </Animated.View>
     </Animated.View>
   );
-};
+});
 
 const styles = {
     likeBadge: {
