@@ -27,6 +27,7 @@ import PurchaseGig from "../Screens/marketplace/PurchaseGig";
 import BuyGig from "../Screens/marketplace/BuyGig";
 import MyLibrary from "../Screens/marketplace/MyLibrary";
 import FeedProfile from "../Screens/newsfeed/FeedProfile";
+import Luminaries from "../Screens/home/Luminaries";
 
 
 // Use SharedElement stack navigator for smart animations
@@ -100,6 +101,12 @@ const ScreenMenu = () => {
            <Stack.Screen
             name="Privacy"
             component={PrivacyPolicy}
+              options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="Luminaries"
+            component={Luminaries}
               options={{ headerShown: false }}
           />
 
