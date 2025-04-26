@@ -15,13 +15,12 @@ import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icon
 import * as ImagePicker from 'expo-image-picker';
 
 // Reusable Components
-import Header from '../EditProfile/EditProfileupdated/Header';
-import ProfileImagePicker from '../EditProfile/EditProfileupdated/ProfileImagePicker';
-import CoverImagePicker from '../EditProfile/EditProfileupdated/CoverImagePicker';
-//import StatusModal from '../EditProfile/EditProfileupdated/StatusModal';
-import EditableSection from '../EditProfile/EditProfileupdated/EditableSection';
-import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfile/EditProfileupdated/Metrics';
-import StatusModal, { statusOptions } from '../EditProfile/EditProfileupdated/StatusModal';
+import Header from './EditProfile Common/Header';
+import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
+import CoverImagePicker from './EditProfile Common/CoverImagePicker';
+import EditableSection from './EditProfile Common/EditableSection';
+import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
+import StatusModal, { statusOptions } from './EditProfile Common/StatusModal';
 
 // Default images
 const defaultProfile = require('../../../../../assets/profile1.jpg');
