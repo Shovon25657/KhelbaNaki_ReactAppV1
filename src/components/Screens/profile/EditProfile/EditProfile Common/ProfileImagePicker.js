@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfileupdated/Metrics';
+import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfile Common/Metrics';
 
 const ProfileImagePicker = ({ image, onPress, size = 100, position = 'absolute', style }) => {
   return (

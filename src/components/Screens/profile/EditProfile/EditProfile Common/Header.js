@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfileupdated/Metrics';
+import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfile Common/Metrics';
 
 const Header = ({ title, onBack, onSave, saveText = 'Save', backIconColor = '#00ff88', saveButtonColor = 'rgb(6, 185, 234)' }) => {
   return (
