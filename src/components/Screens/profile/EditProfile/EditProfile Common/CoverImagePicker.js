@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfileupdated/Metrics';
+import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfile Common/Metrics';
 
 const CoverImagePicker = ({ image, onPress, height = 200 }) => {
   return (
