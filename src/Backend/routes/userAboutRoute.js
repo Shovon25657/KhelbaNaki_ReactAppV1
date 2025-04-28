@@ -9,6 +9,7 @@ const {
   deleteAboutController,
   updateAboutController,
   getAboutDataController,
+  updateprofileController,
 } = require("../controllers/userAboutController");
 const { addGamesPlayedController, getGamesPlayedController, removeGameController,  } = require("../controllers/userGamesPlayedController");
 
@@ -27,6 +28,8 @@ router.get("/get-profile", getProfileDataController);
 router.get("/get-gamesplayed", getGamesPlayedController);
 
 // CREATE  UPDATE || UPDATE
+//UPDATE || PUT
+router.put("/update-profile", requireSingIn, updateprofileController);
 router.delete("/delete-gamesplayed", removeGameController);
 
 //export

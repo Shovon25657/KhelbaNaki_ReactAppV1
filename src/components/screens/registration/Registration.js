@@ -8,8 +8,6 @@ const Registration = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     username: '',
-    gamingname: '',
-    dob: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -21,16 +19,6 @@ const Registration = () => {
     {
       inputs: [
         { name: 'username', placeholder: 'Full name' }
-      ]
-    },
-    {
-      inputs: [
-        { name: 'gamingname', placeholder: 'Gaming name' }
-      ]
-    },
-    {
-      inputs: [
-        { name: 'dob', placeholder: 'Date of birth', keyboardType: 'numeric' }
       ]
     },
     {

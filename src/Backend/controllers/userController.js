@@ -2,6 +2,8 @@ const JWT = require("jsonwebtoken");
 const usermodel = require("../models/userModel");
 const { hashPassword, verifyPassword } = require("../helpers/authHelper");
 var { expressjwt: jwt } = require("express-jwt");
+const userAboutModel = require("../models/userAboutModel");
+const userProfileModel = require("../models/userProfileModel");
 
 //middleware
 const requireSingIn = jwt({
@@ -12,9 +14,9 @@ const requireSingIn = jwt({
 // Register Controller
 const registerController = async (req, res) => {
     try {
-        const { username,  dob, email, password } = req.body;
+        const { username, email, password } = req.body;
 
-        if (!username || !dob || !email || !password) {
+        if (!username || !email || !password) {
             return res.status(400).json({ message: "Please fill all fields!" });
         }
 
@@ -33,13 +35,34 @@ const registerController = async (req, res) => {
 
         const user = new usermodel({
             username,
-            dob,
             email,
             password: hashedPassword, // Save the hashed password
         });
 
         await user.save(); // Save the new user to the database
         user.password = undefined; // Remove password from the response
+
+        // Default about and profile data
+        const defaultAboutData = {
+            educationQualification: "Not specified",
+            location: "Not specified",
+            smoking: "No",
+            drinks: "No",
+            religion: "Not specified",
+            occupation: "Not specified",
+            user: user._id,
+        };
+
+        const defaultProfileData = {
+            bio: "Not specified",
+            age: 0,
+            gamingName: "Not specified",
+            user: user._id,
+        };
+
+        // Create default about and profile data for the user
+        await userAboutModel.create(defaultAboutData);
+        await userProfileModel.create(defaultProfileData);
 
         return res.status(201).json({
             message: "User registered successfully",

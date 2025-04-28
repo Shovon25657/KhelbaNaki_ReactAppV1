@@ -9,12 +9,12 @@ const createAboutController = async ( req,res) => {
       try {
         const {  educationQualification, location, smoking, drinks, gender, religion, occupation } = req.body;
         //validate
-        if ( !educationQualification || !location ||  !smoking || !drinks  || !gender || !religion || !occupation ) {
-          return res.status(500).send({
-            sucess: false,
-            message: "Please Provide All Fields",
-          });
-        }
+        // if ( !educationQualification || !location ||  !smoking || !drinks || !religion || !occupation ) {
+        //   return res.status(500).send({
+        //     sucess: false,
+        //     message: "Please Provide All Fields",
+        //   });
+        // }
 
          // Simulate a database check for an existing Data
                 const existingAboutData = await userAboutModel.findOne({ user: req.auth._id });
@@ -58,12 +58,12 @@ const createprofileController = async ( req,res) => {
       try {
         const { bio, age, gamingName} = req.body;
         //validate
-        if (!bio || !age || !gamingName ) {
-          return res.status(500).send({
-            sucess: false,
-            message: "Please Provide All Fields",
-          });
-        }
+        // if (!bio || !age || !gamingName ) {
+        //   return res.status(500).send({
+        //     sucess: false,
+        //     message: "Please Provide All Fields",
+        //   });
+        // }
 
   // Simulate a database check for an existing Data
   const existingAboutData = await userProfileModel.findOne({ user: req.auth._id });
@@ -165,4 +165,78 @@ const getProfileDataController = async (req, res) => {
 
 
 
-module.exports = {createAboutController, createprofileController, getProfileDataController };
+
+//UPDATE PROFILE
+const updateprofileController = async (req, res) => {
+  try {
+    const { bio, age, gamingName } = req.body;
+
+    // Validate at least one field is being updated
+    if (!bio && !age && !gamingName) {
+      return res.status(400).send({
+        success: false,
+        message: "Please provide at least one field to update",
+      });
+    }
+
+    // Find profile by user ID (not params.id for security)
+    const userProfile = await userProfileModel.findOne({ user: req.auth._id });
+
+    // Check if profile exists
+    if (!userProfile) {
+      return res.status(404).send({
+        success: false,
+        message: "Profile not found",
+      });
+    }
+
+    // Update only the provided fields
+    const updatedFields = {};
+    if (bio !== undefined) updatedFields.bio = bio;
+    if (age !== undefined) updatedFields.age = age;
+    if (gamingName !== undefined) updatedFields.gamingName = gamingName;
+
+    const updatedProfile = await userProfileModel.findOneAndUpdate(
+      { user: req.auth._id },
+      updatedFields,
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Profile Updated Successfully",
+      updatedProfile,
+    });
+  } catch (error) {
+    console.error("Error in update profile:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error in updating profile",
+      error: error.message, // Send only the error message in production
+    });
+  }
+};
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports = {createAboutController, createprofileController, getProfileDataController, updateprofileController, };

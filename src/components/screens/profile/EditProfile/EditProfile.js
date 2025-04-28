@@ -1,55 +1,47 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import React, { useState, useContext } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   SafeAreaView,
   TextInput,
-  FlatList,
   Alert,
   TouchableOpacity,
   Image
 } from 'react-native';
-import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { ProfileDataContext } from "../../../context/profileDataContext";
+import axios from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Reusable Components
-import Header from './EditProfile Common/Header';
-import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
-import CoverImagePicker from './EditProfile Common/CoverImagePicker';
-import EditableSection from './EditProfile Common/EditableSection';
-import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
-import StatusModal, { statusOptions } from './EditProfile Common/StatusModal';
 
 // Default images
 const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
-const EditProfile = ({ navigation, route }) => {
-  const initialUser = route.params?.user || {
-    name: '',
-    age: '',
-    bio: '',
-    about: [],
-    lookingFor: [],
-    bestAt: [],
-    plan: { name: '', features: [] },
-    profileImage: defaultProfile,
-    coverImage: defaultCover,
-    status: 'Online'
+const EditProfile = ({ navigation }) => {
+  // Global state from context
+  const [state, setState] = useContext(ProfileDataContext);
+  const { profileData, getProfileData } = state;
+
+  // Get auth token from AsyncStorage
+  const getToken = async () => {
+    const authData = await AsyncStorage.getItem('@auth');
+    return authData ? JSON.parse(authData).token : null;
   };
 
-  const [user, setUser] = useState(initialUser);
-  const [name, setName] = useState(initialUser.name);
-  const [age, setAge] = useState(initialUser.age?.toString() || '');
-  const [bio, setBio] = useState(initialUser.bio);
-  const [profileImage, setProfileImage] = useState(initialUser.profileImage);
-  const [coverImage, setCoverImage] = useState(initialUser.coverImage);
+  // Local state
+  const [gamingName, setGamingName] = useState(profileData?.gamingName || '');
+  const [age, setAge] = useState(profileData?.age?.toString() || '');
+  const [bio, setBio] = useState(profileData?.bio || '');
+  const [profileImage, setProfileImage] = useState(profileData?.profileImage || defaultProfile);
+  const [coverImage, setCoverImage] = useState(profileData?.coverImage || defaultCover);
+  const [currentStatus, setCurrentStatus] = useState(profileData?.status || 'Online');
+  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState({ bio: false });
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(initialUser.status || 'Online');
-  const [wordCount, setWordCount] = useState(initialUser.bio ? initialUser.bio.split(/\s+/).length : 0);
+  const [wordCount, setWordCount] = useState(profileData?.bio ? profileData.bio.split(/\s+/).length : 0);
 
   // Image Picker Functions
   const pickProfileImage = async () => {
@@ -99,224 +91,177 @@ const EditProfile = ({ navigation, route }) => {
     }
   };
 
-  // Save Profile Function
-  const handleSaveProfile = () => {
-    const updatedUser = {
-      ...user,
-      name: name,
-      age: parseInt(age) || 0,
-      bio: bio,
-      profileImage: profileImage,
-      coverImage: coverImage,
-      status: currentStatus
-    };
+  // Save Profile Function - Integrated with your backend
+  const handleSaveProfile = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
 
-    navigation.navigate('Profile', { updatedUser });
+      const { data } = await axios.put(
+        "/userabout/update-profile",
+        {
+          gamingName,
+          age: parseInt(age) || 0,
+          bio,
+          profileImage,
+          coverImage,
+          status: currentStatus
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // Update context and local storage
+      setState(prev => ({
+        ...prev,
+        profileData: data?.updatedProfile
+      }));
+      
+      // Refresh profile data
+      await getProfileData();
+      
+      setLoading(false);
+      navigation.goBack();
+      Alert.alert("Success", "Profile updated successfully");
+    } catch (error) {
+      setLoading(false);
+      Alert.alert(
+        "Error", 
+        error.response?.data?.message || error.message || "Failed to update profile"
+      );
+      console.log("Update error:", error);
+    }
   };
-
-  // Select status function
-  const selectStatus = (status) => {
-    setCurrentStatus(status);
-    setShowStatusModal(false);
-  };
-
-  // Navigation Functions
-  const navigateToEditAbout = () => navigation.navigate('EditAbout', { about: user.about });
-  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
-  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
-  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
 
   // Get status color based on current status
   const getStatusColor = () => {
+    const statusOptions = [
+      { name: 'Online', color: '#00ff88' },
+      { name: 'Offline', color: '#ff0000' },
+      { name: 'Away', color: '#ffaa00' }
+    ];
     const status = statusOptions.find(option => option.name === currentStatus);
     return status ? status.color : '#00ff88';
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header 
-        title="Edit Profile"
-        onBack={() => navigation.goBack()}
-        onSave={handleSaveProfile}
-      />
-
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Feather name="arrow-left" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <TouchableOpacity onPress={handleSaveProfile} disabled={loading}>
+            <Text style={styles.saveButton}>
+              {loading ? "Saving..." : "Save"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Cover Photo Section */}
         <View style={styles.coverSection}>
-          <CoverImagePicker 
-            image={coverImage} 
-            onPress={pickCoverImage} 
-          />
-          <ProfileImagePicker 
-            image={profileImage} 
-            onPress={pickProfileImage}
-            style={styles.profileImagePosition}
-          />
+          <TouchableOpacity onPress={pickCoverImage}>
+            <Image 
+              source={coverImage} 
+              style={styles.coverImage}
+            />
+            <View style={styles.editCoverIcon}>
+              <Feather name="edit" size={20} color="white" />
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={pickProfileImage} style={styles.profileImageContainer}>
+            <Image 
+              source={profileImage} 
+              style={styles.profileImage}
+            />
+            <View style={styles.editProfileIcon}>
+              <Feather name="edit" size={16} color="white" />
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Name and Age Section */}
-        <View style={styles.nameContainer}>
-          <View style={styles.nameInputsContainer}>
-            <TextInput
-              style={styles.nameInput}
-              value={name}
-              onChangeText={setName}
-              placeholder="Your Name"
-              placeholderTextColor="#aaa"
-            />
-            <View style={styles.ageContainer}>
-              <TextInput
-                style={styles.ageInput}
-                value={age}
-                onChangeText={setAge}
-                keyboardType="numeric"
-                maxLength={2}
-                placeholder="Age"
-                placeholderTextColor="#aaa"
-              />
-            </View>
-          </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Gaming Name</Text>
+          <TextInput
+            style={styles.input}
+            value={gamingName}
+            onChangeText={setGamingName}
+            placeholder="Enter your gaming name"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Age</Text>
+          <TextInput
+            style={styles.input}
+            value={age}
+            onChangeText={setAge}
+            keyboardType="numeric"
+            placeholder="Enter your age"
+            placeholderTextColor="#aaa"
+            maxLength={2}
+          />
+        </View>
+
+        {/* Status */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Status</Text>
           <View style={styles.statusContainer}>
-            <View style={[styles.onlineDot, { backgroundColor: getStatusColor() }]} />
-            <TouchableOpacity onPress={() => setShowStatusModal(true)}>
-              <Text style={styles.status}>{currentStatus} (Tap to change)</Text>
+            <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
+            <Text style={styles.statusText}>{currentStatus}</Text>
+            <TouchableOpacity 
+              style={styles.changeStatusButton}
+              onPress={() => {
+                setCurrentStatus(prev => 
+                  prev === 'Online' ? 'Away' : 
+                  prev === 'Away' ? 'Offline' : 'Online'
+                );
+              }}
+            >
+              <Text style={styles.changeStatusText}>Change</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-            {/* Bio Section */}
-      <EditableSection 
-        title="Player Bio" 
-        onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
-        editIcon={isEditing.bio ? "check" : "edit-2"} // Add this prop
-      >
-        <View style={styles.wordCountContainer}>
-          <Text style={styles.wordCountText}>{wordCount}/150 words</Text>
-        </View>
-        <View style={styles.bioContainer}>
-          {isEditing.bio ? (
+        {/* Bio Section */}
+        <View style={styles.inputContainer}>
+          <View style={styles.bioHeader}>
+            <Text style={styles.label}>Player Bio</Text>
+            <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
+              <Feather name={isEditing ? "check" : "edit-2"} size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.wordCount}>{wordCount}/150 words</Text>
+          
+          {isEditing ? (
             <TextInput
-              style={styles.bioInput}
+              style={[styles.input, styles.bioInput]}
               value={bio}
               onChangeText={handleBioChange}
-              multiline={true}
-              placeholder="Tell others about yourself as a gamer (max 150 words)..."
+              multiline
+              numberOfLines={4}
+              placeholder="Tell others about yourself as a gamer..."
               placeholderTextColor="#aaa"
-              maxLength={1000}
             />
           ) : (
-            <Text style={styles.bioText}>{bio || 'No bio added yet'}</Text>
+            <Text style={styles.bioText}>
+              {bio || 'No bio added yet. Tap edit to add one.'}
+            </Text>
           )}
         </View>
-      </EditableSection>
-
-        {/* About Section */}
-        <EditableSection 
-          title="About" 
-          onEdit={navigateToEditAbout}
-        >
-          <View style={styles.gridContainer}>
-            {user.about.map((item, index) => (
-              <View key={index} style={styles.smallGridItem}>
-                <FontAwesome5 
-                  name={item.icon} 
-                  size={responsiveFont(18)} 
-                  style={styles.icons}
-                />
-                <Text style={styles.smallGridLabel}>{item.label}</Text>
-                <Text style={styles.smallGridValue}>{item.value}</Text>
-              </View>
-            ))}
-          </View>
-        </EditableSection>
-
-        {/* Looking For Section */}
-        <EditableSection 
-          title="Looking For" 
-          onEdit={navigateToEditLookingFor}
-        >
-          <View style={styles.gridContainer}>
-            {user.lookingFor.map((item, index) => (
-              <View key={index} style={styles.smallGridItem}>
-                <FontAwesome5 
-                  name={item.icon} 
-                  size={responsiveFont(18)} 
-                  style={styles.icons} 
-                />
-                <Text style={styles.smallGridLabel}>{item.label}</Text>
-                <Text style={styles.smallGridValue}>{item.value}</Text>
-              </View>
-            ))}
-          </View>
-        </EditableSection>
-
-        {/* Games Played Section */}
-        <EditableSection 
-          title="Games Played" 
-          onEdit={navigateToEditGames}
-        >
-          <View style={styles.gamesContainer}>
-            {user.bestAt.map((game, index) => (
-              <View key={index} style={styles.smallGameCard}>
-                {game.isFavorite && (
-                  <View style={styles.favoriteBadge}>
-                    <MaterialCommunityIcons 
-                      name="heart" 
-                      size={responsiveFont(14)} 
-                      color="#e94560" 
-                    />
-                  </View>
-                )}
-                <Image source={game.image} style={styles.smallGameImage} />
-                <Text style={styles.frequencyTag}>{game.frequency}</Text>
-                <View style={styles.gameInfo}>
-                  <Text style={styles.gameName}>{game.name}</Text>
-                  <View style={styles.gameLevel}>
-                    <MaterialCommunityIcons 
-                      name="medal" 
-                      size={responsiveFont(14)} 
-                      color="#FFD700" 
-                    />
-                    <Text style={styles.levelText}>{game.level}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </View>
-        </EditableSection>
-
-        {/* Subscription Plan Section */}
-        <EditableSection 
-          title="Gamer Subscription" 
-          onEdit={navigateToEditPackage}
-        >
-          <View style={styles.planCard}>
-            <View style={styles.planHeader}>
-              <MaterialCommunityIcons 
-                name="crown" 
-                size={responsiveFont(24)} 
-                color="#FFD700" 
-              />
-              <Text style={styles.planName}>{user.plan.name}</Text>
-            </View>
-            <View style={styles.planFeatures}>
-              {user.plan.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <View style={styles.bulletPoint} />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </EditableSection>
       </ScrollView>
-
-      <StatusModal 
-        visible={showStatusModal}
-        onClose={() => setShowStatusModal(false)}
-        currentStatus={currentStatus}
-        onSelectStatus={selectStatus}
-      />
     </SafeAreaView>
   );
 };
@@ -329,228 +274,116 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  saveButton: {
+    color: '#00ff88',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   coverSection: {
     position: 'relative',
-    marginBottom: responsiveHeight(60),
+    marginBottom: 70,
   },
-  profileImagePosition: {
-    bottom: -responsiveHeight(50),
-    left: responsiveWidth(20),
+  coverImage: {
+    width: '100%',
+    height: 150,
   },
-  nameContainer: {
-    paddingHorizontal: responsiveWidth(20),
-    marginTop: responsiveHeight(60),
-    marginBottom: responsiveHeight(20),
+  editCoverIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 5,
+    borderRadius: 15,
   },
-  nameInputsContainer: {
+  profileImageContainer: {
+    position: 'absolute',
+    bottom: -50,
+    left: 20,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: 'white',
+  },
+  editProfileIcon: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 5,
+    borderRadius: 15,
+  },
+  inputContainer: {
+    backgroundColor: 'rgba(15, 51, 96, 0.5)',
+    padding: 15,
+    margin: 10,
+    borderRadius: 10,
+  },
+  label: {
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: 'white',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    color: 'white',
+  },
+  bioHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  nameInput: {
-    fontSize: responsiveFont(24),
-    fontWeight: 'bold',
-    color: '#fff',
-    flex: 1,
-    paddingVertical: responsiveHeight(5),
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.65)',
-    marginRight: responsiveWidth(10),
+  wordCount: {
+    textAlign: 'right',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 5,
   },
-  ageContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.65)',
-    width: responsiveWidth(60),
+  bioInput: {
+    minHeight: 100,
+    textAlignVertical: 'top',
   },
-  ageInput: {
-    fontSize: responsiveFont(24),
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    paddingVertical: responsiveHeight(5),
+  bioText: {
+    padding: 10,
+    color: 'white',
   },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: responsiveHeight(10),
   },
-  onlineDot: {
-    width: responsiveWidth(10),
-    height: responsiveWidth(10),
-    borderRadius: responsiveWidth(5),
-    marginRight: responsiveWidth(5),
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 10,
   },
-  status: {
-    fontSize: responsiveFont(14),
-    color: '#00ff88',
-    fontStyle: 'italic',
-  },
-  wordCountContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: responsiveHeight(10),
-  },
-  wordCountText: {
-    fontSize: responsiveFont(12),
-    color: 'rgba(1, 225, 255, 0.49)',
-  },
-  bioContainer: {
-    backgroundColor: 'rgba(15, 51, 96, 0.5)',
-    padding: responsiveWidth(15),
-    borderRadius: responsiveWidth(10),
-  },
-  bioText: {
-    fontSize: responsiveFont(16),
-    lineHeight: responsiveFont(24),
-    color: '#fff',
-    textAlign: 'center',
-  },
-  bioInput: {
-    fontSize: responsiveFont(16),
-    lineHeight: responsiveFont(24),
-    color: '#fff',
-    padding: 0,
-    textAlign: 'center',
-    textAlignVertical: 'top',
-    minHeight: responsiveHeight(100),
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  smallGridItem: {
-    width: responsiveWidth(90),
-    alignItems: 'center',
-    padding: responsiveWidth(8),
-    backgroundColor: 'rgba(14, 113, 226, 0.03)',
-    borderRadius: responsiveWidth(10),
-    marginBottom: responsiveHeight(10),
-    borderWidth: 0.5,
-    borderColor: 'rgba(14, 113, 226, 0.42)',
-  },
-  smallGridLabel: {
-    fontSize: responsiveFont(10),
-    color: 'rgba(206, 201, 201, 0.7)',
-    marginTop: responsiveHeight(4),
-    textAlign: 'center',
-  },
-  smallGridValue: {
-    fontSize: responsiveFont(12),
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: responsiveHeight(2),
-    textAlign: 'center',
-  },
-  icons: {
-    color: 'rgba(169, 209, 244, 0.82)',
-  },
-  gamesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-  },
-  smallGameCard: {
-    width: responsiveWidth(140),
-    height: responsiveHeight(170),
-    marginRight: responsiveWidth(12),
-    marginBottom: responsiveHeight(10),
-    backgroundColor: 'rgba(42, 16, 216, 0.42)',
-    borderRadius: responsiveWidth(10),
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(14, 113, 226, 0.42)',
-  },
-  smallGameImage: {
-    width: '100%',
-    height: responsiveHeight(110),
-    resizeMode: 'cover',
-  },
-  favoriteBadge: {
-    position: 'absolute',
-    top: responsiveHeight(5),
-    left: responsiveWidth(5),
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: responsiveWidth(10),
-    width: responsiveWidth(24),
-    height: responsiveWidth(24),
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  frequencyTag: {
-    position: 'absolute',
-    top: responsiveHeight(5),
-    right: responsiveWidth(5),
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    color: '#fff',
-    fontSize: responsiveFont(10),
-    fontWeight: 'bold',
-    paddingHorizontal: responsiveWidth(8),
-    paddingVertical: responsiveHeight(3),
-    borderRadius: responsiveWidth(10),
-  },
-  gameInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: responsiveWidth(8),
-  },
-  gameLevel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: responsiveHeight(5),
-  },
-  gameName: {
-    fontSize: responsiveFont(12),
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  levelText: {
-    fontSize: responsiveFont(10),
-    color: '#fff',
-    marginLeft: responsiveWidth(3),
-  },
-  planCard: {
-    backgroundColor: 'rgba(22, 179, 211, 0.04)',
-    borderRadius: responsiveWidth(15),
-    padding: responsiveWidth(15),
-    borderWidth: 1,
-    borderColor: 'rgba(22, 179, 211, 0.42)',
-  },
-  planHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: responsiveHeight(10),
-  },
-  planName: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-    color: '#fff',
-    marginLeft: responsiveWidth(10),
-  },
-  planFeatures: {
-    paddingLeft: responsiveWidth(5),
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: responsiveHeight(8),
-  },
-  bulletPoint: {
-    width: responsiveWidth(6),
-    height: responsiveWidth(6),
-    borderRadius: responsiveWidth(3),
-    backgroundColor: 'rgb(252, 252, 252)',
-    marginTop: responsiveHeight(5),
-    marginRight: responsiveWidth(8),
-  },
-  featureText: {
-    fontSize: responsiveFont(14),
-    color: '#fff',
+  statusText: {
     flex: 1,
+    color: 'white',
+  },
+  changeStatusButton: {
+    padding: 5,
+  },
+  changeStatusText: {
+    color: '#00ff88',
   },
 });
 
