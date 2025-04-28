@@ -3,42 +3,30 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  Image, 
   ScrollView, 
-  TouchableOpacity,
-  Dimensions,
-  Platform,
-  StatusBar,
   SafeAreaView,
   TextInput,
+  FlatList,
   Alert,
-  Modal,
-  FlatList
+  TouchableOpacity,
+  Image
 } from 'react-native';
 import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
-const { width, height } = Dimensions.get('window');
+// Reusable Components
+import Header from './EditProfile Common/Header';
+import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
+import CoverImagePicker from './EditProfile Common/CoverImagePicker';
+import EditableSection from './EditProfile Common/EditableSection';
+import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
+import StatusModal, { statusOptions } from './EditProfile Common/StatusModal';
 
-// Responsive sizing functions
-const responsiveWidth = (size) => (width / 375) * size;
-const responsiveHeight = (size) => (height / 812) * size;
-const responsiveFont = (size) => (width / 375) * size;
-
-// Status options data
-const statusOptions = [
-  { id: '1', name: 'Online', icon: 'circle', color: '#00ff88' },
-  { id: '2', name: 'Offline', icon: 'circle', color: '#aaa' },
-  { id: '3', name: 'Invisible', icon: 'eye-off', color: '#aaa' },
-  { id: '4', name: 'Do Not Disturb', icon: 'minus-circle', color: '#e94560' },
-  { id: '5', name: 'Ready to Play', icon: 'gamepad', color: '#00bfff' },
-];
+// Default images
+const defaultProfile = require('../../../../../assets/profile1.jpg');
+const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation, route }) => {
-  // Default images
-  const defaultProfile = require('../../../../../assets/profile1.jpg');
-  const defaultCover = require('../../../../../assets/profile3.jpg');
-
   const initialUser = route.params?.user || {
     name: '',
     age: '',
@@ -138,29 +126,6 @@ const EditProfile = ({ navigation, route }) => {
   const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
   const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
 
-  // Render status option item
-  const renderStatusItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.statusOption} 
-      onPress={() => selectStatus(item.name)}
-    >
-      <Feather 
-        name={item.icon} 
-        size={responsiveFont(20)} 
-        color={item.color} 
-      />
-      <Text style={styles.statusOptionText}>{item.name}</Text>
-      {currentStatus === item.name && (
-        <Feather 
-          name="check" 
-          size={responsiveFont(20)} 
-          color="#00ff88" 
-          style={styles.statusCheck}
-        />
-      )}
-    </TouchableOpacity>
-  );
-
   // Get status color based on current status
   const getStatusColor = () => {
     const status = statusOptions.find(option => option.name === currentStatus);
@@ -169,56 +134,24 @@ const EditProfile = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <Feather name="arrow-left" size={responsiveFont(22)} color="#00ff88" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity 
-          style={styles.saveButton} 
-          onPress={handleSaveProfile}
-        >
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
+      <Header 
+        title="Edit Profile"
+        onBack={() => navigation.goBack()}
+        onSave={handleSaveProfile}
+      />
 
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Cover Photo Section */}
-        <View style={styles.coverContainer}>
-          <Image 
-            source={coverImage} 
-            style={styles.coverPhoto} 
-            defaultSource={defaultCover}
+        <View style={styles.coverSection}>
+          <CoverImagePicker 
+            image={coverImage} 
+            onPress={pickCoverImage} 
           />
-          <TouchableOpacity 
-            style={styles.changeCoverButton}
-            onPress={pickCoverImage}
-          >
-            <Feather name="camera" size={responsiveFont(18)} color="#fff" />
-            <Text style={styles.changeButtonText}>Change Cover</Text>
-          </TouchableOpacity>
-          
-          {/* Profile Photo Section */}
-          <View style={styles.profilePhotoContainer}>
-            <Image 
-              source={profileImage} 
-              style={styles.profilePhoto} 
-              defaultSource={defaultProfile}
-            />
-            <TouchableOpacity 
-              style={styles.changeProfileButton}
-              onPress={pickProfileImage}
-            >
-              <Feather name="camera" size={responsiveFont(16)} color="#fff" />
-            </TouchableOpacity>
-          </View>
+          <ProfileImagePicker 
+            image={profileImage} 
+            onPress={pickProfileImage}
+            style={styles.profileImagePosition}
+          />
         </View>
 
         {/* Name and Age Section */}
@@ -251,51 +184,37 @@ const EditProfile = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Bio Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionTitle}>Player Bio</Text>
-            <View style={styles.wordCountContainer}>
-              <Text style={styles.wordCountText}>{wordCount}/150 words</Text>
-              <TouchableOpacity 
-                onPress={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
-                style={styles.editButton}
-              >
-                <Feather 
-                  name={isEditing.bio ? "check" : "edit-2"} 
-                  size={responsiveFont(18)} 
-                  style={styles.icons}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.bioContainer}>
-            {isEditing.bio ? (
-              <TextInput
-                style={styles.bioInput}
-                value={bio}
-                onChangeText={handleBioChange}
-                multiline={true}
-                placeholder="Tell others about yourself as a gamer (max 150 words)..."
-                placeholderTextColor="#aaa"
-                maxLength={1000} // Approximate limit for 150 words
-              />
-            ) : (
-              <Text style={styles.bioText}>{bio || 'No bio added yet'}</Text>
-            )}
-          </View>
+            {/* Bio Section */}
+      <EditableSection 
+        title="Player Bio" 
+        onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
+        editIcon={isEditing.bio ? "check" : "edit-2"} // Add this prop
+      >
+        <View style={styles.wordCountContainer}>
+          <Text style={styles.wordCountText}>{wordCount}/150 words</Text>
         </View>
+        <View style={styles.bioContainer}>
+          {isEditing.bio ? (
+            <TextInput
+              style={styles.bioInput}
+              value={bio}
+              onChangeText={handleBioChange}
+              multiline={true}
+              placeholder="Tell others about yourself as a gamer (max 150 words)..."
+              placeholderTextColor="#aaa"
+              maxLength={1000}
+            />
+          ) : (
+            <Text style={styles.bioText}>{bio || 'No bio added yet'}</Text>
+          )}
+        </View>
+      </EditableSection>
 
         {/* About Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionTitle}>About</Text>
-            <TouchableOpacity onPress={navigateToEditAbout}>
-              <Feather name="edit-2"
-              size={responsiveFont(18)} 
-              style={styles.icons} />
-            </TouchableOpacity>
-          </View>
+        <EditableSection 
+          title="About" 
+          onEdit={navigateToEditAbout}
+        >
           <View style={styles.gridContainer}>
             {user.about.map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
@@ -309,18 +228,13 @@ const EditProfile = ({ navigation, route }) => {
               </View>
             ))}
           </View>
-        </View>
+        </EditableSection>
 
         {/* Looking For Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionTitle}>Looking For</Text>
-            <TouchableOpacity onPress={navigateToEditLookingFor}>
-              <Feather name="edit-2" 
-               size={responsiveFont(18)} 
-               style={styles.icons} />
-            </TouchableOpacity>
-          </View>
+        <EditableSection 
+          title="Looking For" 
+          onEdit={navigateToEditLookingFor}
+        >
           <View style={styles.gridContainer}>
             {user.lookingFor.map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
@@ -334,18 +248,13 @@ const EditProfile = ({ navigation, route }) => {
               </View>
             ))}
           </View>
-        </View>
+        </EditableSection>
 
         {/* Games Played Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionTitle}>Games Played</Text>
-            <TouchableOpacity onPress={navigateToEditGames}>
-              <Feather name="edit-2" 
-              size={responsiveFont(18)} 
-                  style={styles.icons}/>
-            </TouchableOpacity>
-          </View>
+        <EditableSection 
+          title="Games Played" 
+          onEdit={navigateToEditGames}
+        >
           <View style={styles.gamesContainer}>
             {user.bestAt.map((game, index) => (
               <View key={index} style={styles.smallGameCard}>
@@ -374,18 +283,13 @@ const EditProfile = ({ navigation, route }) => {
               </View>
             ))}
           </View>
-        </View>
+        </EditableSection>
 
         {/* Subscription Plan Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionTitle}>Gamer Subscription</Text>
-            <TouchableOpacity onPress={navigateToEditPackage}>
-              <Feather name="edit-2" 
-               size={responsiveFont(18)} 
-               style={styles.icons} />
-            </TouchableOpacity>
-          </View>
+        <EditableSection 
+          title="Gamer Subscription" 
+          onEdit={navigateToEditPackage}
+        >
           <View style={styles.planCard}>
             <View style={styles.planHeader}>
               <MaterialCommunityIcons 
@@ -404,34 +308,15 @@ const EditProfile = ({ navigation, route }) => {
               ))}
             </View>
           </View>
-        </View>
+        </EditableSection>
       </ScrollView>
 
-      {/* Status Selection Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <StatusModal 
         visible={showStatusModal}
-        onRequestClose={() => setShowStatusModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Status</Text>
-            <FlatList
-              data={statusOptions}
-              renderItem={renderStatusItem}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.statusList}
-            />
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setShowStatusModal(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowStatusModal(false)}
+        currentStatus={currentStatus}
+        onSelectStatus={selectStatus}
+      />
     </SafeAreaView>
   );
 };
@@ -441,106 +326,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
   },
-  scrollViewContent: {
-    paddingBottom: 70, // Add padding at the bottom to prevent content from being hidden behind the BottomNavBar
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: responsiveHeight(15),
-    paddingVertical: responsiveHeight(15),
-    backgroundColor: 'rgb(14, 3, 52)',
-    borderBottomWidth: 1,
-    borderBottomColor: '#0f3460',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
-
-  headerTitle: {
-      fontSize: responsiveFont(20),
-      fontWeight: 'bold',
-     color: '#fff',
-     fontFami: 'Roboto',
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-    },
-
-
-  backButton: {
-    padding: responsiveWidth(5),
-  },
-
-  saveButton: {
-    backgroundColor: 'rgb(6, 185, 234)',
-    paddingHorizontal: responsiveWidth(16),
-    paddingVertical: responsiveHeight(8),
-    borderRadius: responsiveWidth(20),
-  },
-  saveButtonText: {
-    color: '#16213e',
-    fontWeight: 'bold',
-    fontSize: responsiveFont(14),
-  },
   scrollView: {
     flex: 1,
   },
-  coverContainer: {
+  coverSection: {
     position: 'relative',
-    height: responsiveHeight(200),
-    backgroundColor: '#0f3460',
+    marginBottom: responsiveHeight(60),
   },
-  coverPhoto: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.8,
-  },
-  changeCoverButton: {
-    position: 'absolute',
-    top: responsiveHeight(10),
-    right: responsiveWidth(10),
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: responsiveWidth(10),
-    paddingVertical: responsiveHeight(5),
-    borderRadius: responsiveWidth(20),
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  changeButtonText: {
-    fontSize: responsiveFont(12),
-    color: '#fff',
-    marginLeft: responsiveWidth(5),
-  },
-   profilePhotoContainer: {
-      position: 'absolute',
-      bottom: -responsiveHeight(50),
-      left: responsiveWidth(20),
-      width: responsiveWidth(100),
-      height: responsiveWidth(100),
-      borderRadius: responsiveWidth(50),
-      borderWidth: 4,
-      borderColor: '#062452',
-      overflow: 'hidden',
-      backgroundColor: 'rgb(164, 167, 170)',
-      shadowColor: '#062452',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.8,
-      shadowRadius: 10,
-      elevation: 10,
-    },
-    profilePhoto: {
-      width: '100%',
-      height: '100%',
-    },
-  changeProfileButton: {
-    position: 'absolute',
-    bottom: responsiveHeight(5),
-    right: responsiveWidth(5),
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    width: responsiveWidth(30),
-    height: responsiveWidth(30),
-    borderRadius: responsiveWidth(15),
-    justifyContent: 'center',
-    alignItems: 'center',
+  profileImagePosition: {
+    bottom: -responsiveHeight(50),
+    left: responsiveWidth(20),
   },
   nameContainer: {
     paddingHorizontal: responsiveWidth(20),
@@ -583,7 +378,6 @@ const styles = StyleSheet.create({
     width: responsiveWidth(10),
     height: responsiveWidth(10),
     borderRadius: responsiveWidth(5),
-    backgroundColor: '#00ff88',
     marginRight: responsiveWidth(5),
   },
   status: {
@@ -591,44 +385,15 @@ const styles = StyleSheet.create({
     color: '#00ff88',
     fontStyle: 'italic',
   },
-  section: {
-    backgroundColor: 'rgba(47, 7, 226, 0.05)',
-    paddingHorizontal: responsiveWidth(20),
-    paddingVertical: responsiveHeight(15),
-    marginBottom: responsiveHeight(10),
-    borderRadius: responsiveWidth(10),
-    marginHorizontal: responsiveWidth(10),
-    borderWidth: 1,
-    borderColor: '#0f3460',
-  },
-
-  sectionTitle: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-    marginBottom: responsiveHeight(15),
-    color: 'rgb(1, 225, 255)',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: responsiveHeight(15),
-  },
   wordCountContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginBottom: responsiveHeight(10),
   },
   wordCountText: {
     fontSize: responsiveFont(12),
     color: 'rgba(1, 225, 255, 0.49)',
-    marginRight: responsiveWidth(10),
   },
-  editButton: {
-    padding: responsiveWidth(5),
-  },
-
   bioContainer: {
     backgroundColor: 'rgba(15, 51, 96, 0.5)',
     padding: responsiveWidth(15),
@@ -637,7 +402,7 @@ const styles = StyleSheet.create({
   bioText: {
     fontSize: responsiveFont(16),
     lineHeight: responsiveFont(24),
-   color: '#fff',
+    color: '#fff',
     textAlign: 'center',
   },
   bioInput: {
@@ -661,12 +426,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(14, 113, 226, 0.03)',
     borderRadius: responsiveWidth(10),
     marginBottom: responsiveHeight(10),
-    borderWidth: .5,
+    borderWidth: 0.5,
     borderColor: 'rgba(14, 113, 226, 0.42)',
   },
   smallGridLabel: {
     fontSize: responsiveFont(10),
-   color: 'rgba(206, 201, 201, 0.7)',
+    color: 'rgba(206, 201, 201, 0.7)',
     marginTop: responsiveHeight(4),
     textAlign: 'center',
   },
@@ -677,18 +442,15 @@ const styles = StyleSheet.create({
     marginTop: responsiveHeight(2),
     textAlign: 'center',
   },
-
   icons: {
-    size:responsiveFont(16) ,
-    color:'rgba(169, 209, 244, 0.82)' 
+    color: 'rgba(169, 209, 244, 0.82)',
   },
-
   gamesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
   },
-   smallGameCard: {
+  smallGameCard: {
     width: responsiveWidth(140),
     height: responsiveHeight(170),
     marginRight: responsiveWidth(12),
@@ -696,7 +458,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(42, 16, 216, 0.42)',
     borderRadius: responsiveWidth(10),
     overflow: 'hidden',
-    borderWidth: .5,
+    borderWidth: 0.5,
     borderColor: 'rgba(14, 113, 226, 0.42)',
   },
   smallGameImage: {
@@ -721,10 +483,9 @@ const styles = StyleSheet.create({
     top: responsiveHeight(5),
     right: responsiveWidth(5),
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-   color: '#fff',
+    color: '#fff',
     fontSize: responsiveFont(10),
     fontWeight: 'bold',
-    
     paddingHorizontal: responsiveWidth(8),
     paddingVertical: responsiveHeight(3),
     borderRadius: responsiveWidth(10),
@@ -745,11 +506,11 @@ const styles = StyleSheet.create({
   gameName: {
     fontSize: responsiveFont(12),
     fontWeight: 'bold',
-   color: '#fff',
+    color: '#fff',
   },
   levelText: {
     fontSize: responsiveFont(10),
-   color: '#fff',
+    color: '#fff',
     marginLeft: responsiveWidth(3),
   },
   planCard: {
@@ -767,7 +528,7 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
-   color: '#fff',
+    color: '#fff',
     marginLeft: responsiveWidth(10),
   },
   planFeatures: {
@@ -781,70 +542,15 @@ const styles = StyleSheet.create({
   bulletPoint: {
     width: responsiveWidth(6),
     height: responsiveWidth(6),
-    borderRadius: responsiveWidth(10),
+    borderRadius: responsiveWidth(3),
     backgroundColor: 'rgb(252, 252, 252)',
     marginTop: responsiveHeight(5),
     marginRight: responsiveWidth(8),
   },
   featureText: {
     fontSize: responsiveFont(14),
-   color: '#fff',
-    flex: 1,
-  },
-  // Modal styles
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  modalContent: {
-    width: responsiveWidth(300),
-    backgroundColor: 'rgb(1, 2, 23)',
-    borderRadius: responsiveWidth(15),
-    padding: responsiveWidth(20),
-    borderWidth: 1,
-    borderColor: '#0f3460',
-  },
-  modalTitle: {
-    fontSize: responsiveFont(20),
-    fontWeight: 'bold',
     color: '#fff',
-    marginBottom: responsiveHeight(20),
-    textAlign: 'center',
-  },
-  statusList: {
-    paddingBottom: responsiveHeight(10),
-  },
-  statusOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: responsiveHeight(12),
-    paddingHorizontal: responsiveWidth(15),
-    marginBottom: responsiveHeight(5),
-    backgroundColor: '#0f3460',
-    borderRadius: responsiveWidth(10),
-  },
-  statusOptionText: {
-    fontSize: responsiveFont(16),
-    color: '#fff',
-    marginLeft: responsiveWidth(10),
     flex: 1,
-  },
-  statusCheck: {
-    marginLeft: 'auto',
-  },
-  closeButton: {
-    backgroundColor: 'rgb(77, 20, 232)',
-    padding: responsiveWidth(12),
-    borderRadius: responsiveWidth(10),
-    marginTop: responsiveHeight(10),
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: responsiveFont(16),
   },
 });
 

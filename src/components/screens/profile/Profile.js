@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,118 +6,168 @@ import {
   Image, 
   ScrollView, 
   TouchableOpacity,
-  Dimensions,
+  ActivityIndicator,
   Platform,
   StatusBar,
-  SafeAreaView
+  SafeAreaView,
+  Alert,
+  RefreshControl
 } from 'react-native';
-import { Feather, MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import profilePhoto from '../../../../assets/Alex.jpg';
 import coverPhoto from '../../../../assets/sova_image.jpg';
 import game1 from '../../../../assets/game1.png';
 import game2 from '../../../../assets/game2.png';
 import game3 from '../../../../assets/game3.png';
 import BottomNavBar from '../../common/BottomNavBar';
+import ProfileCard from './Profile Common/ProfileCard';
+import GamesSection from './Profile Common/GamesSection';
+import PlanSection from './Profile Common/PlanSection';
+import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
+import { useAuth } from '../../context/authContext';
 
-const { width, height } = Dimensions.get('window');
+const Profile = ({ navigation, route }) => {
 
-// Responsive sizing functions
-const responsiveWidth = (size) => (width / 375) * size;
-const responsiveHeight = (size) => (height / 812) * size;
-const responsiveFont = (size) => (width / 375) * size;
+  
+  const [authState] = useAuth();
+  const currentUser = authState?.user || {};
+  
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-const Profile = ({ navigation }) => {
-  const gamesScrollRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-
-  const [user, setUser] = useState({
+  // Default data for fallback
+  const defaultUser = {
     name: 'KMS',
     age: 28,
     bio: 'Professional gamer and streamer. Love playing FPS and strategy games. Looking for teammates who communicate well!',
-    about: [
-      { icon: 'graduation-cap', label: 'Education', value: 'Undergrad Degree' },
-      { icon: 'map-marker-alt', label: 'Location', value: 'New York, NY' },
-      { icon: 'briefcase', label: 'Occupation', value: 'Streamer' },
-      { icon: 'smoking', label: 'Smoking', value: 'Yes' },
-      { icon: 'glass-whiskey', label: 'Drinking', value: 'Socially' },
-      { icon: 'pray', label: 'Religion', value: 'Islam' },
-      { icon: 'genderless', label: 'Gender', value: 'Male' }
-    ],
-    lookingFor: [
-      { icon: 'moon', label: 'Availability', value: 'Night' },
-      { icon: 'gamepad', label: 'Play Style', value: 'Competitive' },
-      { icon: 'users', label: 'Play Mode', value: 'Team Based' },
-    ],
-    bestAt: [
-      { 
-        image: game1, 
-        name: 'Valorant', 
-        level: 'Gold',
-        frequency: 'Most Played',
-        isFavorite: true
-      },
-      { 
-        image: game2, 
-        name: 'Call of Duty Mobile', 
-        level: 'Platinum',
-        frequency: 'Recently Played',
-        isFavorite: false
-      },
-      { 
-        image: game3, 
-        name: 'EA FC 24', 
-        level: 'Gold',
-        frequency: 'Once Played',
-        isFavorite: false
-      },
-    ],
+    about: [],
+    lookingFor: [],
+    bestAt: [],
     plan: {
       name: 'Elite Gamer Package',
-      features: [
-        'Unlimited likes',
-        'Send direct requests',
-        'Premium avatars',
-        'Priority visibility',
-        'Custom gaming themes'
-      ]
+      features: []
+    },
+    profileImage: profilePhoto,
+    coverImage: coverPhoto,
+    status: 'Online'
+  };
+
+  // Fetch profile data
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!currentUser?._id) {
+        throw new Error('User not authenticated');
+      }
+
+      const profileData = await getProfile(currentUser._id);
+      setUser({
+        ...defaultUser,
+        ...profileData,
+        about: profileData?.about || [],
+        lookingFor: profileData?.lookingFor || [],
+        bestAt: profileData?.bestAt || [],
+        plan: {
+          ...defaultUser.plan,
+          ...profileData?.plan,
+          features: profileData?.plan?.features || []
+        }
+      });
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      
+      let errorMsg = err.message;
+      if (err.message === 'Network Error') {
+        errorMsg = 'Network error - please check your connection';
+      }
+      
+      setError(errorMsg);
+      setUser(defaultUser);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  });
+  };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [currentUser?._id]);
+
+  // Handle updated data from EditProfile
+  useEffect(() => {
+    if (route.params?.updatedUser) {
+      setUser(prev => ({
+        ...defaultUser,
+        ...prev,
+        ...route.params.updatedUser,
+        about: route.params.updatedUser?.about || [],
+        lookingFor: route.params.updatedUser?.lookingFor || [],
+        bestAt: route.params.updatedUser?.bestAt || [],
+        plan: {
+          ...defaultUser.plan,
+          ...route.params.updatedUser?.plan,
+          features: route.params.updatedUser?.plan?.features || []
+        }
+      }));
+      
+      if (route.params?.showSuccess) {
+        Alert.alert('Success', 'Profile updated successfully');
+        navigation.setParams({ showSuccess: undefined });
+      }
+    }
+  }, [route.params?.updatedUser]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProfileData();
+  };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { user });
-  };
-
-  // Function to scroll right
-  const scrollGamesRight = () => {
-    if (gamesScrollRef.current) {
-      gamesScrollRef.current.scrollTo({
-        x: responsiveWidth(150),
-        y: 0,
-        animated: true
-      });
+    if (!user || !currentUser?._id) {
+      Alert.alert('Error', 'Cannot edit profile: User not authenticated');
+      return;
     }
+    navigation.navigate('EditProfile', { 
+      user, 
+      userId: currentUser._id 
+    });
   };
 
-  // Function to scroll left
-  const scrollGamesLeft = () => {
-    if (gamesScrollRef.current) {
-      gamesScrollRef.current.scrollTo({
-        x: 0,
-        y: 0,
-        animated: true
-      });
-    }
-  };
+  if (loading && !user) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#00ff88" />
+        <Text style={styles.loadingText}>Loading your profile...</Text>
+      </SafeAreaView>
+    );
+  }
 
-  // Handle scroll events to show/hide left arrow
-  const handleScroll = (event) => {
-    const scrollPosition = event.nativeEvent.contentOffset.x;
-    setCanScrollLeft(scrollPosition > 10);
-  };
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, styles.errorContainer]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={fetchProfileData}
+        >
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  // Safe array accessors
+  const safeAbout = user?.about || [];
+  const safeLookingFor = user?.lookingFor || [];
+  const safeBestAt = user?.bestAt || [];
+  const safePlanFeatures = user?.plan?.features || [];
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with title only */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
@@ -125,23 +175,41 @@ const Profile = ({ navigation }) => {
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContent} // Added for proper spacing with BottomNavBar
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#00ff88"
+          />
+        }
       >
-        {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
-          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <Image 
+            source={user?.coverImage || coverPhoto} 
+            style={styles.coverPhoto} 
+            defaultSource={coverPhoto}
+          />
           <View style={styles.profilePhotoContainer}>
-            <Image source={profilePhoto} style={styles.profilePhoto} />
+            <Image 
+              source={user?.profileImage || profilePhoto} 
+              style={styles.profilePhoto} 
+              defaultSource={profilePhoto}
+            />
           </View>
         </View>
 
-        {/* Name, Age and Edit Profile Button */}
         <View style={styles.nameContainer}>
           <View>
-            <Text style={styles.name}>{user.name}, {user.age}</Text>
+            <Text style={styles.name}>{user?.name || 'No name'}, {user?.age || 'NA'}</Text>
             <View style={styles.statusContainer}>
-              <View style={styles.onlineDot} />
-              <Text style={styles.status}>Online Now</Text>
+              <View style={[styles.onlineDot, { 
+                backgroundColor: user?.status === 'Online' ? '#32ff7e' : 
+                                user?.status === 'Away' ? '#ffaf40' : '#ff4d4d'
+              }]} />
+              <Text style={styles.status}>
+                {user?.status || 'Offline'} {user?.status === 'Online' ? 'Now' : ''}
+              </Text>
             </View>
           </View>
           <TouchableOpacity 
@@ -154,145 +222,42 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Bio Section - Updated version */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Player Bio</Text>
           <View style={styles.bioContainer}>
-            <Text style={styles.bioText}>{user.bio}</Text>
+            <Text style={styles.bioText}>
+              {user?.bio || 'No bio added yet. Tap Edit to add one!'}
+            </Text>
           </View>
         </View>
 
-        {/* About Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.gridContainer}>
-            {user.about.map((item, index) => (
-              <View key={index} style={styles.smallGridItem}>
-                <FontAwesome5 style={styles.icons}
-                  name={item.icon} 
-                />
-                <Text style={styles.smallGridLabel}>{item.label}</Text>
-                <Text style={styles.smallGridValue}>{item.value}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <ProfileCard 
+          title="About" 
+          data={safeAbout}
+          emptyMessage="No about information added yet"
+        />
 
-        {/* Looking For Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Looking For</Text>
-          <View style={styles.gridContainer}>
-            {user.lookingFor.map((item, index) => (
-              <View key={index} style={styles.smallGridItem}>
-                <FontAwesome5 style={styles.icons}
-                  name={item.icon} 
-                />
-                <Text style={styles.smallGridLabel}>{item.label}</Text>
-                <Text style={styles.smallGridValue}>{item.value}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <ProfileCard 
+          title="Looking For" 
+          data={safeLookingFor}
+          emptyMessage="No preferences added yet"
+        />
 
-        {/* Games Played Section - Updated with scrollable indicators */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Games Played</Text>
-          <View style={{ position: 'relative' }}>
-            <ScrollView  
-              ref={gamesScrollRef}
-              horizontal={true} 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.gamesScrollContainer}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-            >
-              {user.bestAt.map((game, index) => (
-                <TouchableOpacity 
-                  key={index} 
-                  style={styles.smallGameCard}
-                  activeOpacity={0.7}
-                >
-                  {game.isFavorite && (
-                    <View style={styles.favoriteBadge}>
-                      <MaterialCommunityIcons 
-                        name="heart" 
-                        size={responsiveFont(14)} 
-                        color="#e94560" 
-                      />
-                    </View>
-                  )}
-                  <Image source={game.image} style={styles.smallGameImage} />
-                  <Text style={styles.frequencyTag}>{game.frequency}</Text>
-                  <View style={styles.gameInfo}>
-                    <Text style={styles.gameName}>{game.name}</Text>
-                    <View style={styles.gameLevel}>
-                      <MaterialCommunityIcons 
-                        name="medal" 
-                        size={responsiveFont(14)} 
-                        color="#FFD700" 
-                      />
-                      <Text style={styles.levelText}>{game.level}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            
-            {/* Left scroll arrow - only visible when scrolled right */}
-            {canScrollLeft && (
-              <TouchableOpacity 
-                style={[styles.scrollIndicator, styles.scrollIndicatorLeft]}
-                onPress={scrollGamesLeft}
-                activeOpacity={0.7}
-              >
-                <Feather 
-                  name="chevron-left" 
-                  size={responsiveFont(20)} 
-                  color="rgb(232, 230, 230)" 
-                />
-              </TouchableOpacity>
-            )}
+        <GamesSection 
+          title="Games Played" 
+          games={safeBestAt}
+          emptyMessage="No games added yet"
+        />
 
-            {/* Right scroll arrow */}
-            <TouchableOpacity 
-              style={styles.scrollIndicator}
-              onPress={scrollGamesRight}
-              activeOpacity={0.7}
-            >
-              <Feather 
-                name="chevron-right" 
-                size={responsiveFont(20)} 
-                color="rgb(232, 230, 230)" 
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* My Plan Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Gamer Subscription</Text>
-          <View style={styles.planCard}>
-            <View style={styles.planHeader}>
-              <MaterialCommunityIcons 
-                name="crown" 
-                size={responsiveFont(24)} 
-                color="#FFD700" 
-              />
-              <Text style={styles.planName}>{user.plan.name}</Text>
-            </View>
-            <View style={styles.planFeatures}>
-              {user.plan.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <View style={styles.bulletPoint} />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
+        <PlanSection 
+          title="Gamer Subscription" 
+          plan={{
+            ...user?.plan,
+            features: safePlanFeatures
+          }}
+        />
       </ScrollView>
 
-      {/* Bottom Navigation Bar */}
       <BottomNavBar />
     </SafeAreaView>
   );
@@ -303,8 +268,38 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
   },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#ff4d4d',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#00a8ff',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   scrollViewContent: {
-    paddingBottom: 70, // Add padding at the bottom to prevent content from being hidden behind the BottomNavBar
+    paddingBottom: 70,
   },
   header: {
     justifyContent: 'center',
@@ -318,8 +313,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: responsiveFont(20),
     fontWeight: 'bold',
-   color: '#fff',
-   fontFami: 'Roboto',
+    color: '#fff',
+    fontFamily: 'Roboto',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -329,7 +324,6 @@ const styles = StyleSheet.create({
   coverContainer: {
     position: 'relative',
     height: responsiveHeight(200),
-   
   },
   coverPhoto: {
     width: '100%',
@@ -367,16 +361,10 @@ const styles = StyleSheet.create({
   name: {
     fontSize: responsiveFont(26),
     fontWeight: 'bold',
-   color: '#fff',
+    color: '#fff',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
-
-  icons: {
-    size:responsiveFont(16) ,
-    color:'rgba(169, 209, 244, 0.82)' 
-  },
-
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -386,23 +374,21 @@ const styles = StyleSheet.create({
     width: responsiveWidth(10),
     height: responsiveWidth(10),
     borderRadius: responsiveWidth(5),
-    backgroundColor: 'rgb(32, 151, 58)',
     marginRight: responsiveWidth(5),
   },
   status: {
     fontSize: responsiveFont(14),
-   color: 'rgb(32, 151, 58)',
+    color: '#32ff7e',
     fontStyle: 'italic',
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    
     paddingHorizontal: responsiveWidth(15),
     paddingVertical: responsiveHeight(8),
     borderRadius: responsiveWidth(20),
     shadowColor: '#e94560',
-   
+    backgroundColor: 'rgba(233, 69, 96, 0.2)',
   },
   editButtonText: {
     fontSize: responsiveFont(14),
@@ -424,174 +410,20 @@ const styles = StyleSheet.create({
     fontSize: responsiveFont(18),
     fontWeight: 'bold',
     marginBottom: responsiveHeight(15),
-   color: 'rgb(1, 225, 255)',
+    color: 'rgb(1, 225, 255)',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   bioContainer: {
-    // backgroundColor: 'rgba(15, 52, 96, 0.5)',
     padding: responsiveWidth(15),
     borderRadius: responsiveWidth(10),
+    backgroundColor: 'rgba(15, 51, 96, 0.3)',
   },
   bioText: {
     fontSize: responsiveFont(16),
     lineHeight: responsiveFont(24),
-   color: '#fff',
-    textAlign: 'center',
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  smallGridItem: {
-    width: responsiveWidth(90),
-    alignItems: 'center',
-    padding: responsiveWidth(8),
-    backgroundColor: 'rgba(14, 113, 226, 0.03)',
-    borderRadius: responsiveWidth(10),
-    marginBottom: responsiveHeight(10),
-    borderWidth: .5,
-    borderColor: 'rgba(14, 113, 226, 0.42)',
-  },
-  smallGridLabel: {
-    fontSize: responsiveFont(10),
-   color: 'rgba(206, 201, 201, 0.7)',
-    marginTop: responsiveHeight(4),
-    textAlign: 'center',
-  },
-  smallGridValue: {
-    fontSize: responsiveFont(12),
-    fontWeight: 'bold',
     color: '#fff',
-    marginTop: responsiveHeight(2),
     textAlign: 'center',
-  },
-  gamesScrollContainer: {
-    paddingRight: responsiveWidth(20),
-    paddingLeft: responsiveWidth(5),
-  },
-  smallGameCard: {
-    width: responsiveWidth(120),
-    height: responsiveHeight(170),
-    marginRight: responsiveWidth(12),
-    marginBottom: responsiveHeight(10),
-    backgroundColor: 'rgba(42, 16, 216, 0.42)',
-    borderRadius: responsiveWidth(10),
-    overflow: 'hidden',
-    borderWidth: .5,
-    borderColor: 'rgba(14, 113, 226, 0.42)',
-  },
-  smallGameImage: {
-    width: '100%',
-    height: responsiveHeight(110),
-    resizeMode: 'cover',
-  },
-  scrollIndicator: {
-    position: 'absolute',
-    right: responsiveWidth(10),
-    top: '50%',
-    transform: [{ translateY: -responsiveHeight(15) }],
-    backgroundColor: 'rgba(214, 229, 222, 0.2)',
-    borderRadius: responsiveWidth(15),
-    width: responsiveWidth(30),
-    height: responsiveWidth(30),
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(214, 229, 222, 0.2)',
-    zIndex: 2,
-  },
-  scrollIndicatorLeft: {
-    right: 'auto',
-    left: responsiveWidth(10),
-  },
-  favoriteBadge: {
-    position: 'absolute',
-    top: responsiveHeight(5),
-    left: responsiveWidth(5),
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: responsiveWidth(10),
-    width: responsiveWidth(24),
-    height: responsiveWidth(24),
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  frequencyTag: {
-    position: 'absolute',
-    top: responsiveHeight(5),
-    right: responsiveWidth(5),
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-   color: '#fff',
-    fontSize: responsiveFont(10),
-    fontWeight: 'bold',
-    
-    paddingHorizontal: responsiveWidth(8),
-    paddingVertical: responsiveHeight(3),
-    borderRadius: responsiveWidth(10),
-  },
-  gameInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: responsiveWidth(8),
-  },
-  gameLevel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: responsiveHeight(5),
-  },
-  gameName: {
-    fontSize: responsiveFont(12),
-    fontWeight: 'bold',
-   color: '#fff',
-  },
-  levelText: {
-    fontSize: responsiveFont(10),
-   color: '#fff',
-    marginLeft: responsiveWidth(3),
-  },
-  planCard: {
-    backgroundColor: 'rgba(22, 179, 211, 0.04)',
-    borderRadius: responsiveWidth(15),
-    padding: responsiveWidth(15),
-    borderWidth: 1,
-    borderColor: 'rgba(22, 179, 211, 0.42)',
-  },
-  planHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: responsiveHeight(10),
-  },
-  planName: {
-    fontSize: responsiveFont(18),
-    fontWeight: 'bold',
-   color: '#fff',
-    marginLeft: responsiveWidth(10),
-  },
-  planFeatures: {
-    paddingLeft: responsiveWidth(5),
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: responsiveHeight(8),
-  },
-  bulletPoint: {
-    width: responsiveWidth(6),
-    height: responsiveWidth(6),
-    borderRadius: responsiveWidth(10),
-    backgroundColor: 'rgb(252, 252, 252)',
-    marginTop: responsiveHeight(5),
-    marginRight: responsiveWidth(8),
-  },
-  featureText: {
-    fontSize: responsiveFont(14),
-   color: '#fff',
-    flex: 1,
   },
 });
 

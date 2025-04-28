@@ -99,7 +99,6 @@ const Luminaries = ({ navigation }) => {
         title="LUMINARIES" 
         onMenuPress={handleBack}
         showBack={true}
-        showActionButton={false}  // This ensures no right-side icon appears
       />
       
       <ScrollView contentContainerStyle={styles.scrollContainer}>
