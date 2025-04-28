@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { responsiveFont, responsiveWidth, responsiveHeight } from './Metrics';
+import { responsiveFont, responsiveWidth, responsiveHeight } from '../EditProfile Common/Metrics';
 
 export const statusOptions = [
   { id: '1', name: 'Online', icon: 'circle', color: '#00ff88' },

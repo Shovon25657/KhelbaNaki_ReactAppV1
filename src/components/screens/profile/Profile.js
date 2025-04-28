@@ -24,7 +24,6 @@ import ProfileCard from './Profile Common/ProfileCard';
 import GamesSection from './Profile Common/GamesSection';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
-import { getProfile } from '../../../Backend/services/api';
 import { useAuth } from '../../context/authContext';
 
 const Profile = ({ navigation, route }) => {
