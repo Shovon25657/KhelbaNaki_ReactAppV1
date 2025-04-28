@@ -105,7 +105,7 @@ const PurchaseGig = () => {
           key={i}
           name={i <= rating ? 'star' : 'star-o'}
           size={14}
-          color="#FFD700"
+          color="rgb(1, 225, 255)"
           style={{ marginRight: 2 }}
         />
       );
@@ -136,7 +136,7 @@ const PurchaseGig = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#FFD700" />
+          <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gig Details</Text>
         <View style={styles.placeholderButton} />
@@ -160,7 +160,7 @@ const PurchaseGig = () => {
 
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <FontAwesome name="star" size={16} color="#FFD700" />
+              <FontAwesome name="star" size={16} color="rgb(1, 225, 255)" />
               <Text style={styles.statText}>{gig.rating} ({gig.reviews} reviews)</Text>
             </View>
             <View style={styles.statItem}>
@@ -184,7 +184,7 @@ const PurchaseGig = () => {
             <Text style={styles.sectionTitle}>What's Included</Text>
             {serviceDetails.map((detail, index) => (
               <View key={index} style={styles.detailItem}>
-                <Feather name={detail.icon} size={20} color="#FFD700" />
+                <Feather name={detail.icon} size={20} color="rgb(1, 225, 255)" />
                 <View style={styles.detailTextContainer}>
                   <Text style={styles.detailTitle}>{detail.title}</Text>
                   <Text style={styles.detailValue}>{detail.value}</Text>
@@ -203,7 +203,7 @@ const PurchaseGig = () => {
             <View style={styles.reviewsHeader}>
               <Text style={styles.sectionTitle}>Customer Reviews</Text>
               <View style={styles.overallRating}>
-                <FontAwesome name="star" size={16} color="#FFD700" />
+                <FontAwesome name="star" size={16} color="rgb(1, 225, 255)" />
                 <Text style={styles.overallRatingText}>{gig.rating} ({gig.reviews})</Text>
               </View>
             </View>
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#fff',
   },
   placeholderButton: {
     width: 34,
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   verifiedBadge: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#rgb(1, 225, 255)',
     borderRadius: 12,
     width: 16,
     height: 16,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     marginBottom: 12,
   },
   descriptionText: {
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     color: '#aaa',
   },
   purchaseButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',

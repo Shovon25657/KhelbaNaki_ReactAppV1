@@ -20,7 +20,7 @@ const PrivacyPolicy = () => {
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={28} color="#FFD700" />
+            <Icon name="arrow-back" size={28} color="rgb(1, 225, 255)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>PRIVACY POLICY</Text>
           <View style={{ width: 28 }} />
@@ -81,7 +81,7 @@ const PrivacyPolicy = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   container: {
     flex: 1,
@@ -90,31 +90,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#16213e',
-    borderBottomWidth: 2,
-    borderBottomColor: '#FFD700',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   headerTitle: {
-    color: '#FFD700',
-    fontSize: 22,
+   fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    flex: 1,
-    fontFamily: 'Arial',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: {width: 1, height: 1},
-    textShadowRadius: 3,
-    letterSpacing: 1,
+    color: '#FFF',
   },
   content: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#0f3460',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   sectionTitle: {
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 20,

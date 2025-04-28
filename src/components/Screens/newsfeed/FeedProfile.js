@@ -408,10 +408,10 @@ const FeedProfile = ({ route, navigation }) => {
           <Image source={{ uri: user.avatar }} style={styles.profileAvatar} />
           
           <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
+            {/* <View style={styles.statItem}>
               <Text style={styles.statNumber}>{posts.length}</Text>
               <Text style={styles.statLabel}>Posts</Text>
-            </View>
+            </View> */}
             <TouchableOpacity style={styles.statItem} onPress={showFollowersModal}>
               <Text style={styles.statNumber}>{user.followers}</Text>
               <Text style={styles.statLabel}>Followers</Text>
@@ -780,7 +780,7 @@ const FeedProfile = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   header: {
     flexDirection: 'row',
@@ -788,8 +788,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#222',
-    backgroundColor: '#1a1a2e',
+    borderBottomColor: '#0f3460',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   headerTitle: {
     fontSize: 20,
@@ -802,11 +802,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   profileAvatar: {
-    width: 100,
-    height: 100,
+    width: 50,
+    height: 50,
     borderRadius: 50,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: 'rgb(1, 225, 255)',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -833,7 +833,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileName: {
-    color: '#FFF',
+    color: 'rgb(1, 225, 255)',
     fontWeight: 'bold',
     fontSize: 18,
     marginRight: 10,
@@ -855,12 +855,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   postContainer: {
-    backgroundColor: '#1a1a2e',
-    marginBottom: 15,
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: 'rgb(1, 2, 23)',
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: '#0f3460',
+      marginHorizontal: 5,
+      marginVertical: 10,
+      borderRadius: 10,
+      padding: 15,
   },
   postContent: {
     color: '#FFF',

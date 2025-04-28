@@ -25,7 +25,7 @@ const { height, width } = Dimensions.get('window');
 const marketplaceData = [
   {
     id: '1',
-    image: require('../../../../assets/game1.png'),
+    image: require('../../../../assets/thumbnail1.jpg'),
     rating: 4.8,
     reviews: 142,
     price: '$25',
@@ -36,7 +36,7 @@ const marketplaceData = [
   },
   {
     id: '2',
-    image: require('../../../../assets/game1.png'),
+    image: require('../../../../assets/thumbnail4.jpg'),
     rating: 4.9,
     reviews: 98,
     price: '$30',
@@ -47,7 +47,7 @@ const marketplaceData = [
   },
   {
     id: '3',
-    image: require('../../../../assets/game1.png'),
+    image: require('../../../../assets/suke-valorant-launch-key-art-4_r.jpg'),
     rating: 4.7,
     reviews: 215,
     price: '$22',
@@ -245,16 +245,16 @@ const Marketplace = () => {
 
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity
-      style={[
+      style={[ 
         styles.categoryItem,
-        selectedCategory === item && styles.selectedCategoryItem
+        selectedCategory === item && styles.selectedCategoryItem 
       ]}
       onPress={() => setSelectedCategory(item === selectedCategory ? null : item)}
       activeOpacity={0.7}
     >
-      <Text style={[
+      <Text style={[ 
         styles.categoryItemText,
-        selectedCategory === item && styles.selectedCategoryItemText
+        selectedCategory === item && styles.selectedCategoryItemText 
       ]}>
         {item}
       </Text>
@@ -263,16 +263,16 @@ const Marketplace = () => {
 
   const renderTimeRangeItem = ({ item }) => (
     <TouchableOpacity
-      style={[
+      style={[ 
         styles.timeRangeItem,
-        selectedTimeRange === item.value && styles.selectedTimeRangeItem
+        selectedTimeRange === item.value && styles.selectedTimeRangeItem 
       ]}
       onPress={() => setSelectedTimeRange(item.value)}
       activeOpacity={0.7}
     >
-      <Text style={[
+      <Text style={[ 
         styles.timeRangeItemText,
-        selectedTimeRange === item.value && styles.selectedTimeRangeItemText
+        selectedTimeRange === item.value && styles.selectedTimeRangeItemText 
       ]}>
         {item.label}
       </Text>
@@ -292,13 +292,13 @@ const Marketplace = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#FFD700" />
+          <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         
         <Text style={styles.headerTitle}>Marketplace</Text>
         
         <TouchableOpacity onPress={handleLibraryPress} style={styles.libraryButton}>
-          <FontAwesome name="book" size={24} color="#FFD700" />
+          <FontAwesome name="book" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
       
@@ -308,11 +308,11 @@ const Marketplace = () => {
         onPress={toggleSearchPanel}
         activeOpacity={0.8}
       >
-        <FontAwesome name="search" size={22} color="#FFD700" />
+        <FontAwesome name="search" size={22} color="rgb(1, 225, 255)" />
         <Text style={styles.searchButtonText}>
           {searchQuery ? `Search: "${searchQuery}"` : 'Search Marketplace'}
         </Text>
-        <FontAwesome name="sliders" size={22} color="#FFD700" />
+        <FontAwesome name="sliders" size={22} color="rgb(1, 225, 255)" />
       </TouchableOpacity>
       
       {/* Marketplace grid */}
@@ -333,9 +333,9 @@ const Marketplace = () => {
       {/* Search Panel Overlay */}
       {showSearchPanel && (
         <Animated.View 
-          style={[
+          style={[ 
             styles.overlay, 
-            { opacity: overlayOpacity }
+            { opacity: overlayOpacity } 
           ]}
           onTouchStart={toggleSearchPanel}
         />
@@ -344,18 +344,18 @@ const Marketplace = () => {
       {/* Search Panel */}
       {showSearchPanel && (
         <Animated.View 
-          style={[
+          style={[ 
             styles.searchPanel, 
             { 
               transform: [{ translateY: panelTranslateY }],
-              height: height * 0.85 // Increased height
+              height: height * 0.85 // Increased height 
             }
           ]}
         >
           <View style={styles.panelHeader}>
             <Text style={styles.panelTitle}>Advanced Search</Text>
             <TouchableOpacity onPress={toggleSearchPanel}>
-              <Ionicons name="close" size={28} color="#FFD700" />
+              <Ionicons name="close" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
           
@@ -402,9 +402,9 @@ const Marketplace = () => {
                 returnKeyType="done"
               />
               <TouchableOpacity 
-                style={[
-                  styles.addCategoryButton,
-                  !customCategory.trim() && styles.disabledButton
+                style={[ 
+                  styles.addCategoryButton, 
+                  !customCategory.trim() && styles.disabledButton 
                 ]}
                 onPress={addCustomCategory}
                 disabled={!customCategory.trim()}
@@ -426,9 +426,9 @@ const Marketplace = () => {
                 maximumValue={100}
                 value={priceRange[0]}
                 onValueChange={(value) => setPriceRange([value, priceRange[1]])}
-                minimumTrackTintColor="#FFD700"
+                minimumTrackTintColor="rgb(1, 225, 255)"
                 maximumTrackTintColor="#888"
-                thumbTintColor="#FFD700"
+                thumbTintColor="rgb(1, 225, 255)"
                 step={1}
               />
               <Text style={styles.sliderLabel}>Max Price: ${Math.round(priceRange[1])}</Text>
@@ -438,9 +438,9 @@ const Marketplace = () => {
                 maximumValue={100}
                 value={priceRange[1]}
                 onValueChange={(value) => setPriceRange([priceRange[0], value])}
-                minimumTrackTintColor="#FFD700"
+                minimumTrackTintColor="rgb(1, 225, 255)"
                 maximumTrackTintColor="#888"
-                thumbTintColor="#FFD700"
+                thumbTintColor="rgb(1, 225, 255)"
                 step={1}
               />
             </View>
@@ -488,28 +488,24 @@ const Marketplace = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#232342',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#FFF',
   },
   libraryButton: {
     padding: 5,
@@ -518,18 +514,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#232342',
+    backgroundColor: 'rgb(1, 12, 20)',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 12,
     margin: 15,
     marginBottom: 5,
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: 'rgb(1, 225, 255)',
   },
   searchButtonText: {
     flex: 1,
-    color: '#FFD700',
+    color: '#fff',
     fontWeight: '600',
     fontSize: 16,
     marginHorizontal: 10,
@@ -540,14 +536,13 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     margin: 8,
-    backgroundColor: '#232342',
     borderRadius: 12,
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    backgroundColor: 'rgb(1, 2, 23)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#0f3460',
+    padding: 15,
   },
   itemImage: {
     width: '100%',
@@ -586,14 +581,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   categoryText: {
-    color: '#FFD700',
+    color: '#fff',
     fontSize: 12,
     fontWeight: '500',
   },
   priceText: {
     fontWeight: '700',
     fontSize: 18,
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
   },
   titleText: {
     fontSize: 16,
@@ -655,7 +650,7 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#fff',
   },
   panelScrollContent: {
     flex: 1,
@@ -667,7 +662,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#232342',
-    paddingVertical: 12,
+    paddingVertical: 1,
     paddingHorizontal: 15,
     borderRadius: 12,
     marginBottom: 15,
@@ -701,8 +696,7 @@ const styles = StyleSheet.create({
     borderColor: '#313160',
   },
   selectedCategoryItem: {
-    backgroundColor: '#FFD700',
-    borderColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
   },
   categoryItemText: {
     color: '#fff',
@@ -721,15 +715,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#232342',
     color: '#fff',
-    padding: 12,
+    paddingHorizontal: 12,
     borderRadius: 12,
     marginRight: 10,
     borderWidth: 1,
     borderColor: '#313160',
   },
   addCategoryButton: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 15,
+    backgroundColor: 'rgb(112, 2, 255)',
+    paddingHorizontal: 25,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -771,8 +765,7 @@ const styles = StyleSheet.create({
     borderColor: '#313160',
   },
   selectedTimeRangeItem: {
-    backgroundColor: '#FFD700',
-    borderColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
   },
   timeRangeItemText: {
     color: '#fff',
@@ -799,20 +792,18 @@ const styles = StyleSheet.create({
   resetButton: {
     backgroundColor: '#313160',
     marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#FFD700',
   },
   applyButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(120, 1, 255)',
     marginLeft: 10,
   },
   resetButtonText: {
-    color: '#FFD700',
+    color: '#fff',
     fontWeight: '600',
     fontSize: 16,
   },
   applyButtonText: {
-    color: '#1a1a2e',
+    color: '#fff',
     fontWeight: '700',
     fontSize: 16,
   },
