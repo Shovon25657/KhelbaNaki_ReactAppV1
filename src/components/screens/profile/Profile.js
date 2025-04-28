@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -18,8 +18,6 @@ import game1 from '../../../../assets/game1.png';
 import game2 from '../../../../assets/game2.png';
 import game3 from '../../../../assets/game3.png';
 import BottomNavBar from '../../common/BottomNavBar';
-import { AuthContext } from '../../context/authContext';
-import { ProfileDataContext } from '../../context/profileDataContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,25 +27,10 @@ const responsiveHeight = (size) => (height / 812) * size;
 const responsiveFont = (size) => (width / 375) * size;
 
 const Profile = ({ navigation }) => {
-
-
-  //global state
-  const [state, setState] = useContext(ProfileDataContext);
-  const {profileData, token } = state;
-
-
-
-
-
-
-
-
-
-
   const gamesScrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
 
-  const [front_end_user, setUser] = useState({
+  const [user, setUser] = useState({
     name: 'KMS',
     age: 28,
     bio: 'Professional gamer and streamer. Love playing FPS and strategy games. Looking for teammates who communicate well!',
@@ -101,7 +84,7 @@ const Profile = ({ navigation }) => {
   });
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { front_end_user });
+    navigation.navigate('EditProfile', { user });
   };
 
   // Function to scroll right
@@ -155,7 +138,7 @@ const Profile = ({ navigation }) => {
         {/* Name, Age and Edit Profile Button */}
         <View style={styles.nameContainer}>
           <View>
-            <Text style={styles.name}>{profileData.gamingName}, {front_end_user.age}</Text>
+            <Text style={styles.name}>{user.name}, {user.age}</Text>
             <View style={styles.statusContainer}>
               <View style={styles.onlineDot} />
               <Text style={styles.status}>Online Now</Text>
@@ -175,7 +158,7 @@ const Profile = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Player Bio</Text>
           <View style={styles.bioContainer}>
-            <Text style={styles.bioText}>{front_end_user.bio}</Text>
+            <Text style={styles.bioText}>{user.bio}</Text>
           </View>
         </View>
 
@@ -183,7 +166,7 @@ const Profile = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
           <View style={styles.gridContainer}>
-            {front_end_user.about.map((item, index) => (
+            {user.about.map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 style={styles.icons}
                   name={item.icon} 
@@ -199,7 +182,7 @@ const Profile = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Looking For</Text>
           <View style={styles.gridContainer}>
-            {front_end_user.lookingFor.map((item, index) => (
+            {user.lookingFor.map((item, index) => (
               <View key={index} style={styles.smallGridItem}>
                 <FontAwesome5 style={styles.icons}
                   name={item.icon} 
@@ -223,7 +206,7 @@ const Profile = ({ navigation }) => {
               onScroll={handleScroll}
               scrollEventThrottle={16}
             >
-              {front_end_user.bestAt.map((game, index) => (
+              {user.bestAt.map((game, index) => (
                 <TouchableOpacity 
                   key={index} 
                   style={styles.smallGameCard}
@@ -295,10 +278,10 @@ const Profile = ({ navigation }) => {
                 size={responsiveFont(24)} 
                 color="#FFD700" 
               />
-              <Text style={styles.planName}>{front_end_user.plan.name}</Text>
+              <Text style={styles.planName}>{user.plan.name}</Text>
             </View>
             <View style={styles.planFeatures}>
-              {front_end_user.plan.features.map((feature, index) => (
+              {user.plan.features.map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
                   <View style={styles.bulletPoint} />
                   <Text style={styles.featureText}>{feature}</Text>
