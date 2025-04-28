@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,10 +6,12 @@ import {
   Image, 
   ScrollView, 
   TouchableOpacity,
-  Dimensions,
+  ActivityIndicator,
   Platform,
   StatusBar,
-  SafeAreaView
+  SafeAreaView,
+  Alert,
+  RefreshControl
 } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import profilePhoto from '../../../../assets/Alex.jpg';
@@ -22,68 +24,150 @@ import ProfileCard from './Profile Common/ProfileCard';
 import GamesSection from './Profile Common/GamesSection';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
+import { useAuth } from '../../context/authContext';
 
-const Profile = ({ navigation }) => {
-  const [user, setUser] = useState({
+const Profile = ({ navigation, route }) => {
+
+  
+  const [authState] = useAuth();
+  const currentUser = authState?.user || {};
+  
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Default data for fallback
+  const defaultUser = {
     name: 'KMS',
     age: 28,
     bio: 'Professional gamer and streamer. Love playing FPS and strategy games. Looking for teammates who communicate well!',
-    about: [
-      { icon: 'graduation-cap', label: 'Education', value: 'Undergrad Degree' },
-      { icon: 'map-marker-alt', label: 'Location', value: 'New York, NY' },
-      { icon: 'briefcase', label: 'Occupation', value: 'Streamer' },
-      { icon: 'smoking', label: 'Smoking', value: 'Yes' },
-      { icon: 'glass-whiskey', label: 'Drinking', value: 'Socially' },
-      { icon: 'pray', label: 'Religion', value: 'Islam' },
-      { icon: 'genderless', label: 'Gender', value: 'Male' }
-    ],
-    lookingFor: [
-      { icon: 'moon', label: 'Availability', value: 'Night' },
-      { icon: 'gamepad', label: 'Play Style', value: 'Competitive' },
-      { icon: 'users', label: 'Play Mode', value: 'Team Based' },
-    ],
-    bestAt: [
-      { 
-        image: game1, 
-        name: 'Valorant', 
-        level: 'Gold',
-        frequency: 'Most Played',
-        isFavorite: true
-      },
-      { 
-        image: game2, 
-        name: 'Call of Duty Mobile', 
-        level: 'Platinum',
-        frequency: 'Recently Played',
-        isFavorite: false
-      },
-      { 
-        image: game3, 
-        name: 'EA FC 24', 
-        level: 'Gold',
-        frequency: 'Once Played',
-        isFavorite: false
-      },
-    ],
+    about: [],
+    lookingFor: [],
+    bestAt: [],
     plan: {
       name: 'Elite Gamer Package',
-      features: [
-        'Unlimited likes',
-        'Send direct requests',
-        'Premium avatars',
-        'Priority visibility',
-        'Custom gaming themes'
-      ]
+      features: []
+    },
+    profileImage: profilePhoto,
+    coverImage: coverPhoto,
+    status: 'Online'
+  };
+
+  // Fetch profile data
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!currentUser?._id) {
+        throw new Error('User not authenticated');
+      }
+
+      const profileData = await getProfile(currentUser._id);
+      setUser({
+        ...defaultUser,
+        ...profileData,
+        about: profileData?.about || [],
+        lookingFor: profileData?.lookingFor || [],
+        bestAt: profileData?.bestAt || [],
+        plan: {
+          ...defaultUser.plan,
+          ...profileData?.plan,
+          features: profileData?.plan?.features || []
+        }
+      });
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      
+      let errorMsg = err.message;
+      if (err.message === 'Network Error') {
+        errorMsg = 'Network error - please check your connection';
+      }
+      
+      setError(errorMsg);
+      setUser(defaultUser);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  });
+  };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [currentUser?._id]);
+
+  // Handle updated data from EditProfile
+  useEffect(() => {
+    if (route.params?.updatedUser) {
+      setUser(prev => ({
+        ...defaultUser,
+        ...prev,
+        ...route.params.updatedUser,
+        about: route.params.updatedUser?.about || [],
+        lookingFor: route.params.updatedUser?.lookingFor || [],
+        bestAt: route.params.updatedUser?.bestAt || [],
+        plan: {
+          ...defaultUser.plan,
+          ...route.params.updatedUser?.plan,
+          features: route.params.updatedUser?.plan?.features || []
+        }
+      }));
+      
+      if (route.params?.showSuccess) {
+        Alert.alert('Success', 'Profile updated successfully');
+        navigation.setParams({ showSuccess: undefined });
+      }
+    }
+  }, [route.params?.updatedUser]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProfileData();
+  };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { user });
+    if (!user || !currentUser?._id) {
+      Alert.alert('Error', 'Cannot edit profile: User not authenticated');
+      return;
+    }
+    navigation.navigate('EditProfile', { 
+      user, 
+      userId: currentUser._id 
+    });
   };
+
+  if (loading && !user) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#00ff88" />
+        <Text style={styles.loadingText}>Loading your profile...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, styles.errorContainer]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={fetchProfileData}
+        >
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  // Safe array accessors
+  const safeAbout = user?.about || [];
+  const safeLookingFor = user?.lookingFor || [];
+  const safeBestAt = user?.bestAt || [];
+  const safePlanFeatures = user?.plan?.features || [];
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with title only */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
@@ -92,22 +176,40 @@ const Profile = ({ navigation }) => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#00ff88"
+          />
+        }
       >
-        {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
-          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <Image 
+            source={user?.coverImage || coverPhoto} 
+            style={styles.coverPhoto} 
+            defaultSource={coverPhoto}
+          />
           <View style={styles.profilePhotoContainer}>
-            <Image source={profilePhoto} style={styles.profilePhoto} />
+            <Image 
+              source={user?.profileImage || profilePhoto} 
+              style={styles.profilePhoto} 
+              defaultSource={profilePhoto}
+            />
           </View>
         </View>
 
-        {/* Name, Age and Edit Profile Button */}
         <View style={styles.nameContainer}>
           <View>
-            <Text style={styles.name}>{user.name}, {user.age}</Text>
+            <Text style={styles.name}>{user?.name || 'No name'}, {user?.age || 'NA'}</Text>
             <View style={styles.statusContainer}>
-              <View style={styles.onlineDot} />
-              <Text style={styles.status}>Online Now</Text>
+              <View style={[styles.onlineDot, { 
+                backgroundColor: user?.status === 'Online' ? '#32ff7e' : 
+                                user?.status === 'Away' ? '#ffaf40' : '#ff4d4d'
+              }]} />
+              <Text style={styles.status}>
+                {user?.status || 'Offline'} {user?.status === 'Online' ? 'Now' : ''}
+              </Text>
             </View>
           </View>
           <TouchableOpacity 
@@ -120,40 +222,42 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Bio Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Player Bio</Text>
           <View style={styles.bioContainer}>
-            <Text style={styles.bioText}>{user.bio}</Text>
+            <Text style={styles.bioText}>
+              {user?.bio || 'No bio added yet. Tap Edit to add one!'}
+            </Text>
           </View>
         </View>
 
-        {/* About Section */}
         <ProfileCard 
           title="About" 
-          data={user.about}
+          data={safeAbout}
+          emptyMessage="No about information added yet"
         />
 
-        {/* Looking For Section */}
         <ProfileCard 
           title="Looking For" 
-          data={user.lookingFor}
+          data={safeLookingFor}
+          emptyMessage="No preferences added yet"
         />
 
-        {/* Games Played Section */}
         <GamesSection 
           title="Games Played" 
-          games={user.bestAt}
+          games={safeBestAt}
+          emptyMessage="No games added yet"
         />
 
-        {/* My Plan Section */}
         <PlanSection 
           title="Gamer Subscription" 
-          plan={user.plan}
+          plan={{
+            ...user?.plan,
+            features: safePlanFeatures
+          }}
         />
       </ScrollView>
 
-      {/* Bottom Navigation Bar */}
       <BottomNavBar />
     </SafeAreaView>
   );
@@ -163,6 +267,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#ff4d4d',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#00a8ff',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   scrollViewContent: {
     paddingBottom: 70,
@@ -240,12 +374,11 @@ const styles = StyleSheet.create({
     width: responsiveWidth(10),
     height: responsiveWidth(10),
     borderRadius: responsiveWidth(5),
-    backgroundColor: 'rgb(32, 151, 58)',
     marginRight: responsiveWidth(5),
   },
   status: {
     fontSize: responsiveFont(14),
-    color: 'rgb(32, 151, 58)',
+    color: '#32ff7e',
     fontStyle: 'italic',
   },
   editButton: {
@@ -255,6 +388,7 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(8),
     borderRadius: responsiveWidth(20),
     shadowColor: '#e94560',
+    backgroundColor: 'rgba(233, 69, 96, 0.2)',
   },
   editButtonText: {
     fontSize: responsiveFont(14),
@@ -283,6 +417,7 @@ const styles = StyleSheet.create({
   bioContainer: {
     padding: responsiveWidth(15),
     borderRadius: responsiveWidth(10),
+    backgroundColor: 'rgba(15, 51, 96, 0.3)',
   },
   bioText: {
     fontSize: responsiveFont(16),

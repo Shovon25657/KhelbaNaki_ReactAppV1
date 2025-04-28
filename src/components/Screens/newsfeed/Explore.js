@@ -698,7 +698,7 @@ const Explore = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   header: {
     flexDirection: 'row',
@@ -706,8 +706,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#222',
-    backgroundColor: '#1a1a2e',
+    borderBottomColor: '#0f3460',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   profileIcon: {
     width: 32,
@@ -731,9 +731,7 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   tab: {
     paddingVertical: 15,
@@ -741,23 +739,23 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: '#FFD700',
+    borderBottomColor: 'rgb(1, 225, 255)',
   },
   tabText: {
-    color: '#888',
+    color: '#fff',
     fontWeight: '600',
   },
   activeTabText: {
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
   },
   createPostButton: {
     position: 'absolute',
-    bottom: 80,
-    right: 20,
-    width: 56,
-    height: 56,
+    bottom: 100,
+    right: 30,
+    width: 50,
+    height: 50,
     borderRadius: 28,
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(0, 114, 130)',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
@@ -788,12 +786,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.93)',
   },
   newPostModal: {
     width: '90%',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 2, 23)',
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#0f3460',
     padding: 15,
   },
   newPostHeader: {
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   postInput: {
-    backgroundColor: '#222235',
+    backgroundColor: 'rgb(6, 9, 58)',
     borderRadius: 8,
     padding: 15,
     color: '#FFF',
@@ -830,16 +830,16 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   postButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(77, 20, 232)',
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
   },
   disabledButton: {
-    backgroundColor: '#666',
+    backgroundColor: 'rgb(11, 12, 36)',
   },
   postButtonText: {
-    color: '#000',
+    color: '#fff',
     fontWeight: 'bold',
   },
   selectedImageContainer: {
@@ -866,16 +866,14 @@ const styles = StyleSheet.create({
     paddingBottom: 70,
   },
   postContainer: {
-    backgroundColor: '#1a1a2e',
-    marginHorizontal: 15,
+    backgroundColor: 'rgb(1, 2, 23)',
+  borderWidth: 1,
+  borderColor: '#0f3460',
+    marginHorizontal: 5,
     marginVertical: 10,
     borderRadius: 10,
     padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 3,
+   
   },
   postHeader: {
     flexDirection: 'row',
@@ -1137,7 +1135,9 @@ const styles = StyleSheet.create({
   notificationsModal: {
     width: '90%',
     height: '80%',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 2, 23)',
+    borderWidth: 1,
+    borderColor: '#0f3460',
     borderRadius: 10,
     padding: 15,
   },
@@ -1179,7 +1179,7 @@ const styles = StyleSheet.create({
   },
   notificationUsername: {
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
   },
   notificationTime: {
     color: '#888',

@@ -163,7 +163,7 @@ const BuyGig = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#FFD700" />
+          <Feather name="arrow-left" size={24} color="rgb(1, 225, 255)" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Complete Purchase</Text>
         <View style={styles.placeholderButton} />
@@ -201,7 +201,7 @@ const BuyGig = () => {
             <Text style={styles.sectionTitle}>Payment Method</Text>
             
             <View style={styles.paymentMethod}>
-              <FontAwesome name="credit-card" size={20} color="#FFD700" />
+              <FontAwesome name="credit-card" size={20} color="rgb(1, 225, 255)" />
               <Text style={styles.paymentMethodText}>Credit/Debit Card</Text>
             </View>
             
@@ -319,20 +319,16 @@ const BuyGig = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#232342',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   backButton: {
     padding: 5,
@@ -340,7 +336,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#fff',
   },
   placeholderButton: {
     width: 34,
@@ -359,7 +355,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     marginBottom: 16,
   },
   gigInfo: {
@@ -411,12 +407,12 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
   },
   totalValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
   },
   paymentSection: {
     backgroundColor: '#2c2c54',
@@ -426,7 +422,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     marginBottom: 16,
   },
   paymentMethod: {
@@ -483,7 +479,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#2c2c54',
   },
   paymentButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -500,7 +496,7 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   successIcon: {
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -511,7 +507,7 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -522,7 +518,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   continueButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
     borderRadius: 8,
     padding: 16,
     width: '100%',
@@ -542,10 +538,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: 'rgb(1, 225, 255)',
   },
   orderButtonText: {
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     fontSize: 16,
     fontWeight: 'bold',
   },
