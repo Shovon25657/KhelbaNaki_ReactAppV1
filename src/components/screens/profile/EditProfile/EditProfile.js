@@ -43,9 +43,10 @@ const EditProfile = ({ navigation }) => {
 
   // Initialize form with profile data
   useEffect(() => {
-      setGamingName(profileData?.gamingName);
+    if (profileData) {
+      setGamingName(profileData.gamingName || '');
       setAge(profileData.age ? profileData.age.toString() : '');
-      setBio(profileData?.bio || '');
+      setBio(profileData.bio || '');
       setProfileImage(
         profileData.profileImage ? { uri: profileData.profileImage } : defaultProfile
       );
@@ -54,6 +55,7 @@ const EditProfile = ({ navigation }) => {
       );
       setCurrentStatus(profileData.status || 'Online');
       setWordCount(profileData.bio ? profileData.bio.split(/\s+/).filter(word => word.length > 0).length : 0);
+    }
   }, [profileData]);
 
   // Update word count when bio changes
@@ -124,7 +126,7 @@ const EditProfile = ({ navigation }) => {
         "/userabout/update-profile",
         {
           gamingName,
-          age: parseInt(age),
+          age: parseInt(age) || 0,
           bio,
           profileImage: profileImage.uri || profileImage,
           coverImage: coverImage.uri || coverImage,
@@ -205,14 +207,6 @@ const EditProfile = ({ navigation }) => {
   {JSON.stringify(profileData, null, 4)}
 </Text>
 
-
-  {profileData?.gamingName && (
-    <Text style={{fontFamily: 'monospace', color: '#fff'}}>
-      Current: {profileData.gamingName}
-    </Text>
-  )}
-
-
         {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
@@ -220,6 +214,8 @@ const EditProfile = ({ navigation }) => {
               style={styles.nameInput}
               value={gamingName}
               onChangeText={setGamingName}
+              placeholder="Gaming Name"
+              placeholderTextColor="#aaa"
             />
             <View style={styles.ageContainer}>
               <TextInput
