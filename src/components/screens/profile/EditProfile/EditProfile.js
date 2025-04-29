@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   TextInput,
   Alert,
   TouchableOpacity,
-  Image
+  ActivityIndicator
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,34 +16,53 @@ import { ProfileDataContext } from "../../../context/profileDataContext";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Reusable Components
+import Header from './EditProfile Common/Header';
+import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
+import CoverImagePicker from './EditProfile Common/CoverImagePicker';
+import EditableSection from './EditProfile Common/EditableSection';
+import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
 
 // Default images
 const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  // Global state from context
-  const [state, setState] = useContext(ProfileDataContext);
-  const { profileData, getProfileData } = state;
-
-  // Get auth token from AsyncStorage
-  const getToken = async () => {
-    const authData = await AsyncStorage.getItem('@auth');
-    return authData ? JSON.parse(authData).token : null;
-  };
-
+  const { profileData, setProfileData, getProfileData, loading: contextLoading } = useContext(ProfileDataContext);
+  
   // Local state
-  const [gamingName, setGamingName] = useState(profileData?.gamingName || '');
-  const [age, setAge] = useState(profileData?.age?.toString() || '');
-  const [bio, setBio] = useState(profileData?.bio || '');
-  const [profileImage, setProfileImage] = useState(profileData?.profileImage || defaultProfile);
-  const [coverImage, setCoverImage] = useState(profileData?.coverImage || defaultCover);
-  const [currentStatus, setCurrentStatus] = useState(profileData?.status || 'Online');
-  const [loading, setLoading] = useState(false);
+  const [gamingName, setGamingName] = useState('');
+  const [age, setAge] = useState('');
+  const [bio, setBio] = useState('');
+  const [profileImage, setProfileImage] = useState(defaultProfile);
+  const [coverImage, setCoverImage] = useState(defaultCover);
+  const [currentStatus, setCurrentStatus] = useState('Online');
+  const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState({ bio: false });
-  const [wordCount, setWordCount] = useState(profileData?.bio ? profileData.bio.split(/\s+/).length : 0);
+  const [wordCount, setWordCount] = useState(0);
 
-  // Image Picker Functions
+  // Initialize form with profile data
+  useEffect(() => {
+    if (profileData) {
+      setGamingName(profileData.gamingName || '');
+      setAge(profileData.age ? profileData.age.toString() : '');
+      setBio(profileData.bio || '');
+      setProfileImage(
+        profileData.profileImage ? { uri: profileData.profileImage } : defaultProfile
+      );
+      setCoverImage(
+        profileData.coverImage ? { uri: profileData.coverImage } : defaultCover
+      );
+      setCurrentStatus(profileData.status || 'Online');
+      setWordCount(profileData.bio ? profileData.bio.split(/\s+/).filter(word => word.length > 0).length : 0);
+    }
+  }, [profileData]);
+
+  // Update word count when bio changes
+  useEffect(() => {
+    setWordCount(bio.split(/\s+/).filter(word => word.length > 0).length);
+  }, [bio]);
+
   const pickProfileImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -82,19 +101,21 @@ const EditProfile = ({ navigation }) => {
     }
   };
 
-  // Handle bio text change with word limit
   const handleBioChange = (text) => {
     const words = text.split(/\s+/);
     if (words.length <= 150 || text.length < bio.length) {
       setBio(text);
-      setWordCount(words.length);
     }
   };
 
-  // Save Profile Function - Integrated with your backend
-  const handleSaveProfile = async () => {
+  const getToken = async () => {
+    const authData = await AsyncStorage.getItem('@auth');
+    return authData ? JSON.parse(authData).token : null;
+  };
+
+  const handleCreateProfile = async () => {
     try {
-      setLoading(true);
+      setSaving(true);
       const token = await getToken();
       
       if (!token) {
@@ -107,8 +128,8 @@ const EditProfile = ({ navigation }) => {
           gamingName,
           age: parseInt(age) || 0,
           bio,
-          profileImage,
-          coverImage,
+          profileImage: profileImage.uri || profileImage,
+          coverImage: coverImage.uri || coverImage,
           status: currentStatus
         },
         {
@@ -118,29 +139,21 @@ const EditProfile = ({ navigation }) => {
         }
       );
 
-      // Update context and local storage
-      setState(prev => ({
-        ...prev,
-        profileData: data?.updatedProfile
-      }));
-      
-      // Refresh profile data
+      setProfileData(data?.profile);
       await getProfileData();
-      
-      setLoading(false);
+      setSaving(false);
       navigation.goBack();
       Alert.alert("Success", "Profile updated successfully");
     } catch (error) {
-      setLoading(false);
+      setSaving(false);
       Alert.alert(
         "Error", 
         error.response?.data?.message || error.message || "Failed to update profile"
       );
-      console.log("Update error:", error);
+      console.log("Update profile error:", error);
     }
   };
 
-  // Get status color based on current status
   const getStatusColor = () => {
     const statusOptions = [
       { name: 'Online', color: '#00ff88' },
@@ -151,116 +164,99 @@ const EditProfile = ({ navigation }) => {
     return status ? status.color : '#00ff88';
   };
 
+  const toggleStatus = () => {
+    setCurrentStatus(prev => 
+      prev === 'Online' ? 'Away' : 
+      prev === 'Away' ? 'Offline' : 'Online'
+    );
+  };
+
+  if (contextLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00ff88" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Feather name="arrow-left" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
-          <TouchableOpacity onPress={handleSaveProfile} disabled={loading}>
-            <Text style={styles.saveButton}>
-              {loading ? "Saving..." : "Save"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+      <Header 
+        title="Edit Profile"
+        onBack={() => navigation.goBack()}
+        onSave={handleCreateProfile}
+        saveText={saving ? "Saving..." : "Save"}
+      />
 
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Cover Photo Section */}
         <View style={styles.coverSection}>
-          <TouchableOpacity onPress={pickCoverImage}>
-            <Image 
-              source={coverImage} 
-              style={styles.coverImage}
-            />
-            <View style={styles.editCoverIcon}>
-              <Feather name="edit" size={20} color="white" />
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity onPress={pickProfileImage} style={styles.profileImageContainer}>
-            <Image 
-              source={profileImage} 
-              style={styles.profileImage}
-            />
-            <View style={styles.editProfileIcon}>
-              <Feather name="edit" size={16} color="white" />
-            </View>
-          </TouchableOpacity>
+          <CoverImagePicker 
+            image={coverImage} 
+            onPress={pickCoverImage} 
+          />
+          <ProfileImagePicker 
+            image={profileImage} 
+            onPress={pickProfileImage}
+            style={styles.profileImagePosition}
+          />
         </View>
 
         {/* Name and Age Section */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Gaming Name</Text>
-          <TextInput
-            style={styles.input}
-            value={gamingName}
-            onChangeText={setGamingName}
-            placeholder="Enter your gaming name"
-            placeholderTextColor="#aaa"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Age</Text>
-          <TextInput
-            style={styles.input}
-            value={age}
-            onChangeText={setAge}
-            keyboardType="numeric"
-            placeholder="Enter your age"
-            placeholderTextColor="#aaa"
-            maxLength={2}
-          />
-        </View>
-
-        {/* Status */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Status</Text>
+        <View style={styles.nameContainer}>
+          <View style={styles.nameInputsContainer}>
+            <TextInput
+              style={styles.nameInput}
+              value={gamingName}
+              onChangeText={setGamingName}
+              placeholder="Gaming Name"
+              placeholderTextColor="#aaa"
+            />
+            <View style={styles.ageContainer}>
+              <TextInput
+                style={styles.ageInput}
+                value={age}
+                onChangeText={setAge}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="Age"
+                placeholderTextColor="#aaa"
+              />
+            </View>
+          </View>
           <View style={styles.statusContainer}>
-            <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-            <Text style={styles.statusText}>{currentStatus}</Text>
-            <TouchableOpacity 
-              style={styles.changeStatusButton}
-              onPress={() => {
-                setCurrentStatus(prev => 
-                  prev === 'Online' ? 'Away' : 
-                  prev === 'Away' ? 'Offline' : 'Online'
-                );
-              }}
-            >
-              <Text style={styles.changeStatusText}>Change</Text>
+            <View style={[styles.onlineDot, { backgroundColor: getStatusColor() }]} />
+            <TouchableOpacity onPress={toggleStatus}>
+              <Text style={styles.status}>{currentStatus} (Tap to change)</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Bio Section */}
-        <View style={styles.inputContainer}>
-          <View style={styles.bioHeader}>
-            <Text style={styles.label}>Player Bio</Text>
-            <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
-              <Feather name={isEditing ? "check" : "edit-2"} size={20} color="#666" />
-            </TouchableOpacity>
+        <EditableSection 
+          title="Player Bio" 
+          onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
+          editIcon={isEditing.bio ? "check" : "edit-2"}
+        >
+          <View style={styles.wordCountContainer}>
+            <Text style={styles.wordCountText}>{wordCount}/150 words</Text>
           </View>
-          <Text style={styles.wordCount}>{wordCount}/150 words</Text>
-          
-          {isEditing ? (
-            <TextInput
-              style={[styles.input, styles.bioInput]}
-              value={bio}
-              onChangeText={handleBioChange}
-              multiline
-              numberOfLines={4}
-              placeholder="Tell others about yourself as a gamer..."
-              placeholderTextColor="#aaa"
-            />
-          ) : (
-            <Text style={styles.bioText}>
-              {bio || 'No bio added yet. Tap edit to add one.'}
-            </Text>
-          )}
-        </View>
+          <View style={styles.bioContainer}>
+            {isEditing.bio ? (
+              <TextInput
+                style={styles.bioInput}
+                value={bio}
+                onChangeText={handleBioChange}
+                multiline={true}
+                placeholder="Tell others about yourself as a gamer (max 150 words)..."
+                placeholderTextColor="#aaa"
+                maxLength={1000}
+              />
+            ) : (
+              <Text style={styles.bioText}>{bio || 'No bio added yet'}</Text>
+            )}
+          </View>
+        </EditableSection>
       </ScrollView>
     </SafeAreaView>
   );
@@ -271,119 +267,99 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
   scrollView: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  saveButton: {
-    color: '#00ff88',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   coverSection: {
     position: 'relative',
-    marginBottom: 70,
+    marginBottom: responsiveHeight(60),
   },
-  coverImage: {
-    width: '100%',
-    height: 150,
+  profileImagePosition: {
+    bottom: -responsiveHeight(50),
+    left: responsiveWidth(20),
   },
-  editCoverIcon: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 5,
-    borderRadius: 15,
+  nameContainer: {
+    paddingHorizontal: responsiveWidth(20),
+    marginTop: responsiveHeight(60),
+    marginBottom: responsiveHeight(20),
   },
-  profileImageContainer: {
-    position: 'absolute',
-    bottom: -50,
-    left: 20,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: 'white',
-  },
-  editProfileIcon: {
-    position: 'absolute',
-    bottom: 5,
-    right: 5,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 5,
-    borderRadius: 15,
-  },
-  inputContainer: {
-    backgroundColor: 'rgba(15, 51, 96, 0.5)',
-    padding: 15,
-    margin: 10,
-    borderRadius: 10,
-  },
-  label: {
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: 'white',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: 'white',
-  },
-  bioHeader: {
+  nameInputsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  wordCount: {
-    textAlign: 'right',
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginBottom: 5,
+  nameInput: {
+    fontSize: responsiveFont(24),
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
+    paddingVertical: responsiveHeight(5),
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.65)',
+    marginRight: responsiveWidth(10),
   },
-  bioInput: {
-    minHeight: 100,
-    textAlignVertical: 'top',
+  ageContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.65)',
+    width: responsiveWidth(60),
   },
-  bioText: {
-    padding: 10,
-    color: 'white',
+  ageInput: {
+    fontSize: responsiveFont(24),
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    paddingVertical: responsiveHeight(5),
   },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: responsiveHeight(10),
   },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 10,
+  onlineDot: {
+    width: responsiveWidth(10),
+    height: responsiveWidth(10),
+    borderRadius: responsiveWidth(5),
+    marginRight: responsiveWidth(5),
   },
-  statusText: {
-    flex: 1,
-    color: 'white',
-  },
-  changeStatusButton: {
-    padding: 5,
-  },
-  changeStatusText: {
+  status: {
+    fontSize: responsiveFont(14),
     color: '#00ff88',
+    fontStyle: 'italic',
+  },
+  wordCountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: responsiveHeight(10),
+  },
+  wordCountText: {
+    fontSize: responsiveFont(12),
+    color: 'rgba(1, 225, 255, 0.49)',
+  },
+  bioContainer: {
+    backgroundColor: 'rgba(15, 51, 96, 0.5)',
+    padding: responsiveWidth(15),
+    borderRadius: responsiveWidth(10),
+  },
+  bioText: {
+    fontSize: responsiveFont(16),
+    lineHeight: responsiveFont(24),
+    color: '#fff',
+    textAlign: 'center',
+  },
+  bioInput: {
+    fontSize: responsiveFont(16),
+    lineHeight: responsiveFont(24),
+    color: '#fff',
+    padding: 0,
+    textAlign: 'center',
+    textAlignVertical: 'top',
+    minHeight: responsiveHeight(100),
   },
 });
 
