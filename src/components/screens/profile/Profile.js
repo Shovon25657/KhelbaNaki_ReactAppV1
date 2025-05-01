@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,44 +6,56 @@ import {
   Image, 
   ScrollView, 
   TouchableOpacity,
-  Dimensions,
-  Platform,
+  ActivityIndicator,
+  SafeAreaView,
   StatusBar,
-  SafeAreaView
+  Platform
 } from 'react-native';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import profilePhoto from '../../../../assets/Alex.jpg';
 import coverPhoto from '../../../../assets/sova_image.jpg';
-import game1 from '../../../../assets/game1.png';
-import game2 from '../../../../assets/game2.png';
-import game3 from '../../../../assets/game3.png';
 import BottomNavBar from '../../common/BottomNavBar';
 import ProfileCard from './Profile Common/ProfileCard';
 import GamesSection from './Profile Common/GamesSection';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
+import { UserDataContext } from '../../context/UserDataContext';
 
 const Profile = ({ navigation }) => {
-  const [user, setUser] = useState({
-    name: '',
-    age: null,
-    bio: '',
-    about: [],
-    lookingFor: [],
-    bestAt: [],
-    plan: {
-      name: '',
-      features: []
-    }
-  });
+  const { 
+    profileData, 
+    aboutData,
+    loading, 
+    error, 
+    refreshData 
+  } = useContext(UserDataContext);
+
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { user });
+    navigation.navigate('EditProfile');
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00ff88" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error loading profile: {error}</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with title only */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
@@ -53,21 +65,28 @@ const Profile = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
       >
-        {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
-          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <Image 
+            source={profileData?.coverImage ? { uri: profileData.coverImage } : coverPhoto} 
+            style={styles.coverPhoto} 
+          />
           <View style={styles.profilePhotoContainer}>
-            <Image source={profilePhoto} style={styles.profilePhoto} />
+            <Image 
+              source={profileData?.profileImage ? { uri: profileData.profileImage } : profilePhoto} 
+              style={styles.profilePhoto} 
+            />
           </View>
         </View>
 
-        {/* Name, Age and Edit Profile Button */}
         <View style={styles.nameContainer}>
           <View>
-            <Text style={styles.name}>{user.name}{user.age ? `, ${user.age}` : ''}</Text>
+            <Text style={styles.name}>
+              {profileData?.gamingName || 'Unknown Player'}
+              {profileData?.age ? `, ${profileData.age}` : ''}
+            </Text>
             <View style={styles.statusContainer}>
               <View style={styles.onlineDot} />
-              <Text style={styles.status}>Online Now</Text>
+              <Text style={styles.status}>{profileData?.status || 'Offline'}</Text>
             </View>
           </View>
           <TouchableOpacity 
@@ -80,55 +99,51 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Bio Section */}
-        {user.bio ? (
+        {profileData?.bio && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Player Bio</Text>
             <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>{user.bio}</Text>
+              <Text style={styles.bioText}>{profileData.bio}</Text>
             </View>
           </View>
-        ) : null}
+        )}
 
-        {/* About Section */}
-        {user.about.length > 0 && (
+        {aboutData && (
           <ProfileCard 
             title="About" 
-            data={user.about}
+            data={[
+              { label: 'Education', value: aboutData.educationQualification || 'Not specified' },
+              { label: 'Occupation', value: aboutData.occupation || 'Not specified' },
+              { label: 'Location', value: aboutData.location || 'Not specified' },
+              { label: 'Religion', value: aboutData.religion || 'Not specified' },
+              { label: 'Hobbies', value: aboutData.hobbies || 'Not specified' },
+              { label: 'Favorite Game', value: aboutData.favoriteGame || 'Not specified' },
+
+            ]}
           />
         )}
 
-        {/* Looking For Section */}
-        {user.lookingFor.length > 0 && (
-          <ProfileCard 
-            title="Looking For" 
-            data={user.lookingFor}
-          />
-        )}
-
-        {/* Games Played Section */}
-        {user.bestAt.length > 0 && (
+        {profileData?.gamesPlayed?.length > 0 && (
           <GamesSection 
             title="Games Played" 
-            games={user.bestAt}
+            games={profileData.gamesPlayed}
           />
         )}
 
-        {/* My Plan Section */}
-        {user.plan.name && (
+        {profileData?.plan?.name && (
           <PlanSection 
             title="Gamer Subscription" 
-            plan={user.plan}
+            plan={profileData.plan}
           />
         )}
       </ScrollView>
 
-      {/* Bottom Navigation Bar */}
       <BottomNavBar />
     </SafeAreaView>
   );
 };
 
+// Keep all your existing styles from the original Profile.js
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -259,6 +274,18 @@ const styles = StyleSheet.create({
     lineHeight: responsiveFont(24),
     color: '#fff',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    padding: 20,
   },
 });
 

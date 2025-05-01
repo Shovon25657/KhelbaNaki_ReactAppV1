@@ -7,7 +7,7 @@ const {
   getAllAboutContoller,
   getUserAboutController,
   deleteAboutController,
-  updateAboutController,
+  updateAboutDataController,
   getAboutDataController,
   updateprofileController,
 } = require("../controllers/userAboutController");
@@ -25,11 +25,13 @@ router.post("/create-gamesplayed", requireSingIn, addGamesPlayedController);
 // CREATE GET || GET
 //get about
 router.get("/get-profile", requireSingIn, getProfileDataController);
+router.get("/get-about", requireSingIn, getAboutDataController);
 router.get("/get-gamesplayed", requireSingIn, getGamesPlayedController);
 
 // CREATE  UPDATE || UPDATE
 //UPDATE || PUT
 router.put("/update-profile", requireSingIn, updateprofileController);
+router.put("/update-about", requireSingIn, updateAboutDataController);
 router.delete("/delete-gamesplayed", removeGameController);
 
 //export

@@ -1,14 +1,15 @@
 import React from 'react';
 import { AuthProvider } from './context/authContext';
-import { ProfileDataProvider } from './context/profileDataContext';
+import { UserDataProvider } from './context/UserDataContext';
+
 import ScreenMenu from './Menus/ScreenMenu';
 
 const RootNavigation = () => {
   return (
     <AuthProvider>
-      <ProfileDataProvider>
+      <UserDataProvider>
         <ScreenMenu />
-      </ProfileDataProvider>
+      </UserDataProvider>
     </AuthProvider>
   );
 };

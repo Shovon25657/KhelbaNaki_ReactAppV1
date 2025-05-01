@@ -53,6 +53,109 @@ const createAboutController = async ( req,res) => {
 };
 
 
+
+//Get AboutData
+const getAboutDataController = async (req, res) => {
+  try {
+    const aboutData = await userAboutModel.findOne({ user: req.auth._id });
+
+    if (!aboutData) {
+      return res.status(404).send({
+        success: false,
+        message: "About data not found",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: 'About Data',
+      aboutData
+    });
+  } catch (error) {
+    console.error("Error in GetAboutData:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error in GetAboutData",
+      error: error.message,
+    });
+  }
+}
+
+//Update About
+const updateAboutDataController = async (req, res) => {
+  try {
+    const { educationQualification, location, smoking, drinks, gender, religion, occupation } = req.body;
+    // Find profile by user ID (not params.id for security)
+    const aboutData = await userAboutModel.findOne({ user: req.auth._id });
+
+
+     // Validate at least one field is being updated
+     if (!educationQualification && !location && !smoking && !drinks && !gender && !religion && !occupation) {
+      return res.status(500).send({
+        success: false,
+        message: "Please provide at least one field to update",
+      });
+    }
+
+
+    // Check if profile exists
+    if (!aboutData) {
+      return res.status(404).send({
+        success: false,
+        message: "AboutData not found",
+      });
+    }
+
+    // Update only the provided fields
+    const updatedFields = {};
+    if (educationQualification !== undefined) updatedFields.educationQualification = educationQualification;
+    if (location !== undefined) updatedFields.location = location;
+    if (smoking !== undefined) updatedFields.smoking = smoking;
+    if (drinks !== undefined) updatedFields.drinks = drinks;
+    if (gender !== undefined) updatedFields.gender = gender;
+    if (religion !== undefined) updatedFields.religion = religion;
+    if (occupation !== undefined) updatedFields.occupation = occupation;
+
+    
+
+    const updatedAboutData = await userAboutModel.findOneAndUpdate(
+      { user: req.auth._id },
+      {
+        educationQualification: updatedFields.educationQualification || aboutData?.educationQualification,
+        location: updatedFields.location || aboutData?.location,
+        smoking: updatedFields.smoking || aboutData?.smoking,
+        drinks: updatedFields.drinks || aboutData?.drinks,
+        gender: updatedFields.gender || aboutData?.gender,
+        religion: updatedFields.religion || aboutData?.religion,
+        occupation: updatedFields.occupation || aboutData?.occupation,
+        // Add other fields as needed
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "AboutData Updated Successfully",
+      updatedAboutData,
+    });
+  } catch (error) {
+    console.error("Error in update AboutData:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error in updating AboutData",
+      error: error.message, // Send only the error message in production
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
 //Create Profile
 const createprofileController = async ( req,res) => {
       try {
@@ -214,4 +317,4 @@ const updateprofileController = async (req, res) => {
 
 
 
-module.exports = {createAboutController, createprofileController, getProfileDataController, updateprofileController, };
+module.exports = {createAboutController, getAboutDataController, updateAboutDataController, createprofileController, getProfileDataController, updateprofileController, };

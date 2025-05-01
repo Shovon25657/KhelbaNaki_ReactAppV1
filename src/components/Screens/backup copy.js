@@ -1,20 +1,18 @@
-import React, { useState, useContext, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
   SafeAreaView,
   TextInput,
+  FlatList,
   Alert,
   TouchableOpacity,
-  ActivityIndicator
+  Image
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { ProfileDataContext } from "../../../context/profileDataContext";
-import axios from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Reusable Components
 import Header from './EditProfile Common/Header';
@@ -22,51 +20,38 @@ import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
 import CoverImagePicker from './EditProfile Common/CoverImagePicker';
 import EditableSection from './EditProfile Common/EditableSection';
 import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
+import StatusModal, { statusOptions } from './EditProfile Common/StatusModal';
 
 // Default images
 const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
-const EditProfile = ({ navigation }) => {
-  const { profileData, setProfileData, getProfileData, loading: contextLoading } = useContext(ProfileDataContext);
-  
-  // Local state
-  const [gamingName, setGamingName] = useState('');
-  const [age, setAge] = useState('');
-  const [bio, setBio] = useState('');
-  const [profileImage, setProfileImage] = useState(defaultProfile);
-  const [coverImage, setCoverImage] = useState(defaultCover);
-  const [currentStatus, setCurrentStatus] = useState('Online');
-  const [saving, setSaving] = useState(false);
+const EditProfile = ({ navigation, route }) => {
+  const initialUser = route.params?.user || {
+    name: '',
+    age: '',
+    bio: '',
+    about: [],
+    lookingFor: [],
+    bestAt: [],
+    plan: { name: '', features: [] },
+    profileImage: defaultProfile,
+    coverImage: defaultCover,
+    status: 'Online'
+  };
+
+  const [user, setUser] = useState(initialUser);
+  const [name, setName] = useState(initialUser.name);
+  const [age, setAge] = useState(initialUser.age?.toString() || '');
+  const [bio, setBio] = useState(initialUser.bio);
+  const [profileImage, setProfileImage] = useState(initialUser.profileImage);
+  const [coverImage, setCoverImage] = useState(initialUser.coverImage);
   const [isEditing, setIsEditing] = useState({ bio: false });
-  const [wordCount, setWordCount] = useState(0);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(initialUser.status || 'Online');
+  const [wordCount, setWordCount] = useState(initialUser.bio ? initialUser.bio.split(/\s+/).length : 0);
 
-  // Initialize form with profile data
-  useEffect(() => {
-    if (profileData) return;
-  
-    setGamingName(profileData.gamingName || '');
-    setAge(profileData.age ? profileData.age.toString() : '');
-    setBio(profileData.bio || '');
-    setProfileImage(
-      profileData.profileImage ? { uri: profileData.profileImage } : defaultProfile
-    );
-    setCoverImage(
-      profileData.coverImage ? { uri: profileData.coverImage } : defaultCover
-    );
-    setCurrentStatus(profileData.status || 'Online');
-    setWordCount(
-      profileData.bio
-        ? profileData.bio.split(/\s+/).filter(word => word.length > 0).length
-        : 0
-    );
-  }, [profileData]);
-
-  // Update word count when bio changes
-  useEffect(() => {
-    setWordCount(bio.split(/\s+/).filter(word => word.length > 0).length);
-  }, [bio]);
-
+  // Image Picker Functions
   const pickProfileImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -105,91 +90,54 @@ const EditProfile = ({ navigation }) => {
     }
   };
 
+  // Handle bio text change with word limit
   const handleBioChange = (text) => {
     const words = text.split(/\s+/);
     if (words.length <= 150 || text.length < bio.length) {
       setBio(text);
+      setWordCount(words.length);
     }
   };
 
-  const getToken = async () => {
-    const authData = await AsyncStorage.getItem('@auth');
-    return authData ? JSON.parse(authData).token : null;
+  // Save Profile Function
+  const handleSaveProfile = () => {
+    const updatedUser = {
+      ...user,
+      name: name,
+      age: parseInt(age) || 0,
+      bio: bio,
+      profileImage: profileImage,
+      coverImage: coverImage,
+      status: currentStatus
+    };
+
+    navigation.navigate('Profile', { updatedUser });
   };
 
-  const handleCreateProfile = async () => {
-    try {
-      setSaving(true);
-      const token = await getToken();
-      
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
-
-      const { data } = await axios.put(
-        "/userabout/update-profile",
-        {
-          gamingName,
-          parsedAge: age === '' ? null : parseInt(age),
-          bio,
-          profileImage: profileImage.uri || profileImage,
-          coverImage: coverImage.uri || coverImage,
-          status: currentStatus
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      setProfileData(data?.profile);
-      await getProfileData();
-      setSaving(false);
-      navigation.goBack();
-      Alert.alert("Success", "Profile updated successfully");
-    } catch (error) {
-      setSaving(false);
-      Alert.alert(
-        "Error", 
-        error.response?.data?.message || error.message || "Failed to update profile"
-      );
-      console.log("Update profile error:", error);
-    }
+  // Select status function
+  const selectStatus = (status) => {
+    setCurrentStatus(status);
+    setShowStatusModal(false);
   };
 
+  // Navigation Functions
+  const navigateToEditAbout = () => navigation.navigate('EditAbout', { about: user.about });
+  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
+  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
+  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
+
+  // Get status color based on current status
   const getStatusColor = () => {
-    const statusOptions = [
-      { name: 'Online', color: '#00ff88' },
-      { name: 'Offline', color: '#ff0000' },
-      { name: 'Away', color: '#ffaa00' }
-    ];
     const status = statusOptions.find(option => option.name === currentStatus);
     return status ? status.color : '#00ff88';
   };
-
-  const toggleStatus = () => {
-    setCurrentStatus(prev => 
-      prev === 'Online' ? 'Away' : 
-      prev === 'Away' ? 'Offline' : 'Online'
-    );
-  };
-
-  if (contextLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00ff88" />
-      </View>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
       <Header 
         title="Edit Profile"
         onBack={() => navigation.goBack()}
-        onSave={handleCreateProfile}
-        saveText={saving ? "Saving..." : "Save"}
+        onSave={handleSaveProfile}
       />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -206,36 +154,15 @@ const EditProfile = ({ navigation }) => {
           />
         </View>
 
-
-        <Text style={{fontFamily: 'monospace', color: '#fff'}}>
-  {JSON.stringify(profileData, null, 4)}
-</Text>
-
-
-  {profileData?.gamingName && (
-    <Text style={{fontFamily: 'monospace', color: '#fff'}}>
-      Current: {profileData.gamingName}
-    </Text>
-  )}
-
-
         {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
-            <View>
-              <Text style={{fontFamily: 'monospace', color: '#fff'}}>
-                {profileData?.gamingName && (
-                  <Text style={{fontFamily: 'monospace', color: '#fff'}}>
-                    Current: {profileData.gamingName}
-                  </Text>
-                )}
-                   </Text>
-            </View>
-
             <TextInput
               style={styles.nameInput}
-              value={gamingName}
-              onChangeText={setGamingName}
+              value={name}
+              onChangeText={setName}
+              placeholder="Your Name"
+              placeholderTextColor="#aaa"
             />
             <View style={styles.ageContainer}>
               <TextInput
@@ -251,38 +178,145 @@ const EditProfile = ({ navigation }) => {
           </View>
           <View style={styles.statusContainer}>
             <View style={[styles.onlineDot, { backgroundColor: getStatusColor() }]} />
-            <TouchableOpacity onPress={toggleStatus}>
+            <TouchableOpacity onPress={() => setShowStatusModal(true)}>
               <Text style={styles.status}>{currentStatus} (Tap to change)</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Bio Section */}
+            {/* Bio Section */}
+      <EditableSection 
+        title="Player Bio" 
+        onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
+        editIcon={isEditing.bio ? "check" : "edit-2"} // Add this prop
+      >
+        <View style={styles.wordCountContainer}>
+          <Text style={styles.wordCountText}>{wordCount}/150 words</Text>
+        </View>
+        <View style={styles.bioContainer}>
+          {isEditing.bio ? (
+            <TextInput
+              style={styles.bioInput}
+              value={bio}
+              onChangeText={handleBioChange}
+              multiline={true}
+              placeholder="Tell others about yourself as a gamer (max 150 words)..."
+              placeholderTextColor="#aaa"
+              maxLength={1000}
+            />
+          ) : (
+            <Text style={styles.bioText}>{bio || 'No bio added yet'}</Text>
+          )}
+        </View>
+      </EditableSection>
+
+        {/* About Section */}
         <EditableSection 
-          title="Player Bio" 
-          onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
-          editIcon={isEditing.bio ? "check" : "edit-2"}
+          title="About" 
+          onEdit={navigateToEditAbout}
         >
-          <View style={styles.wordCountContainer}>
-            <Text style={styles.wordCountText}>{wordCount}/150 words</Text>
+          <View style={styles.gridContainer}>
+            {user.about.map((item, index) => (
+              <View key={index} style={styles.smallGridItem}>
+                <FontAwesome5 
+                  name={item.icon} 
+                  size={responsiveFont(18)} 
+                  style={styles.icons}
+                />
+                <Text style={styles.smallGridLabel}>{item.label}</Text>
+                <Text style={styles.smallGridValue}>{item.value}</Text>
+              </View>
+            ))}
           </View>
-          <View style={styles.bioContainer}>
-            {isEditing.bio ? (
-              <TextInput
-                style={styles.bioInput}
-                value={bio}
-                onChangeText={handleBioChange}
-                multiline={true}
-                placeholder="Tell others about yourself as a gamer (max 150 words)..."
-                placeholderTextColor="#aaa"
-                maxLength={1000}
+        </EditableSection>
+
+        {/* Looking For Section */}
+        <EditableSection 
+          title="Looking For" 
+          onEdit={navigateToEditLookingFor}
+        >
+          <View style={styles.gridContainer}>
+            {user.lookingFor.map((item, index) => (
+              <View key={index} style={styles.smallGridItem}>
+                <FontAwesome5 
+                  name={item.icon} 
+                  size={responsiveFont(18)} 
+                  style={styles.icons} 
+                />
+                <Text style={styles.smallGridLabel}>{item.label}</Text>
+                <Text style={styles.smallGridValue}>{item.value}</Text>
+              </View>
+            ))}
+          </View>
+        </EditableSection>
+
+        {/* Games Played Section */}
+        <EditableSection 
+          title="Games Played" 
+          onEdit={navigateToEditGames}
+        >
+          <View style={styles.gamesContainer}>
+            {user.bestAt.map((game, index) => (
+              <View key={index} style={styles.smallGameCard}>
+                {game.isFavorite && (
+                  <View style={styles.favoriteBadge}>
+                    <MaterialCommunityIcons 
+                      name="heart" 
+                      size={responsiveFont(14)} 
+                      color="#e94560" 
+                    />
+                  </View>
+                )}
+                <Image source={game.image} style={styles.smallGameImage} />
+                <Text style={styles.frequencyTag}>{game.frequency}</Text>
+                <View style={styles.gameInfo}>
+                  <Text style={styles.gameName}>{game.name}</Text>
+                  <View style={styles.gameLevel}>
+                    <MaterialCommunityIcons 
+                      name="medal" 
+                      size={responsiveFont(14)} 
+                      color="#FFD700" 
+                    />
+                    <Text style={styles.levelText}>{game.level}</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        </EditableSection>
+
+        {/* Subscription Plan Section */}
+        <EditableSection 
+          title="Gamer Subscription" 
+          onEdit={navigateToEditPackage}
+        >
+          <View style={styles.planCard}>
+            <View style={styles.planHeader}>
+              <MaterialCommunityIcons 
+                name="crown" 
+                size={responsiveFont(24)} 
+                color="#FFD700" 
               />
-            ) : (
-              <Text style={styles.bioText}>{bio || 'No bio added yet'}</Text>
-            )}
+              <Text style={styles.planName}>{user.plan.name}</Text>
+            </View>
+            <View style={styles.planFeatures}>
+              {user.plan.features.map((feature, index) => (
+                <View key={index} style={styles.featureItem}>
+                  <View style={styles.bulletPoint} />
+                  <Text style={styles.featureText}>{feature}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </EditableSection>
       </ScrollView>
+
+      <StatusModal 
+        visible={showStatusModal}
+        onClose={() => setShowStatusModal(false)}
+        currentStatus={currentStatus}
+        onSelectStatus={selectStatus}
+      />
     </SafeAreaView>
   );
 };
@@ -290,12 +324,6 @@ const EditProfile = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgb(1, 12, 20)',
   },
   scrollView: {
@@ -385,6 +413,144 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'top',
     minHeight: responsiveHeight(100),
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  smallGridItem: {
+    width: responsiveWidth(90),
+    alignItems: 'center',
+    padding: responsiveWidth(8),
+    backgroundColor: 'rgba(14, 113, 226, 0.03)',
+    borderRadius: responsiveWidth(10),
+    marginBottom: responsiveHeight(10),
+    borderWidth: 0.5,
+    borderColor: 'rgba(14, 113, 226, 0.42)',
+  },
+  smallGridLabel: {
+    fontSize: responsiveFont(10),
+    color: 'rgba(206, 201, 201, 0.7)',
+    marginTop: responsiveHeight(4),
+    textAlign: 'center',
+  },
+  smallGridValue: {
+    fontSize: responsiveFont(12),
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: responsiveHeight(2),
+    textAlign: 'center',
+  },
+  icons: {
+    color: 'rgba(169, 209, 244, 0.82)',
+  },
+  gamesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+  },
+  smallGameCard: {
+    width: responsiveWidth(140),
+    height: responsiveHeight(170),
+    marginRight: responsiveWidth(12),
+    marginBottom: responsiveHeight(10),
+    backgroundColor: 'rgba(42, 16, 216, 0.42)',
+    borderRadius: responsiveWidth(10),
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(14, 113, 226, 0.42)',
+  },
+  smallGameImage: {
+    width: '100%',
+    height: responsiveHeight(110),
+    resizeMode: 'cover',
+  },
+  favoriteBadge: {
+    position: 'absolute',
+    top: responsiveHeight(5),
+    left: responsiveWidth(5),
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: responsiveWidth(10),
+    width: responsiveWidth(24),
+    height: responsiveWidth(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  frequencyTag: {
+    position: 'absolute',
+    top: responsiveHeight(5),
+    right: responsiveWidth(5),
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: '#fff',
+    fontSize: responsiveFont(10),
+    fontWeight: 'bold',
+    paddingHorizontal: responsiveWidth(8),
+    paddingVertical: responsiveHeight(3),
+    borderRadius: responsiveWidth(10),
+  },
+  gameInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: responsiveWidth(8),
+  },
+  gameLevel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: responsiveHeight(5),
+  },
+  gameName: {
+    fontSize: responsiveFont(12),
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  levelText: {
+    fontSize: responsiveFont(10),
+    color: '#fff',
+    marginLeft: responsiveWidth(3),
+  },
+  planCard: {
+    backgroundColor: 'rgba(22, 179, 211, 0.04)',
+    borderRadius: responsiveWidth(15),
+    padding: responsiveWidth(15),
+    borderWidth: 1,
+    borderColor: 'rgba(22, 179, 211, 0.42)',
+  },
+  planHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: responsiveHeight(10),
+  },
+  planName: {
+    fontSize: responsiveFont(18),
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: responsiveWidth(10),
+  },
+  planFeatures: {
+    paddingLeft: responsiveWidth(5),
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: responsiveHeight(8),
+  },
+  bulletPoint: {
+    width: responsiveWidth(6),
+    height: responsiveWidth(6),
+    borderRadius: responsiveWidth(3),
+    backgroundColor: 'rgb(252, 252, 252)',
+    marginTop: responsiveHeight(5),
+    marginRight: responsiveWidth(8),
+  },
+  featureText: {
+    fontSize: responsiveFont(14),
+    color: '#fff',
+    flex: 1,
   },
 });
 
