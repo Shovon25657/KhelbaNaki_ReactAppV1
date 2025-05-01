@@ -5,30 +5,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ProfileDataContext = createContext();
 
 const ProfileDataProvider = ({ children }) => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  const [error, setError] = useState(null);
 
   const getProfileData = async () => {
     setLoading(true);
     try {
       const authData = await AsyncStorage.getItem('@auth');
-      if (!authData) {
-        console.log('No auth data found');
-        setLoading(false);
-        return;
-      }
+      if (!authData) return;
       
       const { token } = JSON.parse(authData);
       const { data } = await axios.get("/userabout/get-profile", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
-      setProfileData(data?.profileData || {});
-      setLoading(false);
+
+      if (data?.success) {
+        setProfileData(data.profileData);
+      }
     } catch (error) {
-      console.log(error);
+      setError(error.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -40,9 +37,10 @@ const ProfileDataProvider = ({ children }) => {
   return (
     <ProfileDataContext.Provider value={{
       profileData,
-      setProfileData,
-      getProfileData,
-      loading
+      setProfileData, // Now properly exposed
+      loading,
+      error,
+      getProfileData
     }}>
       {children}
     </ProfileDataContext.Provider>

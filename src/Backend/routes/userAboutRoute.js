@@ -24,8 +24,8 @@ router.post("/create-gamesplayed", requireSingIn, addGamesPlayedController);
 
 // CREATE GET || GET
 //get about
-router.get("/get-profile", getProfileDataController);
-router.get("/get-gamesplayed", getGamesPlayedController);
+router.get("/get-profile", requireSingIn, getProfileDataController);
+router.get("/get-gamesplayed", requireSingIn, getGamesPlayedController);
 
 // CREATE  UPDATE || UPDATE
 //UPDATE || PUT

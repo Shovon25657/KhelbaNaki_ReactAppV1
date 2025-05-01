@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './responsiveDimensions';
 
-const ProfileCard = ({ title, data }) => {
+const ProfileCard = ({ profileData }) => {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
