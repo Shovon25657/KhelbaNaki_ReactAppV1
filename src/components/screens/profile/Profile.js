@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -6,24 +6,26 @@ import {
   Image, 
   ScrollView, 
   TouchableOpacity,
-  Dimensions,
   Platform,
   StatusBar,
-  SafeAreaView
+  SafeAreaView,
+  ActivityIndicator
 } from 'react-native';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import { ProfileDataContext } from "../../context/profileDataContext";
 import profilePhoto from '../../../../assets/Alex.jpg';
 import coverPhoto from '../../../../assets/sova_image.jpg';
-import game1 from '../../../../assets/game1.png';
-import game2 from '../../../../assets/game2.png';
-import game3 from '../../../../assets/game3.png';
 import BottomNavBar from '../../common/BottomNavBar';
 import ProfileCard from './Profile Common/ProfileCard';
 import GamesSection from './Profile Common/GamesSection';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
 
-const Profile = ({ navigation }) => {
+const Profile = ({ navigation, route }) => {
+  // Get profile data from context
+  const { profileData, getProfileData, loading } = useContext(ProfileDataContext);
+
+  // Initialize local state for user data
   const [user, setUser] = useState({
     name: '',
     age: null,
@@ -37,9 +39,45 @@ const Profile = ({ navigation }) => {
     }
   });
 
+  // Fetch profile data when component mounts
+  useEffect(() => {
+    getProfileData();
+  }, []);
+
+  // Update local state when profileData changes
+  useEffect(() => {
+    if (profileData) {
+      setUser({
+        name: profileData.gamingName || '',
+        age: profileData.age || null,
+        bio: profileData.bio || '',
+        status: profileData.status || 'Online',
+        profileImage: profileData.profileImage,
+        coverImage: profileData.coverImage,
+        about: profileData.about || [],
+        lookingFor: profileData.lookingFor || [],
+        bestAt: profileData.bestAt || [],
+        plan: profileData.plan || {
+          name: '',
+          features: []
+        }
+      });
+    }
+  }, [profileData]);
+
+  // Handle edit profile button press
   const handleEditProfile = () => {
     navigation.navigate('EditProfile', { user });
   };
+
+  // Show loading indicator while fetching data
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00ff88" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,9 +93,15 @@ const Profile = ({ navigation }) => {
       >
         {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
-          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <Image 
+            source={user.coverImage ? { uri: user.coverImage } : coverPhoto} 
+            style={styles.coverPhoto} 
+          />
           <View style={styles.profilePhotoContainer}>
-            <Image source={profilePhoto} style={styles.profilePhoto} />
+            <Image 
+              source={user.profileImage ? { uri: user.profileImage } : profilePhoto} 
+              style={styles.profilePhoto} 
+            />
           </View>
         </View>
 
@@ -66,8 +110,8 @@ const Profile = ({ navigation }) => {
           <View>
             <Text style={styles.name}>{user.name}{user.age ? `, ${user.age}` : ''}</Text>
             <View style={styles.statusContainer}>
-              <View style={styles.onlineDot} />
-              <Text style={styles.status}>Online Now</Text>
+              <View style={[styles.onlineDot, { backgroundColor: getStatusColor(user.status) }]} />
+              <Text style={[styles.status, { color: getStatusColor(user.status) }]}>{user.status || 'Online'}</Text>
             </View>
           </View>
           <TouchableOpacity 
@@ -88,10 +132,17 @@ const Profile = ({ navigation }) => {
               <Text style={styles.bioText}>{user.bio}</Text>
             </View>
           </View>
-        ) : null}
+        ) : (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Player Bio</Text>
+            <View style={styles.bioContainer}>
+              <Text style={styles.bioText}>No bio added yet</Text>
+            </View>
+          </View>
+        )}
 
         {/* About Section */}
-        {user.about.length > 0 && (
+        {user.about && user.about.length > 0 && (
           <ProfileCard 
             title="About" 
             data={user.about}
@@ -99,7 +150,7 @@ const Profile = ({ navigation }) => {
         )}
 
         {/* Looking For Section */}
-        {user.lookingFor.length > 0 && (
+        {user.lookingFor && user.lookingFor.length > 0 && (
           <ProfileCard 
             title="Looking For" 
             data={user.lookingFor}
@@ -107,7 +158,7 @@ const Profile = ({ navigation }) => {
         )}
 
         {/* Games Played Section */}
-        {user.bestAt.length > 0 && (
+        {user.bestAt && user.bestAt.length > 0 && (
           <GamesSection 
             title="Games Played" 
             games={user.bestAt}
@@ -115,7 +166,7 @@ const Profile = ({ navigation }) => {
         )}
 
         {/* My Plan Section */}
-        {user.plan.name && (
+        {user.plan && user.plan.name && (
           <PlanSection 
             title="Gamer Subscription" 
             plan={user.plan}
@@ -129,9 +180,26 @@ const Profile = ({ navigation }) => {
   );
 };
 
+// Helper function to get status color
+const getStatusColor = (status) => {
+  const statusOptions = [
+    { name: 'Online', color: 'rgb(32, 151, 58)' },
+    { name: 'Offline', color: '#ff0000' },
+    { name: 'Away', color: '#ffaa00' }
+  ];
+  const statusObj = statusOptions.find(option => option.name === status);
+  return statusObj ? statusObj.color : 'rgb(32, 151, 58)';
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgb(1, 12, 20)',
   },
   scrollViewContent: {
