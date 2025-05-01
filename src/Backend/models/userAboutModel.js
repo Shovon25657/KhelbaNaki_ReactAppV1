@@ -6,6 +6,10 @@ const userAboutSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    location: {
+        type: String,
+        default: ""
+    },
     smoking: {
         type: String,
         enum: ['Yes', 'No', ''], // Allow empty string

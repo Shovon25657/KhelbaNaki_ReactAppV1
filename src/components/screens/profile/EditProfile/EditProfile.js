@@ -317,7 +317,10 @@ const EditProfile = ({ navigation }) => {
     { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || 'Not specified' },
     { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || 'Not specified' },
     { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || 'Not specified' },
-    { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' }
+    { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' },
+    { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || 'Not specified' },
+    { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || 'Not specified' },
+    { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || 'Not specified' },
   ]}
   iconComponent={FontAwesome5}
 />

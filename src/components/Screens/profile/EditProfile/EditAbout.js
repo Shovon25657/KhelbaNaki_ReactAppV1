@@ -58,8 +58,10 @@ const EditAbout = ({ navigation }) => {
   const fieldOptions = {
     educationQualification: ['High School', 'Bachelor Degree', 'Master Degree', 'PhD', 'Other'],
     occupation: ['Student', 'Engineer', 'Doctor', 'Teacher', 'Artist', 'Streamer', 'Gamer', 'Developer', 'Other'],
-    location: ['New York', 'London', 'Tokyo', 'Other'],
-    religion: ['Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Judaism', 'Atheism', 'Other']
+    religion: ['Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Judaism', 'Atheism', 'Other'],
+    drinks: ['Yes', 'No'],
+    smoking: ['Yes', 'No'],
+    gender: ['Male', 'Female', 'Other']
   };
 
   // Sync with context data
@@ -205,7 +207,7 @@ const EditAbout = ({ navigation }) => {
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <Ionicons name="game-controller" size={28} color={colors.accent} style={styles.gameIcon} />
-            <Text style={styles.title}>About Me</Text>
+            <Text style={styles.title}> About Me </Text>
           </View>
           <TouchableOpacity
             onPress={() => Alert.alert('Guide', 'Provide accurate information about yourself')}
@@ -218,8 +220,11 @@ const EditAbout = ({ navigation }) => {
         {/* Fields */}
         {renderField('educationQualification', 'Education')}
         {renderField('occupation', 'Occupation')}
-        {renderField('location', 'Location')}
+        {renderField('gender', 'gender')}
         {renderField('religion', 'Religion')}
+        {renderField('smoking', 'Smoking')}
+        {renderField('drinks', 'Drinks')}
+
 
         {/* Action Buttons */}
         <View style={styles.buttonRow}>
