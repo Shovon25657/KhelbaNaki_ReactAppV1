@@ -114,7 +114,7 @@ const Profile = ({ navigation }) => {
             data={[
               { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || '' },
               { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || '' },
-              { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || '' },
+              // { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || '' },
               { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || '' },
               { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || '' },
               { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || '' },

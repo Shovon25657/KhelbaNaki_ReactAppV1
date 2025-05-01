@@ -61,7 +61,8 @@ const EditAbout = ({ navigation }) => {
     religion: ['Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Judaism', 'Atheism', 'Other'],
     drinks: ['Yes', 'No'],
     smoking: ['Yes', 'No'],
-    gender: ['Male', 'Female', 'Other']
+    gender: ['Male', 'Female', 'Other'],
+   // location: ['USA', 'Canada', 'UK', 'Australia', 'India', 'Other'],
   };
 
   // Sync with context data
@@ -102,7 +103,7 @@ const EditAbout = ({ navigation }) => {
         {
           educationQualification: about.educationQualification,
           occupation: about.occupation,
-          location: about.location,
+         // location: about.location,
           religion: about.religion,
           smoking: about.smoking,
           drinks: about.drinks,
@@ -227,6 +228,7 @@ const EditAbout = ({ navigation }) => {
         {renderField('religion', 'Religion')}
         {renderField('smoking', 'Smoking')}
         {renderField('drinks', 'Drinks')}
+        {/* {renderField('location', 'Location')} */}
 
 
         {/* Action Buttons */}

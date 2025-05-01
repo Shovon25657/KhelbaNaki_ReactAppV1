@@ -145,8 +145,7 @@ const EditProfile = ({ navigation }) => {
       if (data?.success) {
         setProfileData(data.updatedProfile);
         await refreshData();
-        Alert.alert("Success", "Profile updated successfully");
-        navigation.goBack();
+        navigation.goBack();  // Removed the Alert line
       }
     } catch (error) {
       Alert.alert(
@@ -238,18 +237,27 @@ const EditProfile = ({ navigation }) => {
       <Header 
         title="Edit Profile"
         onBack={() => navigation.goBack()}
-        onSave={handleSaveProfile}
+        onSave={async () => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          handleSaveProfile();
+        }}
       />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.coverSection}>
           <CoverImagePicker 
             image={coverImage} 
-            onPress={pickCoverImage} 
+            onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              pickCoverImage();
+            }} 
           />
           <ProfileImagePicker 
             image={profileImage} 
-            onPress={pickProfileImage}
+            onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              pickProfileImage();
+            }}
             style={styles.profileImagePosition}
           />
         </View>
@@ -277,7 +285,10 @@ const EditProfile = ({ navigation }) => {
           </View>
           <View style={styles.statusContainer}>
             <View style={[styles.onlineDot, { backgroundColor: getStatusColor() }]} />
-            <TouchableOpacity onPress={() => setShowStatusModal(true)}>
+            <TouchableOpacity onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              setShowStatusModal(true);
+            }}>
               <Text style={styles.status}>{currentStatus} (Tap to change)</Text>
             </TouchableOpacity>
           </View>
@@ -285,7 +296,10 @@ const EditProfile = ({ navigation }) => {
 
         <EditableSection 
           title="Player Bio" 
-          onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            setIsEditing({...isEditing, bio: !isEditing.bio});
+          }}
           editIcon={isEditing.bio ? "check" : "edit-2"}
         >
           <View style={styles.wordCountContainer}>
@@ -311,22 +325,22 @@ const EditProfile = ({ navigation }) => {
 
         {/* About Section */}
         <EditableSection 
-  title="About" 
-  onEdit={navigateToEditAbout}
-  data={[
-    { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || 'Not specified' },
-    { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || 'Not specified' },
-    { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || 'Not specified' },
-    { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' },
-    { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || 'Not specified' },
-    { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || 'Not specified' },
-    { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || 'Not specified' },
-  ]}
-  iconComponent={FontAwesome5}
-/>
-
-
-
+          title="About" 
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            navigateToEditAbout();
+          }}
+          data={[
+            { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || 'Not specified' },
+            { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || 'Not specified' },
+            // { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || 'Not specified' },
+            { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' },
+            { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || 'Not specified' },
+            { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || 'Not specified' },
+            { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || 'Not specified' },
+          ]}
+          iconComponent={FontAwesome5}
+        />
 
         {(saving || uploadingImages) && (
           <View style={styles.loadingOverlay}>
@@ -340,9 +354,15 @@ const EditProfile = ({ navigation }) => {
 
       <StatusModal 
         visible={showStatusModal}
-        onClose={() => setShowStatusModal(false)}
+        onClose={async () => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          setShowStatusModal(false);
+        }}
         currentStatus={currentStatus}
-        onSelectStatus={selectStatus}
+        onSelectStatus={async (status) => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          selectStatus(status);
+        }}
       />
     </SafeAreaView>
   );
