@@ -1,6 +1,3 @@
-
-
-
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -32,7 +29,7 @@ const AuthProvider = ({ children }) => {
   //default axios setting
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   axios.defaults.baseURL =
-    "http://192.168.0.105:8080/api/v1";
+    "http://192.168.0.106:8080/api/v1";
 
   return (
     <AuthContext.Provider value={[state, setState]}>
