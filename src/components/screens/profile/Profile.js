@@ -1,10 +1,10 @@
 import React, { useContext, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
@@ -22,12 +22,12 @@ import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Com
 import { UserDataContext } from '../../context/UserDataContext';
 
 const Profile = ({ navigation }) => {
-  const { 
-    profileData, 
+  const {
+    profileData,
     aboutData,
-    loading, 
-    error, 
-    refreshData 
+    loading,
+    error,
+    refreshData
   } = useContext(UserDataContext);
 
   useEffect(() => {
@@ -60,20 +60,20 @@ const Profile = ({ navigation }) => {
         <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
       >
         <View style={styles.coverContainer}>
-          <Image 
-            source={profileData?.coverImage ? { uri: profileData.coverImage } : coverPhoto} 
-            style={styles.coverPhoto} 
+          <Image
+            source={profileData?.coverImage ? { uri: profileData.coverImage } : coverPhoto}
+            style={styles.coverPhoto}
           />
           <View style={styles.profilePhotoContainer}>
-            <Image 
-              source={profileData?.profileImage ? { uri: profileData.profileImage } : profilePhoto} 
-              style={styles.profilePhoto} 
+            <Image
+              source={profileData?.profileImage ? { uri: profileData.profileImage } : profilePhoto}
+              style={styles.profilePhoto}
             />
           </View>
         </View>
@@ -89,8 +89,8 @@ const Profile = ({ navigation }) => {
               <Text style={styles.status}>{profileData?.status || 'Offline'}</Text>
             </View>
           </View>
-          <TouchableOpacity 
-            style={styles.editButton} 
+          <TouchableOpacity
+            style={styles.editButton}
             onPress={handleEditProfile}
             activeOpacity={0.7}
           >
@@ -109,30 +109,31 @@ const Profile = ({ navigation }) => {
         )}
 
         {aboutData && (
-          <ProfileCard 
-            title="About" 
+          <ProfileCard
+            title="About"
             data={[
-              { label: 'Education', value: aboutData.educationQualification || 'Not specified' },
-              { label: 'Occupation', value: aboutData.occupation || 'Not specified' },
-              { label: 'Location', value: aboutData.location || 'Not specified' },
-              { label: 'Religion', value: aboutData.religion || 'Not specified' },
-              { label: 'Hobbies', value: aboutData.hobbies || 'Not specified' },
-              { label: 'Favorite Game', value: aboutData.favoriteGame || 'Not specified' },
+              { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || '' },
+              { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || '' },
+              { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || '' },
+              { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || '' },
+              { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || '' },
+              { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || '' },
+              { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || '' },
 
             ]}
           />
         )}
 
         {profileData?.gamesPlayed?.length > 0 && (
-          <GamesSection 
-            title="Games Played" 
+          <GamesSection
+            title="Games Played"
             games={profileData.gamesPlayed}
           />
         )}
 
         {profileData?.plan?.name && (
-          <PlanSection 
-            title="Gamer Subscription" 
+          <PlanSection
+            title="Gamer Subscription"
             plan={profileData.plan}
           />
         )}
@@ -232,6 +233,7 @@ const styles = StyleSheet.create({
     fontSize: responsiveFont(14),
     color: 'rgb(32, 151, 58)',
     fontStyle: 'italic',
+    width: responsiveWidth(100),
   },
   editButton: {
     flexDirection: 'row',

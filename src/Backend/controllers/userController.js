@@ -44,19 +44,20 @@ const registerController = async (req, res) => {
 
         // Default about and profile data
         const defaultAboutData = {
-            educationQualification: "Not specified",
-            location: "Not specified",
-            smoking: "No",
-            drinks: "No",
-            religion: "Not specified",
-            occupation: "Not specified",
+            educationQualification: "",
+            location: "",
+            smoking: "",
+            drinks: "",
+            religion: "",
+            occupation: "",
             user: user._id,
         };
 
         const defaultProfileData = {
-            bio: "Not specified",
-            age: 0,
-            gamingName: "Not specified",
+            bio: "",
+            age: "",
+            status: "",
+            gamingName: "",
             user: user._id,
         };
 

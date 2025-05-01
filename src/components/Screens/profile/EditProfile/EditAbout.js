@@ -103,7 +103,10 @@ const EditAbout = ({ navigation }) => {
           educationQualification: about.educationQualification,
           occupation: about.occupation,
           location: about.location,
-          religion: about.religion
+          religion: about.religion,
+          smoking: about.smoking,
+          drinks: about.drinks,
+          gender: about.gender,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -418,10 +421,12 @@ const styles = StyleSheet.create({
   selectedText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
   },
   placeholderText: {
     color: '#8e8e8e',
     fontSize: 16,
+    fontWeight: '400',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -527,7 +532,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
-    backgroundColor: 'rgba(110, 68, 255, 0.2)',
+    backgroundColor: 'rgba(56, 14, 206, 0.2)',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -535,7 +540,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(110, 68, 255, 0.5)',
   },
   optionText: {
+    width: '80%',
     color: '#fff',
+    fontSize: 16,
   },
   customInputContainer: {
     gap: 15,

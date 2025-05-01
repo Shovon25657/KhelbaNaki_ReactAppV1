@@ -100,11 +100,13 @@ const styles = StyleSheet.create({
       color: 'rgba(206, 201, 201, 0.7)',
       marginTop: responsiveHeight(4),
       textAlign: 'center',
+      width: responsiveWidth(80), // Adjust width to fit the label
     },
     smallGridValue: {
       fontSize: responsiveFont(12),
       fontWeight: 'bold',
       color: '#fff',
+      width: responsiveWidth(80), // Adjust width to fit the label
       marginTop: responsiveHeight(2),
       textAlign: 'center',
     },

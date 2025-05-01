@@ -409,8 +409,9 @@ const styles = StyleSheet.create({
     marginRight: responsiveWidth(5),
   },
   status: {
-    fontSize: responsiveFont(14),
+    fontSize: responsiveFont(16),
     color: '#00ff88',
+    fontWeight: 'bold',
     fontStyle: 'italic',
   },
   wordCountContainer: {

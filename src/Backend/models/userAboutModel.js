@@ -12,17 +12,14 @@ const userAboutSchema = new mongoose.Schema({
     },
     smoking: {
         type: String,
-        enum: ['Yes', 'No', ''], // Allow empty string
         default: ""
     },
     drinks: {
         type: String,
-        enum: ['Yes', 'No', ''],
         default: ""
     },
     gender: {
         type: String,
-        enum: ['Male', 'Female', 'Other', ''],
         default: ""
     },
     religion: {
