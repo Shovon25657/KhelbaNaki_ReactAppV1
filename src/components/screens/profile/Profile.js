@@ -25,55 +25,15 @@ import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Com
 
 const Profile = ({ navigation }) => {
   const [user, setUser] = useState({
-    name: 'KMS',
-    age: 28,
-    bio: 'Professional gamer and streamer. Love playing FPS and strategy games. Looking for teammates who communicate well!',
-    about: [
-      { icon: 'graduation-cap', label: 'Education', value: 'Undergrad Degree' },
-      { icon: 'map-marker-alt', label: 'Location', value: 'New York, NY' },
-      { icon: 'briefcase', label: 'Occupation', value: 'Streamer' },
-      { icon: 'smoking', label: 'Smoking', value: 'Yes' },
-      { icon: 'glass-whiskey', label: 'Drinking', value: 'Socially' },
-      { icon: 'pray', label: 'Religion', value: 'Islam' },
-      { icon: 'genderless', label: 'Gender', value: 'Male' }
-    ],
-    lookingFor: [
-      { icon: 'moon', label: 'Availability', value: 'Night' },
-      { icon: 'gamepad', label: 'Play Style', value: 'Competitive' },
-      { icon: 'users', label: 'Play Mode', value: 'Team Based' },
-    ],
-    bestAt: [
-      { 
-        image: game1, 
-        name: 'Valorant', 
-        level: 'Gold',
-        frequency: 'Most Played',
-        isFavorite: true
-      },
-      { 
-        image: game2, 
-        name: 'Call of Duty Mobile', 
-        level: 'Platinum',
-        frequency: 'Recently Played',
-        isFavorite: false
-      },
-      { 
-        image: game3, 
-        name: 'EA FC 24', 
-        level: 'Gold',
-        frequency: 'Once Played',
-        isFavorite: false
-      },
-    ],
+    name: '',
+    age: null,
+    bio: '',
+    about: [],
+    lookingFor: [],
+    bestAt: [],
     plan: {
-      name: 'Elite Gamer Package',
-      features: [
-        'Unlimited likes',
-        'Send direct requests',
-        'Premium avatars',
-        'Priority visibility',
-        'Custom gaming themes'
-      ]
+      name: '',
+      features: []
     }
   });
 
@@ -104,7 +64,7 @@ const Profile = ({ navigation }) => {
         {/* Name, Age and Edit Profile Button */}
         <View style={styles.nameContainer}>
           <View>
-            <Text style={styles.name}>{user.name}, {user.age}</Text>
+            <Text style={styles.name}>{user.name}{user.age ? `, ${user.age}` : ''}</Text>
             <View style={styles.statusContainer}>
               <View style={styles.onlineDot} />
               <Text style={styles.status}>Online Now</Text>
@@ -121,36 +81,46 @@ const Profile = ({ navigation }) => {
         </View>
 
         {/* Bio Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Player Bio</Text>
-          <View style={styles.bioContainer}>
-            <Text style={styles.bioText}>{user.bio}</Text>
+        {user.bio ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Player Bio</Text>
+            <View style={styles.bioContainer}>
+              <Text style={styles.bioText}>{user.bio}</Text>
+            </View>
           </View>
-        </View>
+        ) : null}
 
         {/* About Section */}
-        <ProfileCard 
-          title="About" 
-          data={user.about}
-        />
+        {user.about.length > 0 && (
+          <ProfileCard 
+            title="About" 
+            data={user.about}
+          />
+        )}
 
         {/* Looking For Section */}
-        <ProfileCard 
-          title="Looking For" 
-          data={user.lookingFor}
-        />
+        {user.lookingFor.length > 0 && (
+          <ProfileCard 
+            title="Looking For" 
+            data={user.lookingFor}
+          />
+        )}
 
         {/* Games Played Section */}
-        <GamesSection 
-          title="Games Played" 
-          games={user.bestAt}
-        />
+        {user.bestAt.length > 0 && (
+          <GamesSection 
+            title="Games Played" 
+            games={user.bestAt}
+          />
+        )}
 
         {/* My Plan Section */}
-        <PlanSection 
-          title="Gamer Subscription" 
-          plan={user.plan}
-        />
+        {user.plan.name && (
+          <PlanSection 
+            title="Gamer Subscription" 
+            plan={user.plan}
+          />
+        )}
       </ScrollView>
 
       {/* Bottom Navigation Bar */}

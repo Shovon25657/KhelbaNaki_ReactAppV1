@@ -55,7 +55,7 @@ const LoginPage = () => {
           setState({ ...state, user: data?.user, token: data?.token });
           await AsyncStorage.setItem('@auth', JSON.stringify(data));
           Alert.alert('Success', 'Login successful!');
-          navigation.navigate('Home');
+          navigation.navigate('EditProfile');
         }
       } catch (error) {
         Alert.alert('Error', 'Invalid email or password');

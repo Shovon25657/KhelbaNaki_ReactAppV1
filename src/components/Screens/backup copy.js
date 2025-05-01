@@ -38,14 +38,13 @@ const EditProfile = ({ navigation }) => {
   const [coverImage, setCoverImage] = useState(defaultCover);
   const [currentStatus, setCurrentStatus] = useState('Online');
   const [saving, setSaving] = useState(false);
-  const [uploadingImages, setUploadingImages] = useState(false);
   const [isEditing, setIsEditing] = useState({ bio: false });
   const [wordCount, setWordCount] = useState(0);
 
   // Initialize form with profile data
   useEffect(() => {
-    if (!profileData) return;
-
+    if (profileData) return;
+  
     setGamingName(profileData.gamingName || '');
     setAge(profileData.age ? profileData.age.toString() : '');
     setBio(profileData.bio || '');
@@ -67,102 +66,6 @@ const EditProfile = ({ navigation }) => {
   useEffect(() => {
     setWordCount(bio.split(/\s+/).filter(word => word.length > 0).length);
   }, [bio]);
-
-  const validateInputs = () => {
-    if (age && isNaN(age)) {
-      Alert.alert("Invalid Age", "Please enter a valid number for age");
-      return false;
-    }
-    if (wordCount > 150) {
-      Alert.alert("Bio Too Long", "Please keep bio under 150 words");
-      return false;
-    }
-    return true;
-  };
-
-  const uploadImage = async (uri, type) => {
-    const formData = new FormData();
-    formData.append('image', {
-      uri,
-      type: 'image/jpeg',
-      name: `${type}_${Date.now()}.jpg`
-    });
-
-    try {
-      const { data } = await axios.post('/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${await getToken()}`
-        }
-      });
-      return data.imageUrl;
-    } catch (error) {
-      console.error('Image upload failed:', error);
-      throw error;
-    }
-  };
-
-  const getToken = async () => {
-    const authData = await AsyncStorage.getItem('@auth');
-    return authData ? JSON.parse(authData).token : null;
-  };
-
-  const handleCreateProfile = async () => {
-    try {
-      if (!validateInputs()) return;
-      
-      setSaving(true);
-      const token = await getToken();
-      
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
-
-      // Upload images first
-      setUploadingImages(true);
-      const profileImageUrl = profileImage.uri !== defaultProfile.uri 
-        ? await uploadImage(profileImage.uri, 'profile')
-        : profileData?.profileImage;
-
-      const coverImageUrl = coverImage.uri !== defaultCover.uri 
-        ? await uploadImage(coverImage.uri, 'cover')
-        : profileData?.coverImage;
-
-      // Update profile data
-      const { data } = await axios.put(
-        "/userabout/update-profile",
-        {
-          gamingName,
-          age: age ? parseInt(age) : null,
-          bio,
-          profileImage: profileImageUrl,
-          coverImage: coverImageUrl,
-          status: currentStatus
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (data?.success) {
-        setProfileData(data.updatedProfile);
-        await getProfileData();
-        Alert.alert("Success", "Profile updated successfully");
-        navigation.goBack();
-      }
-    } catch (error) {
-      Alert.alert(
-        "Error", 
-        error.response?.data?.message || error.message || "Failed to update profile"
-      );
-      console.error("Update profile error:", error);
-    } finally {
-      setSaving(false);
-      setUploadingImages(false);
-    }
-  };
 
   const pickProfileImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -209,6 +112,52 @@ const EditProfile = ({ navigation }) => {
     }
   };
 
+  const getToken = async () => {
+    const authData = await AsyncStorage.getItem('@auth');
+    return authData ? JSON.parse(authData).token : null;
+  };
+
+  const handleCreateProfile = async () => {
+    try {
+      setSaving(true);
+      const token = await getToken();
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      const { data } = await axios.put(
+        "/userabout/update-profile",
+        {
+          gamingName,
+          parsedAge: age === '' ? null : parseInt(age),
+          bio,
+          profileImage: profileImage.uri || profileImage,
+          coverImage: coverImage.uri || coverImage,
+          status: currentStatus
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      setProfileData(data?.profile);
+      await getProfileData();
+      setSaving(false);
+      navigation.goBack();
+      Alert.alert("Success", "Profile updated successfully");
+    } catch (error) {
+      setSaving(false);
+      Alert.alert(
+        "Error", 
+        error.response?.data?.message || error.message || "Failed to update profile"
+      );
+      console.log("Update profile error:", error);
+    }
+  };
+
   const getStatusColor = () => {
     const statusOptions = [
       { name: 'Online', color: '#00ff88' },
@@ -226,11 +175,10 @@ const EditProfile = ({ navigation }) => {
     );
   };
 
-  if (contextLoading || uploadingImages) {
+  if (contextLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#00ff88" />
-        {uploadingImages && <Text style={styles.uploadingText}>Uploading Images...</Text>}
       </View>
     );
   }
@@ -242,7 +190,6 @@ const EditProfile = ({ navigation }) => {
         onBack={() => navigation.goBack()}
         onSave={handleCreateProfile}
         saveText={saving ? "Saving..." : "Save"}
-        saveDisabled={saving}
       />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -259,15 +206,36 @@ const EditProfile = ({ navigation }) => {
           />
         </View>
 
+
+        <Text style={{fontFamily: 'monospace', color: '#fff'}}>
+  {JSON.stringify(profileData, null, 4)}
+</Text>
+
+
+  {profileData?.gamingName && (
+    <Text style={{fontFamily: 'monospace', color: '#fff'}}>
+      Current: {profileData.gamingName}
+    </Text>
+  )}
+
+
         {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
+            <View>
+              <Text style={{fontFamily: 'monospace', color: '#fff'}}>
+                {profileData?.gamingName && (
+                  <Text style={{fontFamily: 'monospace', color: '#fff'}}>
+                    Current: {profileData.gamingName}
+                  </Text>
+                )}
+                   </Text>
+            </View>
+
             <TextInput
               style={styles.nameInput}
               value={gamingName}
               onChangeText={setGamingName}
-              placeholder="Gaming Name"
-              placeholderTextColor="#aaa"
             />
             <View style={styles.ageContainer}>
               <TextInput
@@ -330,11 +298,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgb(1, 12, 20)',
   },
-  uploadingText: {
-    color: '#00ff88',
-    marginTop: 10,
-    fontSize: 16,
-  },
   scrollView: {
     flex: 1,
   },
@@ -355,7 +318,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: responsiveWidth(10),
   },
   nameInput: {
     fontSize: responsiveFont(24),
@@ -365,6 +327,7 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(5),
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.65)',
+    marginRight: responsiveWidth(10),
   },
   ageContainer: {
     borderBottomWidth: 1,
