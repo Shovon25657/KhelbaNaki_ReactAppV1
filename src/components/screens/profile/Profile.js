@@ -34,33 +34,6 @@ const Profile = ({ navigation }) => {
     refreshData();
   }, []);
 
-  // Fetch profile data when component mounts
-  useEffect(() => {
-    getProfileData();
-  }, []);
-
-  // Update local state when profileData changes
-  useEffect(() => {
-    if (profileData) {
-      setUser({
-        name: profileData.gamingName || '',
-        age: profileData.age || null,
-        bio: profileData.bio || '',
-        status: profileData.status || 'Online',
-        profileImage: profileData.profileImage,
-        coverImage: profileData.coverImage,
-        about: profileData.about || [],
-        lookingFor: profileData.lookingFor || [],
-        bestAt: profileData.bestAt || [],
-        plan: profileData.plan || {
-          name: '',
-          features: []
-        }
-      });
-    }
-  }, [profileData]);
-
-  // Handle edit profile button press
   const handleEditProfile = () => {
     navigation.navigate('EditProfile');
   };
@@ -175,12 +148,6 @@ const Profile = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgb(1, 12, 20)',
   },
   scrollViewContent: {
