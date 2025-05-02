@@ -28,8 +28,8 @@ const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  const { profileData, aboutData, setProfileData,  refreshData } = useContext(UserDataContext);
-  
+  const { profileData, aboutData, setProfileData, refreshData } = useContext(UserDataContext);
+
   const [gamingName, setGamingName] = useState('');
   const [age, setAge] = useState('');
   const [bio, setBio] = useState('');
@@ -108,20 +108,20 @@ const EditProfile = ({ navigation }) => {
   const handleSaveProfile = async () => {
     try {
       if (!validateInputs()) return;
-      
+
       setSaving(true);
       const token = await getToken();
-      
+
       if (!token) {
         throw new Error('Authentication token not found');
       }
 
       setUploadingImages(true);
-      const profileImageUrl = profileImage.uri !== defaultProfile.uri 
+      const profileImageUrl = profileImage.uri !== defaultProfile.uri
         ? await uploadImage(profileImage.uri, 'profile')
         : profileData?.profileImage;
 
-      const coverImageUrl = coverImage.uri !== defaultCover.uri 
+      const coverImageUrl = coverImage.uri !== defaultCover.uri
         ? await uploadImage(coverImage.uri, 'cover')
         : profileData?.coverImage;
 
@@ -149,7 +149,7 @@ const EditProfile = ({ navigation }) => {
       }
     } catch (error) {
       Alert.alert(
-        "Error", 
+        "Error",
         error.response?.data?.message || error.message || "Failed to update profile"
       );
       console.error("Update profile error:", error);
@@ -220,7 +220,7 @@ const EditProfile = ({ navigation }) => {
   };
 
   // Navigation Functions
-  const navigateToEditAbout = () => navigation.navigate('EditAbout', { 
+  const navigateToEditAbout = () => navigation.navigate('EditAbout', {
     about: {
       educationQualification: aboutData?.educationQualification,
       occupation: aboutData?.occupation,
@@ -234,7 +234,7 @@ const EditProfile = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header 
+      <Header
         title="Edit Profile"
         onBack={() => navigation.goBack()}
         onSave={async () => {
@@ -245,15 +245,15 @@ const EditProfile = ({ navigation }) => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.coverSection}>
-          <CoverImagePicker 
-            image={coverImage} 
+          <CoverImagePicker
+            image={coverImage}
             onPress={async () => {
               await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
               pickCoverImage();
-            }} 
+            }}
           />
-          <ProfileImagePicker 
-            image={profileImage} 
+          <ProfileImagePicker
+            image={profileImage}
             onPress={async () => {
               await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
               pickProfileImage();
@@ -294,11 +294,11 @@ const EditProfile = ({ navigation }) => {
           </View>
         </View>
 
-        <EditableSection 
-          title="Player Bio" 
+        <EditableSection
+          title="Player Bio"
           onEdit={async () => {
             await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
-            setIsEditing({...isEditing, bio: !isEditing.bio});
+            setIsEditing({ ...isEditing, bio: !isEditing.bio });
           }}
           editIcon={isEditing.bio ? "check" : "edit-2"}
         >
@@ -324,8 +324,8 @@ const EditProfile = ({ navigation }) => {
 
 
         {/* About Section */}
-        <EditableSection 
-          title="About" 
+        <EditableSection
+          title="About"
           onEdit={async () => {
             await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
             navigateToEditAbout();
@@ -342,6 +342,28 @@ const EditProfile = ({ navigation }) => {
           iconComponent={FontAwesome5}
         />
 
+        {/* Looking For Section */}
+        <EditableSection
+          title="Looking For"
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            navigateToEditAbout();
+          }}
+          data={[
+            { icon: 'moon', label: 'Education', value: aboutData?.educationQualification || 'Not specified' },
+            { icon: 'game', label: 'Occupation', value: aboutData?.occupation || 'Not specified' },
+            { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' },
+            { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || 'Not specified' },
+            { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || 'Not specified' },
+            { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || 'Not specified' },
+          ]}
+          iconComponent={FontAwesome5}
+        />
+
+
+
+
+
         {(saving || uploadingImages) && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#00ff88" />
@@ -352,7 +374,7 @@ const EditProfile = ({ navigation }) => {
         )}
       </ScrollView>
 
-      <StatusModal 
+      <StatusModal
         visible={showStatusModal}
         onClose={async () => {
           await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
