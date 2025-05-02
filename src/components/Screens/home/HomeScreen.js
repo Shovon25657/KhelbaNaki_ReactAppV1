@@ -12,6 +12,7 @@ import {
   Platform
 } from 'react-native';
 import { AuthContext } from '../../context/authContext';
+import { UserDataContext } from '../../context/UserDataContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -33,41 +34,32 @@ const { width, height } = Dimensions.get('window');
 
 const HomeScreen = () => {
   const [state, setState] = useContext(AuthContext);
+  const { userProfile, loading, error, refreshData } = useContext(UserDataContext);
   const navigation = useNavigation();
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   
-  const [profiles] = useState([
-    {
-      id: 1,
-      name: 'xXProGamerXx',
-      age: 28,
-      games: ['Fortnite', 'Valorant', 'Apex Legends'],
-      image: person1
-    },
-    {
-      id: 2,
-      name: 'PixelQueen',
-      age: 24,
-      games: ['League of Legends', 'Overwatch', 'Dota 2'],
-      image: person2
-    },
-    {
-      id: 3,
-      name: 'HeadshotHunter',
-      age: 26,
-      games: ['Call of Duty', 'PUBG', 'CS:GO'],
-      image: person3
-    },
-    {
-      id: 4,
-      name: 'NoobSlayer',
-      age: 25,
-      games: ['Rocket League', 'FIFA', 'NBA 2K'],
-      image: person1
-    },
-  ]);
+  // Transform userProfile data into the format expected by the component
+  const transformProfileData = (profile) => {
+    if (!profile) return null;
+    
+    return {
+      id: profile.id || profile._id,
+      name: profile.gamingName || 'Anonymous',
+      age: profile.age || 'Not specified',
+      bio: profile.bio || 'No bio provided',
+      occupation: profile.occupation || 'Not specified',
+      location: profile.location || 'Not specified',
+      gender: profile.gender || 'Not specified',
+      religion: profile.religion || 'Not specified',
+      // Using placeholder images since the actual image might not be in the profile data
+      image: [person1, person2, person3][Math.floor(Math.random() * 3)]
+    };
+  };
 
+  // Create profiles array from userProfile data
+  const profiles = userProfile ? [transformProfileData(userProfile)] : [];
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -76,20 +68,26 @@ const HomeScreen = () => {
   useFocusEffect(
     useCallback(() => {
       nextCardScale.setValue(0.9);
+      // Refresh data when screen comes into focus
+      refreshData();
       return () => {};
     }, [])
   );
 
   const handleLike = () => {
     console.log('Liked:', profiles[currentIndex].name);
+    // Here you would typically make an API call to record the like
   };
 
   const handleDislike = () => {
     console.log('Disliked:', profiles[currentIndex].name);
+    // Here you would typically make an API call to record the dislike
   };
 
   const handleSwipeComplete = () => {
-    setCurrentIndex(prev => (prev < profiles.length - 1 ? prev + 1 : 0));
+    // Since we're only showing one profile at a time, reset to 0
+    setCurrentIndex(0);
+    // You might want to fetch a new profile here
   };
 
   const handleButtonSwipe = (direction) => {
@@ -137,8 +135,10 @@ const HomeScreen = () => {
   };
 
   const renderNextProfile = () => {
-    const nextIndex = currentIndex < profiles.length - 1 ? currentIndex + 1 : 0;
-    const nextProfile = profiles[nextIndex];
+    // Since we're only showing one profile at a time, next profile is the same
+    const nextProfile = profiles[0];
+    
+    if (!nextProfile) return null;
     
     return (
       <Animated.View style={[styles.card, styles.nextCard, { transform: [{ scale: nextCardScale }] }]}>
@@ -152,6 +152,36 @@ const HomeScreen = () => {
   };
 
   const renderProfileCard = () => {
+    if (loading) {
+      return (
+        <View style={styles.card}>
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      );
+    }
+    
+    if (error) {
+      return (
+        <View style={styles.card}>
+          <Text style={styles.errorText}>Error loading profile</Text>
+          <TouchableOpacity 
+            style={styles.resetButton}
+            onPress={refreshData}
+          >
+            <Text style={styles.resetButtonText}>RETRY</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    
+    if (profiles.length === 0) {
+      return (
+        <View style={styles.noProfiles}>
+          <Text style={styles.noProfilesText}>No profile to show</Text>
+        </View>
+      );
+    }
+    
     return (
       <View style={styles.card}>
         <ProfileCard 
@@ -193,38 +223,25 @@ const HomeScreen = () => {
           />
           
           <View style={styles.cardContainer}>
-            {profiles.length > 0 ? (
-              <>
-                {renderNextProfile()}
-                <CardSwiper
-                  ref={swipeRef}
-                  onSwipeLeft={handleDislike}
-                  onSwipeRight={handleLike}
-                  onSwipeComplete={handleSwipeComplete}
-                  currentIndex={currentIndex}
-                  nextCardScale={nextCardScale}
-                  onAnimationComplete={() => setIsTransitioning(false)}
-                >
-                  {renderProfileCard()}
-                </CardSwiper>
-              </>
-            ) : (
-              <View style={styles.noProfiles}>
-                <Text style={styles.noProfilesText}>No more profiles to show</Text>
-                <TouchableOpacity 
-                  style={styles.resetButton}
-                  onPress={() => setCurrentIndex(0)}
-                >
-                  <Text style={styles.resetButtonText}>RESET</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            {profiles.length > 0 && renderNextProfile()}
+            <CardSwiper
+              ref={swipeRef}
+              onSwipeLeft={handleDislike}
+              onSwipeRight={handleLike}
+              onSwipeComplete={handleSwipeComplete}
+              currentIndex={currentIndex}
+              nextCardScale={nextCardScale}
+              onAnimationComplete={() => setIsTransitioning(false)}
+            >
+              {renderProfileCard()}
+            </CardSwiper>
           </View>
           
           <ActionButtons 
             onLike={() => handleButtonSwipe(1)}
             onDislike={() => handleButtonSwipe(-1)}
             isTransitioning={isTransitioning}
+            disabled={profiles.length === 0 || loading || error}
           />
         </View>
         
@@ -282,6 +299,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(86, 57, 246, 0.28)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   nextCard: {
     position: 'absolute',
@@ -295,9 +314,23 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 2,
     borderColor: 'rgb(1, 225, 255)',
+    width: width * 0.85,
+    height: height * 0.6,
+    justifyContent: 'center',
   },
   noProfilesText: {
     color: 'rgb(1, 225, 255)',
+    fontSize: 18,
+    marginBottom: 20,
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    color: 'rgb(1, 225, 255)',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
     fontSize: 18,
     marginBottom: 20,
     fontWeight: 'bold',
