@@ -99,7 +99,7 @@ const EditAbout = ({ navigation }) => {
       
       const { token } = JSON.parse(authData);
       const response = await axios.put(
-        '/userabout/update-about',
+        '/userabout/update-about-data',
         {
           educationQualification: about.educationQualification,
           occupation: about.occupation,

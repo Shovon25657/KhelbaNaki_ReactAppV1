@@ -12,6 +12,7 @@ const {
   updateprofileController,
 } = require("../controllers/userAboutController");
 const { addGamesPlayedController, getGamesPlayedController, removeGameController,  } = require("../controllers/userGamesPlayedController");
+const getUserProfileController = require("../controllers/getUserProfileController");
 
 //router object
 const router = express.Router();
@@ -24,14 +25,17 @@ router.post("/create-gamesplayed", requireSingIn, addGamesPlayedController);
 
 // CREATE GET || GET
 //get about
-router.get("/get-profile", requireSingIn, getProfileDataController);
-router.get("/get-about", requireSingIn, getAboutDataController);
+router.get("/get-profile-data", requireSingIn, getProfileDataController);
+router.get("/get-about-data", requireSingIn, getAboutDataController);
 router.get("/get-gamesplayed", requireSingIn, getGamesPlayedController);
+router.get("/get-user-profile", requireSingIn, getUserProfileController);
+
+
 
 // CREATE  UPDATE || UPDATE
 //UPDATE || PUT
-router.put("/update-profile", requireSingIn, updateprofileController);
-router.put("/update-about", requireSingIn, updateAboutDataController);
+router.put("/update-profile-data", requireSingIn, updateprofileController);
+router.put("/update-about-data", requireSingIn, updateAboutDataController);
 router.delete("/delete-gamesplayed", removeGameController);
 
 //export
