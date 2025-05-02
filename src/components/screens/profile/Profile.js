@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
+import React, { useContext, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
   TouchableOpacity,
-  Platform,
-  StatusBar,
+  ActivityIndicator,
   SafeAreaView,
-  ActivityIndicator
+  StatusBar,
+  Platform
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { ProfileDataContext } from "../../context/profileDataContext";
 import profilePhoto from '../../../../assets/Alex.jpg';
 import coverPhoto from '../../../../assets/sova_image.jpg';
 import BottomNavBar from '../../common/BottomNavBar';
@@ -20,24 +19,20 @@ import ProfileCard from './Profile Common/ProfileCard';
 import GamesSection from './Profile Common/GamesSection';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
+import { UserDataContext } from '../../context/UserDataContext';
 
-const Profile = ({ navigation, route }) => {
-  // Get profile data from context
-  const { profileData, getProfileData, loading } = useContext(ProfileDataContext);
+const Profile = ({ navigation }) => {
+  const {
+    profileData,
+    aboutData,
+    loading,
+    error,
+    refreshData
+  } = useContext(UserDataContext);
 
-  // Initialize local state for user data
-  const [user, setUser] = useState({
-    name: '',
-    age: null,
-    bio: '',
-    about: [],
-    lookingFor: [],
-    bestAt: [],
-    plan: {
-      name: '',
-      features: []
-    }
-  });
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   // Fetch profile data when component mounts
   useEffect(() => {
@@ -67,10 +62,9 @@ const Profile = ({ navigation, route }) => {
 
   // Handle edit profile button press
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { user });
+    navigation.navigate('EditProfile');
   };
 
-  // Show loading indicator while fetching data
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -79,43 +73,51 @@ const Profile = ({ navigation, route }) => {
     );
   }
 
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error loading profile: {error}</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with title only */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
       >
-        {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
-          <Image 
-            source={user.coverImage ? { uri: user.coverImage } : coverPhoto} 
-            style={styles.coverPhoto} 
+          <Image
+            source={profileData?.coverImage ? { uri: profileData.coverImage } : coverPhoto}
+            style={styles.coverPhoto}
           />
           <View style={styles.profilePhotoContainer}>
-            <Image 
-              source={user.profileImage ? { uri: user.profileImage } : profilePhoto} 
-              style={styles.profilePhoto} 
+            <Image
+              source={profileData?.profileImage ? { uri: profileData.profileImage } : profilePhoto}
+              style={styles.profilePhoto}
             />
           </View>
         </View>
 
-        {/* Name, Age and Edit Profile Button */}
         <View style={styles.nameContainer}>
           <View>
-            <Text style={styles.name}>{user.name}{user.age ? `, ${user.age}` : ''}</Text>
+            <Text style={styles.name}>
+              {profileData?.gamingName || 'Unknown Player'}
+              {profileData?.age ? `, ${profileData.age}` : ''}
+            </Text>
             <View style={styles.statusContainer}>
-              <View style={[styles.onlineDot, { backgroundColor: getStatusColor(user.status) }]} />
-              <Text style={[styles.status, { color: getStatusColor(user.status) }]}>{user.status || 'Online'}</Text>
+              <View style={styles.onlineDot} />
+              <Text style={styles.status}>{profileData?.status || 'Offline'}</Text>
             </View>
           </View>
-          <TouchableOpacity 
-            style={styles.editButton} 
+          <TouchableOpacity
+            style={styles.editButton}
             onPress={handleEditProfile}
             activeOpacity={0.7}
           >
@@ -124,73 +126,52 @@ const Profile = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Bio Section */}
-        {user.bio ? (
+        {profileData?.bio && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Player Bio</Text>
             <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>{user.bio}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Player Bio</Text>
-            <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>No bio added yet</Text>
+              <Text style={styles.bioText}>{profileData.bio}</Text>
             </View>
           </View>
         )}
 
-        {/* About Section */}
-        {user.about && user.about.length > 0 && (
-          <ProfileCard 
-            title="About" 
-            data={user.about}
+        {aboutData && (
+          <ProfileCard
+            title="About"
+            data={[
+              { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || '' },
+              { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || '' },
+              // { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || '' },
+              { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || '' },
+              { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || '' },
+              { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || '' },
+              { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || '' },
+
+            ]}
           />
         )}
 
-        {/* Looking For Section */}
-        {user.lookingFor && user.lookingFor.length > 0 && (
-          <ProfileCard 
-            title="Looking For" 
-            data={user.lookingFor}
+        {profileData?.gamesPlayed?.length > 0 && (
+          <GamesSection
+            title="Games Played"
+            games={profileData.gamesPlayed}
           />
         )}
 
-        {/* Games Played Section */}
-        {user.bestAt && user.bestAt.length > 0 && (
-          <GamesSection 
-            title="Games Played" 
-            games={user.bestAt}
-          />
-        )}
-
-        {/* My Plan Section */}
-        {user.plan && user.plan.name && (
-          <PlanSection 
-            title="Gamer Subscription" 
-            plan={user.plan}
+        {profileData?.plan?.name && (
+          <PlanSection
+            title="Gamer Subscription"
+            plan={profileData.plan}
           />
         )}
       </ScrollView>
 
-      {/* Bottom Navigation Bar */}
       <BottomNavBar />
     </SafeAreaView>
   );
 };
 
-// Helper function to get status color
-const getStatusColor = (status) => {
-  const statusOptions = [
-    { name: 'Online', color: 'rgb(32, 151, 58)' },
-    { name: 'Offline', color: '#ff0000' },
-    { name: 'Away', color: '#ffaa00' }
-  ];
-  const statusObj = statusOptions.find(option => option.name === status);
-  return statusObj ? statusObj.color : 'rgb(32, 151, 58)';
-};
-
+// Keep all your existing styles from the original Profile.js
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -285,6 +266,7 @@ const styles = StyleSheet.create({
     fontSize: responsiveFont(14),
     color: 'rgb(32, 151, 58)',
     fontStyle: 'italic',
+    width: responsiveWidth(100),
   },
   editButton: {
     flexDirection: 'row',
@@ -327,6 +309,18 @@ const styles = StyleSheet.create({
     lineHeight: responsiveFont(24),
     color: '#fff',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    padding: 20,
   },
 });
 

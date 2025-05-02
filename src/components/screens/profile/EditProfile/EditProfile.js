@@ -12,25 +12,24 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { ProfileDataContext } from "../../../context/profileDataContext";
+import { UserDataContext } from "../../../context/UserDataContext";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Reusable Components
 import Header from './EditProfile Common/Header';
 import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
 import CoverImagePicker from './EditProfile Common/CoverImagePicker';
 import EditableSection from './EditProfile Common/EditableSection';
 import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
+import StatusModal from './EditProfile Common/StatusModal';
+import ProfileCard from '../Profile Common/ProfileCard';
+import { FontAwesome5 } from '@expo/vector-icons';
 
-// Default images
 const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  const { profileData, setProfileData, getProfileData, loading: contextLoading } = useContext(ProfileDataContext);
+  const { profileData, aboutData, setProfileData,  refreshData } = useContext(UserDataContext);
   
-  // Local state
   const [gamingName, setGamingName] = useState('');
   const [age, setAge] = useState('');
   const [bio, setBio] = useState('');
@@ -41,8 +40,8 @@ const EditProfile = ({ navigation }) => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [isEditing, setIsEditing] = useState({ bio: false });
   const [wordCount, setWordCount] = useState(0);
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
-  // Initialize form with profile data
   useEffect(() => {
     if (!profileData) return;
 
@@ -63,7 +62,6 @@ const EditProfile = ({ navigation }) => {
     );
   }, [profileData]);
 
-  // Update word count when bio changes
   useEffect(() => {
     setWordCount(bio.split(/\s+/).filter(word => word.length > 0).length);
   }, [bio]);
@@ -107,7 +105,7 @@ const EditProfile = ({ navigation }) => {
     return authData ? JSON.parse(authData).token : null;
   };
 
-  const handleCreateProfile = async () => {
+  const handleSaveProfile = async () => {
     try {
       if (!validateInputs()) return;
       
@@ -118,7 +116,6 @@ const EditProfile = ({ navigation }) => {
         throw new Error('Authentication token not found');
       }
 
-      // Upload images first
       setUploadingImages(true);
       const profileImageUrl = profileImage.uri !== defaultProfile.uri 
         ? await uploadImage(profileImage.uri, 'profile')
@@ -128,7 +125,6 @@ const EditProfile = ({ navigation }) => {
         ? await uploadImage(coverImage.uri, 'cover')
         : profileData?.coverImage;
 
-      // Update profile data
       const { data } = await axios.put(
         "/userabout/update-profile",
         {
@@ -148,9 +144,8 @@ const EditProfile = ({ navigation }) => {
 
       if (data?.success) {
         setProfileData(data.updatedProfile);
-        await getProfileData();
-        Alert.alert("Success", "Profile updated successfully");
-        navigation.goBack();
+        await refreshData();
+        navigation.goBack();  // Removed the Alert line
       }
     } catch (error) {
       Alert.alert(
@@ -219,47 +214,54 @@ const EditProfile = ({ navigation }) => {
     return status ? status.color : '#00ff88';
   };
 
-  const toggleStatus = () => {
-    setCurrentStatus(prev => 
-      prev === 'Online' ? 'Away' : 
-      prev === 'Away' ? 'Offline' : 'Online'
-    );
+  const selectStatus = (status) => {
+    setCurrentStatus(status);
+    setShowStatusModal(false);
   };
 
-  if (contextLoading || uploadingImages) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00ff88" />
-        {uploadingImages && <Text style={styles.uploadingText}>Uploading Images...</Text>}
-      </View>
-    );
-  }
+  // Navigation Functions
+  const navigateToEditAbout = () => navigation.navigate('EditAbout', { 
+    about: {
+      educationQualification: aboutData?.educationQualification,
+      occupation: aboutData?.occupation,
+      location: aboutData?.location,
+      religion: aboutData?.religion
+    }
+  });
+  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
+  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
+  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
 
   return (
     <SafeAreaView style={styles.container}>
       <Header 
         title="Edit Profile"
         onBack={() => navigation.goBack()}
-        onSave={handleCreateProfile}
-        saveText={saving ? "Saving..." : "Save"}
-        saveDisabled={saving}
+        onSave={async () => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          handleSaveProfile();
+        }}
       />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Cover Photo Section */}
         <View style={styles.coverSection}>
           <CoverImagePicker 
             image={coverImage} 
-            onPress={pickCoverImage} 
+            onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              pickCoverImage();
+            }} 
           />
           <ProfileImagePicker 
             image={profileImage} 
-            onPress={pickProfileImage}
+            onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              pickProfileImage();
+            }}
             style={styles.profileImagePosition}
           />
         </View>
 
-        {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
             <TextInput
@@ -283,16 +285,21 @@ const EditProfile = ({ navigation }) => {
           </View>
           <View style={styles.statusContainer}>
             <View style={[styles.onlineDot, { backgroundColor: getStatusColor() }]} />
-            <TouchableOpacity onPress={toggleStatus}>
+            <TouchableOpacity onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              setShowStatusModal(true);
+            }}>
               <Text style={styles.status}>{currentStatus} (Tap to change)</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Bio Section */}
         <EditableSection 
           title="Player Bio" 
-          onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            setIsEditing({...isEditing, bio: !isEditing.bio});
+          }}
           editIcon={isEditing.bio ? "check" : "edit-2"}
         >
           <View style={styles.wordCountContainer}>
@@ -314,26 +321,58 @@ const EditProfile = ({ navigation }) => {
             )}
           </View>
         </EditableSection>
+
+
+        {/* About Section */}
+        <EditableSection 
+          title="About" 
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            navigateToEditAbout();
+          }}
+          data={[
+            { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || 'Not specified' },
+            { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || 'Not specified' },
+            // { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || 'Not specified' },
+            { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' },
+            { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || 'Not specified' },
+            { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || 'Not specified' },
+            { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || 'Not specified' },
+          ]}
+          iconComponent={FontAwesome5}
+        />
+
+        {(saving || uploadingImages) && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#00ff88" />
+            <Text style={styles.loadingText}>
+              {uploadingImages ? 'Uploading images...' : 'Saving changes...'}
+            </Text>
+          </View>
+        )}
       </ScrollView>
+
+      <StatusModal 
+        visible={showStatusModal}
+        onClose={async () => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          setShowStatusModal(false);
+        }}
+        currentStatus={currentStatus}
+        onSelectStatus={async (status) => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          selectStatus(status);
+        }}
+      />
     </SafeAreaView>
   );
 };
 
+// Keep all your existing styles from the original EditProfile.js
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  uploadingText: {
-    color: '#00ff88',
-    marginTop: 10,
-    fontSize: 16,
   },
   scrollView: {
     flex: 1,
@@ -355,7 +394,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: responsiveWidth(10),
   },
   nameInput: {
     fontSize: responsiveFont(24),
@@ -365,6 +403,7 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(5),
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.65)',
+    marginRight: responsiveWidth(10),
   },
   ageContainer: {
     borderBottomWidth: 1,
@@ -390,8 +429,9 @@ const styles = StyleSheet.create({
     marginRight: responsiveWidth(5),
   },
   status: {
-    fontSize: responsiveFont(14),
+    fontSize: responsiveFont(16),
     color: '#00ff88',
+    fontWeight: 'bold',
     fontStyle: 'italic',
   },
   wordCountContainer: {
@@ -422,6 +462,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'top',
     minHeight: responsiveHeight(100),
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
   },
 });
 
