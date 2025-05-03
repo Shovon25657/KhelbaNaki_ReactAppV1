@@ -1,55 +1,56 @@
 const userAboutModel = require("../models/userAboutModel");
 const userProfileModel = require("../models/userProfileModel");
+const userLookingForModel = require("../models/lookingFor");
 const JWT = require("jsonwebtoken");
 var { expressjwt: jwt } = require("express-jwt");
 
 
 //Create About
-const createAboutController = async ( req,res) => {
-      try {
-        const {  educationQualification, location, smoking, drinks, gender, religion, occupation } = req.body;
-        //validate
-        // if ( !educationQualification || !location ||  !smoking || !drinks || !religion || !occupation ) {
-        //   return res.status(500).send({
-        //     sucess: false,
-        //     message: "Please Provide All Fields",
-        //   });
-        // }
+const createAboutController = async (req, res) => {
+  try {
+    const { educationQualification, location, smoking, drinks, gender, religion, occupation } = req.body;
+    //validate
+    // if ( !educationQualification || !location ||  !smoking || !drinks || !religion || !occupation ) {
+    //   return res.status(500).send({
+    //     sucess: false,
+    //     message: "Please Provide All Fields",
+    //   });
+    // }
 
-         // Simulate a database check for an existing Data
-                const existingAboutData = await userAboutModel.findOne({ user: req.auth._id });
-        
-                if (existingAboutData) {
-                    return res.status(400).json({
-                        success: false,
-                        message: "Data already exists!",
-                    });
-                }
-        const post = await userAboutModel({
-    
-          educationQualification,
-          location,
-          smoking,
-          drinks,
-          gender,
-          religion,
-          occupation,
-          user: req.auth._id,
-        }).save();
-        res.status(201).send({
-          success: true,
-          message: "Post Created Successfully",
-          post,
-        });
-        console.log(req);
-      } catch (error) {
-        console.log(error);
-        res.status(500).send({
-          sucess: true,
-          message: "Error in Create Post APi",
-          error,
-        });
-      }
+    // Simulate a database check for an existing Data
+    const existingAboutData = await userAboutModel.findOne({ user: req.auth._id });
+
+    if (existingAboutData) {
+      return res.status(400).json({
+        success: false,
+        message: "Data already exists!",
+      });
+    }
+    const userAboutData = await userAboutModel({
+
+      educationQualification,
+      location,
+      smoking,
+      drinks,
+      gender,
+      religion,
+      occupation,
+      user: req.auth._id,
+    }).save();
+    res.status(201).send({
+      success: true,
+      message: "UserAboutData Created Successfully",
+      userAboutData,
+    });
+    console.log(req);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      sucess: true,
+      message: "Error in Create Post APi",
+      error,
+    });
+  }
 };
 
 
@@ -89,8 +90,8 @@ const updateAboutDataController = async (req, res) => {
     const aboutData = await userAboutModel.findOne({ user: req.auth._id });
 
 
-     // Validate at least one field is being updated
-     if (!educationQualification && !location && !smoking && !drinks && !gender && !religion && !occupation) {
+    // Validate at least one field is being updated
+    if (!educationQualification && !location && !smoking && !drinks && !gender && !religion && !occupation) {
       return res.status(500).send({
         success: false,
         message: "Please provide at least one field to update",
@@ -116,7 +117,7 @@ const updateAboutDataController = async (req, res) => {
     if (religion !== undefined) updatedFields.religion = religion;
     if (occupation !== undefined) updatedFields.occupation = occupation;
 
-    
+
 
     const updatedAboutData = await userAboutModel.findOneAndUpdate(
       { user: req.auth._id },
@@ -157,62 +158,56 @@ const updateAboutDataController = async (req, res) => {
 
 
 //Create Profile
-const createprofileController = async ( req,res) => {
-      try {
-        const { bio, age, gamingName} = req.body;
-        //validate
-        // if (!bio || !age || !gamingName ) {
-        //   return res.status(500).send({
-        //     sucess: false,
-        //     message: "Please Provide All Fields",
-        //   });
-        // }
+const createprofileController = async (req, res) => {
+  try {
+    const { bio, age, gamingName } = req.body;
+    //validate
+    // if (!bio || !age || !gamingName ) {
+    //   return res.status(500).send({
+    //     sucess: false,
+    //     message: "Please Provide All Fields",
+    //   });
+    // }
 
-  // Simulate a database check for an existing Data
-  const existingAboutData = await userProfileModel.findOne({ user: req.auth._id });
-        
-  if (existingAboutData) {
+    // Simulate a database check for an existing Data
+    const existingProfileData = await userProfileModel.findOne({ user: req.auth._id });
+
+    if (existingProfileData) {
       return res.status(400).json({
-          success: false,
-          message: "Data already exists!",
+        success: false,
+        message: "ProfileData already exists!",
       });
+    }
+
+    const userProfileData = await userProfileModel({
+      bio,
+      gamingName,
+      age,
+      user: req.auth._id
+    }).save();
+    res.status(201).send({
+      success: true,
+      message: "ProfileData Created Successfully",
+      userProfileData,
+    });
+    console.log(req);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      sucess: true,
+      message: "Error in Create Post APi",
+      error,
+    });
   }
-
-        const post = await userProfileModel({
-          bio,
-          gamingName,
-          age,
-          user: req.auth._id
-        }).save();
-        res.status(201).send({
-          success: true,
-          message: "ProfileData Created Successfully",
-          post,
-        });
-        console.log(req);
-      } catch (error) {
-        console.log(error);
-        res.status(500).send({
-          sucess: true,
-          message: "Error in Create Post APi",
-          error,
-        });
-      }
 };
-
-
-//Create lookingFor
-
-
 
 
 
 
 //Get ProfileData
-
 const getProfileDataController = async (req, res) => {
   try {
-    const profileData = await userProfileModel.findOne({ user: req.auth._id });
+    const userProfileData = await userProfileModel.findOne({ user: req.auth._id });
 
     if (!profileData) {
       return res.status(404).send({
@@ -224,7 +219,7 @@ const getProfileDataController = async (req, res) => {
     res.status(200).send({
       success: true,
       message: 'Profile Data',
-      profileData
+      userProfileData
     });
   } catch (error) {
     console.error("Error in GetProfileData:", error);
@@ -247,8 +242,8 @@ const updateprofileController = async (req, res) => {
     const userProfile = await userProfileModel.findOne({ user: req.auth._id });
 
 
-     // Validate at least one field is being updated
-     if (!bio && !age && !gamingName) {
+    // Validate at least one field is being updated
+    if (!bio && !age && !gamingName) {
       return res.status(500).send({
         success: false,
         message: "Please provide at least one field to update",
@@ -296,7 +291,130 @@ const updateprofileController = async (req, res) => {
 };
 
 
- 
+
+//Create lookingFor
+const createUserLookingForDataController = async (req, res) => {
+  try {
+    const { availability, playMode, playStyle } = req.body;
+
+    // Simulate a database check for an existing Data
+    const existingUserLookingForData = await userLookingForModel.findOne({ user: req.auth._id });
+
+    if (existingUserLookingForData) {
+      return res.status(400).json({
+        success: false,
+        message: "Data already exists!",
+      });
+
+    }
+    const userLookingForData = await userLookingForModel({
+
+      availability,
+      playMode,
+      playStyle,
+      user: req.auth._id,
+    }).save();
+    res.status(201).send({
+      success: true,
+      message: "Post Created Successfully",
+      userLookingForData,
+    });
+    console.log(req);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      sucess: true,
+      message: "Error in Create Post APi",
+      error,
+    });
+  }
+};
+
+
+//Get LookingForData
+const getUserLookingForDataController = async (req, res) => {
+  try {
+    const userLookingForData = await userLookingForModel.findOne({ user: req.auth._id });
+
+    if (!userLookingForData) {
+      return res.status(404).send({
+        success: false,
+        message: "Profile not found",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: 'Looking For Data',
+      userLookingForData
+    });
+  } catch (error) {
+    console.error("Error in GetLookingForData:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error in GetLookingForData",
+      error: error.message,
+    });
+  }
+};
+
+
+
+//Update LookingFor
+const updateUserLookingForDataController = async (req, res) => {
+  try {
+    const { availability, playMode, playStyle } = req.body;
+    // Find profile by user ID (not params.id for security)
+    const userLookingForData = await userLookingForModel.findOne({ user: req.auth._id });
+
+
+    // Validate at least one field is being updated
+    if (!availability && !playMode && !playStyle) {
+      return res.status(500).send({
+        success: false,
+        message: "Please provide at least one field to update",
+      });
+    }
+
+
+    // Check if profile exists
+    if (!userLookingForData) {
+      return res.status(404).send({
+        success: false,
+        message: "Looking For Data not found",
+      });
+    }
+
+    // Update only the provided fields
+    const updatedFields = {};
+    if (availability !== undefined) updatedFields.availability = availability;
+    if (playMode !== undefined) updatedFields.playMode = playMode;
+    if (playStyle !== undefined) updatedFields.playStyle = playStyle;
+
+    const updatedUserLookingForData = await userLookingForModel.findOneAndUpdate(
+      { user: req.auth._id },
+      {
+        availability: updatedFields.availability || userLookingForData?.availability,
+        playMode: updatedFields.playMode || userLookingForData?.playMode,
+        playStyle: updatedFields.playStyle || userLookingForData?.playStyle
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Looking For Data Updated Successfully",
+      updatedUserLookingForData,
+    });
+  } catch (error) {
+    console.error("Error in update Looking For Data:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error in updating Looking For Data",
+      error: error.message, // Send only the error message in production
+    });
+  }
+};
 
 
 
@@ -317,4 +435,20 @@ const updateprofileController = async (req, res) => {
 
 
 
-module.exports = {createAboutController, getAboutDataController, updateAboutDataController, createprofileController, getProfileDataController, updateprofileController, };
+
+
+
+
+
+
+module.exports = {
+  createAboutController,
+  getAboutDataController,
+  updateAboutDataController,
+  createprofileController,
+  getProfileDataController,
+  updateprofileController,
+  createUserLookingForDataController,
+  getUserLookingForDataController,
+  updateUserLookingForDataController
+};

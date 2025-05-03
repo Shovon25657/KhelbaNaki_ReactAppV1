@@ -9,6 +9,7 @@ const UserDataProvider = ({ children }) => {
   const [profileData, setProfileData] = useState(null);
   const [aboutData, setAboutData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [userLookingForData, setUserLookingForData] = useState(null);
   const [error, setError] = useState(null);
 
   // Fetch all user data
@@ -21,15 +22,17 @@ const UserDataProvider = ({ children }) => {
       const { token } = JSON.parse(authData);
       
       // Fetch both endpoints in parallel
-      const [profileRes, aboutRes, userProfileRes] = await Promise.all([
+      const [profileRes, aboutRes, userProfileRes, userLookingForRes ] = await Promise.all([
         axios.get("/userabout/get-profile-data", { headers: { Authorization: `Bearer ${token}` } }),
         axios.get("/userabout/get-about-data", { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get("/userabout/get-user-profile", { headers: { Authorization: `Bearer ${token}` } })
+        axios.get("/userabout/get-user-profile", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("/userabout/get-user-looking-for", { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       if (profileRes.data?.success) setProfileData(profileRes.data.profileData);
       if (aboutRes.data?.success) setAboutData(aboutRes.data.aboutData);
       if (userProfileRes.data?.success) setUserProfile(userProfileRes.data.userProfile);
+      if (userLookingForRes.data?.success) setUserLookingForData(userLookingForRes.data.userLookingForData);
 
     } catch (error) {
       setError(error.message);
@@ -51,6 +54,10 @@ const UserDataProvider = ({ children }) => {
       // About data
       aboutData,
       setAboutData,
+
+      // // User looking for data
+       userLookingForData,
+       setUserLookingForData,
 
       // User profile
       userProfile,

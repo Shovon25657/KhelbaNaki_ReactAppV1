@@ -28,7 +28,7 @@ const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  const { profileData, aboutData, setProfileData, refreshData } = useContext(UserDataContext);
+  const { profileData, aboutData, setProfileData, userLookingForData, refreshData } = useContext(UserDataContext);
 
   const [gamingName, setGamingName] = useState('');
   const [age, setAge] = useState('');
@@ -347,18 +347,16 @@ const EditProfile = ({ navigation }) => {
           title="Looking For"
           onEdit={async () => {
             await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
-            navigateToEditAbout();
+            navigateToEditLookingFor();
           }}
           data={[
-            { icon: 'moon', label: 'Avilablity', value: aboutData?.educationQualification || '' },
-            { icon: 'play', label: 'Play Style', value: aboutData?.occupation || '' },
-            { icon: '', label: 'Play Mode', value: aboutData?.religion || '' },
+            { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
+            { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playMode || 'Not specified' },
+            { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playStyle || 'Not specified' },
 
           ]}
           iconComponent={FontAwesome5}
         />
-
-
 
 
 

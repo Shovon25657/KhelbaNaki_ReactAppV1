@@ -25,6 +25,7 @@ const Profile = ({ navigation }) => {
   const {
     profileData,
     aboutData,
+    userLookingForData,
     loading,
     error,
     refreshData
@@ -120,6 +121,20 @@ const Profile = ({ navigation }) => {
               { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || '' },
               { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || '' },
 
+            ]}
+          />
+        )}
+
+
+
+        {aboutData && (
+          <ProfileCard
+            title="Looking for"
+            data={[
+              { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
+              { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playMode || 'Not specified' },
+              { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playStyle || 'Not specified' },
+  
             ]}
           />
         )}
