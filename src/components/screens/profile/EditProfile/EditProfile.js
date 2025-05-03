@@ -126,7 +126,7 @@ const EditProfile = ({ navigation }) => {
         : profileData?.coverImage;
 
       const { data } = await axios.put(
-        "/userabout/update-profile",
+        "/userabout/update-profile-data",
         {
           gamingName,
           age: age ? parseInt(age) : null,
