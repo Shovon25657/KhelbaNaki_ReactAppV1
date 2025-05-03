@@ -350,12 +350,10 @@ const EditProfile = ({ navigation }) => {
             navigateToEditAbout();
           }}
           data={[
-            { icon: 'moon', label: 'Education', value: aboutData?.educationQualification || 'Not specified' },
-            { icon: 'game', label: 'Occupation', value: aboutData?.occupation || 'Not specified' },
-            { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' },
-            { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || 'Not specified' },
-            { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || 'Not specified' },
-            { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || 'Not specified' },
+            { icon: 'moon', label: 'Avilablity', value: aboutData?.educationQualification || '' },
+            { icon: 'play', label: 'Play Style', value: aboutData?.occupation || '' },
+            { icon: '', label: 'Play Mode', value: aboutData?.religion || '' },
+
           ]}
           iconComponent={FontAwesome5}
         />
