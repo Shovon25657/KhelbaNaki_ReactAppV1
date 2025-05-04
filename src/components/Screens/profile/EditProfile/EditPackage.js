@@ -34,7 +34,7 @@ const EditPackage = ({ navigation, route }) => {
         'Limited matchmaking filters'
       ],
       price: 0,
-      color: '#1e40af'
+      color: '#6366f1'
     },
     { 
       id: '2', 
@@ -47,7 +47,7 @@ const EditPackage = ({ navigation, route }) => {
         'Priority support'
       ],
       price: 4.99,
-      color: '#6d28d9'
+      color: '#8b5cf6'
     },
     { 
       id: '3', 
@@ -61,7 +61,7 @@ const EditPackage = ({ navigation, route }) => {
         'All CHALLENGER features'
       ],
       price: 9.99,
-      color: '#be185d'
+      color: '#ec4899'
     },
     { 
       id: '4', 
@@ -75,7 +75,7 @@ const EditPackage = ({ navigation, route }) => {
         'All PROFESSIONAL features'
       ],
       price: 19.99,
-      color: '#d97706'
+      color: '#f59e0b'
     },
   ];
 
@@ -109,7 +109,14 @@ const EditPackage = ({ navigation, route }) => {
     <TouchableOpacity
       style={[
         styles.packageCard,
-        { borderColor: selectedPackage.id === item.id ? item.color : 'transparent' }
+        { 
+          borderColor: item.color,
+          shadowColor: item.color,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 8
+        }
       ]}
       onPress={() => handleSelectPackage(item)}
     >
@@ -132,7 +139,7 @@ const EditPackage = ({ navigation, route }) => {
           styles.selectButton,
           { 
             backgroundColor: item.color,
-            opacity: selectedPackage.id === item.id ? 1 : 0.85
+            opacity: selectedPackage.id === item.id ? 1 : 0.8
           }
         ]}
         onPress={() => handleSelectPackage(item)}
@@ -146,16 +153,15 @@ const EditPackage = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
       <View style={styles.container}>
-        {/* Header with title aligned with back button */}
-        <View style={styles.headerContainer}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#7DD1F0" />
-            </TouchableOpacity>
-            <Text style={styles.title}>Upgrade Your Plan</Text>
-          </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={28} color="#94a3b8" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Upgrade Your Plan</Text>
+          <View style={styles.headerRightPlaceholder} />
         </View>
         
         <Text style={styles.subtitle}>Choose the perfect package for your gaming journey</Text>
@@ -170,7 +176,7 @@ const EditPackage = ({ navigation, route }) => {
 
         {/* Payment Modal */}
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           visible={showPaymentModal}
           onRequestClose={() => setShowPaymentModal(false)}
@@ -210,7 +216,7 @@ const EditPackage = ({ navigation, route }) => {
                 </>
               ) : (
                 <View style={styles.successContainer}>
-                  <Ionicons name="checkmark-circle" size={80} color="#7DD1F0" />
+                  <Ionicons name="checkmark-circle" size={80} color="#10b981" />
                   <Text style={styles.successTitle}>Payment Successful!</Text>
                   <Text style={styles.successText}>
                     Thank you for subscribing to {selectedPackage.name}. 
@@ -235,38 +241,43 @@ const EditPackage = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#060B11',
+    backgroundColor: '#0f172a',
   },
   container: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight : 20,
-  },
-  headerContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#0f172a',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    backgroundColor: '#0f172a',
   },
   backButton: {
-    padding: 4,
-    marginRight: 16,
+    padding: 5,
+    marginRight: 10,
+  },
+  headerRightPlaceholder: {
+    width: 28,
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#7DD1F0',
+    fontWeight: '600',
+    color: '#f8fafc',
+    textAlign: 'center',
     flex: 1,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
-    marginVertical: 20,
-    paddingHorizontal: 20,
+    fontSize: 14,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 25,
+    paddingHorizontal: 30,
   },
   listContainer: {
     paddingHorizontal: 20,
@@ -274,46 +285,41 @@ const styles = StyleSheet.create({
   },
   packageCard: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 24,
-    borderWidth: 2,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    backgroundColor: '#1e293b',
   },
   packageHeader: {
     padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   packageName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#fff',
     textTransform: 'uppercase',
-    letterSpacing: 1
+    letterSpacing: 0.5,
   },
   packagePrice: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff'
+    fontWeight: '700',
+    color: '#fff',
   },
   featuresContainer: {
-    padding: 18
+    padding: 18,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12
+    marginBottom: 12,
   },
   featureText: {
-    color: '#fff',
-    fontSize: 15,
+    color: '#e2e8f0',
+    fontSize: 14,
     marginLeft: 10,
     flexShrink: 1,
     lineHeight: 20,
@@ -325,131 +331,126 @@ const styles = StyleSheet.create({
   },
   selectButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 16,
-    letterSpacing: 1
+    letterSpacing: 0.5,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.75)'
+    backgroundColor: 'rgba(15,23,42,0.9)',
   },
   modalContent: {
     width: width * 0.9,
-    backgroundColor: '#0D1721',
-    borderRadius: 20,
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
     padding: 25,
     borderWidth: 1,
-    borderColor: 'rgba(125, 209, 240, 0.3)',
-    elevation: 5,
+    borderColor: '#334155',
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#7DD1F0',
+    fontWeight: '600',
+    color: '#f8fafc',
     marginBottom: 20,
-    textAlign: 'center'
+    textAlign: 'center',
   },
   packageSummary: {
     marginBottom: 25,
-    paddingBottom: 20,
+    paddingBottom: 15,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: '#334155',
   },
   summaryTitle: {
-    color: 'rgba(255,255,255,0.7)',
+    color: '#94a3b8',
     fontSize: 14,
-    marginBottom: 8
+    marginBottom: 5,
   },
   summaryName: {
-    color: '#fff',
+    color: '#f8fafc',
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 6
+    fontWeight: '600',
+    marginBottom: 5,
   },
   summaryPrice: {
-    color: '#7DD1F0',
+    color: '#10b981',
     fontSize: 22,
-    fontWeight: 'bold'
+    fontWeight: '700',
   },
   paymentForm: {
-    marginBottom: 25
+    marginBottom: 25,
   },
   paymentTitle: {
-    color: '#fff',
+    color: '#f8fafc',
     fontSize: 16,
+    fontWeight: '500',
     marginBottom: 15,
-    fontWeight: '600',
   },
   cardInput: {
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 12,
+    backgroundColor: '#334155',
+    borderRadius: 10,
     padding: 16,
-    marginBottom: 15
+    marginBottom: 15,
   },
   cardDetails: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   cardDetailInput: {
     width: '48%',
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    padding: 16
+    backgroundColor: '#334155',
+    borderRadius: 10,
+    padding: 16,
   },
   cardText: {
-    color: '#e6e6e6',
-    fontSize: 16
+    color: '#e2e8f0',
+    fontSize: 16,
   },
   payButton: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
   },
   payButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18
+    fontWeight: '600',
+    fontSize: 16,
   },
   successContainer: {
     alignItems: 'center',
-    padding: 15
+    padding: 10,
   },
   successTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#7DD1F0',
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#10b981',
     marginTop: 15,
-    marginBottom: 12,
-    textAlign: 'center'
+    marginBottom: 10,
+    textAlign: 'center',
   },
   successText: {
-    color: '#e6e6e6',
-    fontSize: 16,
+    color: '#e2e8f0',
+    fontSize: 15,
     textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 24
+    marginBottom: 25,
+    lineHeight: 22,
+    paddingHorizontal: 10,
   },
   doneButton: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   doneButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 16,
-    letterSpacing: 1,
-  }
+  },
 });
 
 export default EditPackage;
