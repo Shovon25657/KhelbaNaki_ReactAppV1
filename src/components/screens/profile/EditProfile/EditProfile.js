@@ -28,7 +28,7 @@ const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  const { profileData, aboutData, setProfileData, userLookingForData, refreshData } = useContext(UserDataContext);
+  const { userProfileData, aboutData, setUserProfileData, userLookingForData, refreshData } = useContext(UserDataContext);
 
   const [gamingName, setGamingName] = useState('');
   const [age, setAge] = useState('');
@@ -43,24 +43,24 @@ const EditProfile = ({ navigation }) => {
   const [showStatusModal, setShowStatusModal] = useState(false);
 
   useEffect(() => {
-    if (!profileData) return;
+    if (!userProfileData) return;
 
-    setGamingName(profileData.gamingName || '');
-    setAge(profileData.age ? profileData.age.toString() : '');
-    setBio(profileData.bio || '');
+    setGamingName(userProfileData.gamingName || '');
+    setAge(userProfileData.age ? userProfileData.age.toString() : '');
+    setBio(userProfileData.bio || '');
     setProfileImage(
-      profileData.profileImage ? { uri: profileData.profileImage } : defaultProfile
+      userProfileData.profileImage ? { uri: userProfileData.profileImage } : defaultProfile
     );
     setCoverImage(
-      profileData.coverImage ? { uri: profileData.coverImage } : defaultCover
+      userProfileData.coverImage ? { uri: userProfileData.coverImage } : defaultCover
     );
-    setCurrentStatus(profileData.status || 'Online');
+    setCurrentStatus(userProfileData.status || 'Online');
     setWordCount(
-      profileData.bio
-        ? profileData.bio.split(/\s+/).filter(word => word.length > 0).length
+      userProfileData.bio
+        ? userProfileData.bio.split(/\s+/).filter(word => word.length > 0).length
         : 0
     );
-  }, [profileData]);
+  }, [userProfileData]);
 
   useEffect(() => {
     setWordCount(bio.split(/\s+/).filter(word => word.length > 0).length);
@@ -119,11 +119,11 @@ const EditProfile = ({ navigation }) => {
       setUploadingImages(true);
       const profileImageUrl = profileImage.uri !== defaultProfile.uri
         ? await uploadImage(profileImage.uri, 'profile')
-        : profileData?.profileImage;
+        : userProfileData?.profileImage;
 
       const coverImageUrl = coverImage.uri !== defaultCover.uri
         ? await uploadImage(coverImage.uri, 'cover')
-        : profileData?.coverImage;
+        : userProfileData?.coverImage;
 
       const { data } = await axios.put(
         "/userabout/update-profile-data",
@@ -143,7 +143,7 @@ const EditProfile = ({ navigation }) => {
       );
 
       if (data?.success) {
-        setProfileData(data.updatedProfile);
+        setUserProfileData(data.updatedProfile);
         await refreshData();
         navigation.goBack();  // Removed the Alert line
       }
@@ -228,7 +228,17 @@ const EditProfile = ({ navigation }) => {
       religion: aboutData?.religion
     }
   });
-  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { lookingFor: user.lookingFor });
+  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { 
+    lookingfor: {
+      availability: userLookingForData?.availability,
+      playStyle: userLookingForData?.playStyle,
+      playMode: userLookingForData?.playMode,
+    }
+   });
+
+
+
+
   const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
   const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
 

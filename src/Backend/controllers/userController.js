@@ -4,6 +4,7 @@ const { hashPassword, verifyPassword } = require("../helpers/authHelper");
 var { expressjwt: jwt } = require("express-jwt");
 const userAboutModel = require("../models/userAboutModel");
 const userProfileModel = require("../models/userProfileModel");
+const userLookingForModel = require("../models/lookingFormodel");
 
 //middleware
 const requireSingIn = jwt({
@@ -42,7 +43,7 @@ const registerController = async (req, res) => {
         await user.save(); // Save the new user to the database
         user.password = undefined; // Remove password from the response
 
-        // Default about and profile data
+        // Default about , profile data , Game Played Data
         const defaultAboutData = {
             educationQualification: "",
             location: "",
@@ -61,9 +62,17 @@ const registerController = async (req, res) => {
             user: user._id,
         };
 
+        const defaultLookingForData = {
+            availability: "",
+            playMode: "",
+            playStyle: "",
+            user: user._id,
+        };
+
         // Create default about and profile data for the user
         await userAboutModel.create(defaultAboutData);
         await userProfileModel.create(defaultProfileData);
+        await userLookingForModel.create(defaultLookingForData);
 
         return res.status(201).json({
             message: "User registered successfully",
