@@ -26,10 +26,15 @@
     "@react-navigation/native-stack": "^7.3.3",
     "@react-navigation/stack": "^7.2.3",
     "axios": "^1.8.4",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
     "expo": "~52.0.46",
+    "expo-dev-client": "~5.0.20",
     "expo-document-picker": "~13.0.3",
     "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
+    "expo-system-ui": "~4.0.9",
+    "express": "^5.1.0",
     "react": "^18.3.1",
     "react-dom": "18.3.1",
     "react-native": "^0.76.9",
@@ -45,13 +50,23 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "react-navigation-shared-element": "^3.1.3",
-    "expo-dev-client": "~5.0.20",
-    "expo-system-ui": "~4.0.9"
+    "react-navigation-shared-element": "^3.1.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@react-native-community/cli": "^18.0.0"
   },
-  "private": true
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shovon25657/KhelbaNaki_ReactAppV1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Shovon25657/KhelbaNaki_ReactAppV1/issues"
+  },
+  "homepage": "https://github.com/Shovon25657/KhelbaNaki_ReactAppV1#readme",
+  "description": ""
 }
