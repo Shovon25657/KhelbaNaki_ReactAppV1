@@ -77,7 +77,7 @@ const PrivacyPolicy = () => {
         • Opt out of non-essential communications{'\n'}
         • Manage cookie and tracking preferences{'\n'}
         {'\n'}
-        To exercise your rights, go to Settings > Privacy Controls or contact us at khelbanakiinfo@gmail.com.
+        To exercise your rights, go to Settings {'>'} Privacy Controls or contact us at khelbanakiinfo@gmail.com.
       </Text>
 
       <Text style={styles.sectionTitle}>5. Data Retention</Text>
