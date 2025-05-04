@@ -16,6 +16,9 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserDataContext } from '../../../context/UserDataContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,8 +28,8 @@ const responsiveHeight = (size) => (height / 812) * size;
 const responsiveFont = (size) => (width / 375) * size;
 
 const EditLookingFor = ({ navigation, route }) => {
-  const initialLookingFor = route.params?.lookingFor || {};
-  const [lookingFor, setLookingFor] = useState(initialLookingFor);
+ const { userLookingForData, setUserLookingForData, refreshData } = useContext(UserDataContext);
+  const [lookingFor, setLookingFor] = useState(userLookingForData || {});
   const [modalVisible, setModalVisible] = useState(false);
   const [currentField, setCurrentField] = useState('');
   const [customInput, setCustomInput] = useState('');
@@ -57,11 +60,66 @@ const EditLookingFor = ({ navigation, route }) => {
     playMode: ['Solo', 'Co-op', 'PvP', 'PvE', 'Multiplayer', 'Singleplayer', 'Custom']
   };
 
-  // Compare current state with initial state
+ // Sync with context data
+   useEffect(() => {
+     if (userLookingForData) setLookingFor(userLookingForData);
+   }, [userLookingForData]);
+ 
+  // Track changes
   useEffect(() => {
-    const changesExist = JSON.stringify(lookingFor) !== JSON.stringify(initialLookingFor);
-    setHasChanges(changesExist);
-  }, [lookingFor, initialLookingFor]);
+    const changesDetected = JSON.stringify(lookingFor) !== JSON.stringify(userLookingForData);
+    setHasChanges(changesDetected);
+  }, [lookingFor, userLookingForData]);
+
+ // Back button handler
+  useEffect(() => {
+    const backAction = () => {
+      if (hasChanges) {
+        setUnsavedChangesVisible(true);
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [hasChanges]);
+
+
+    // Save to backend
+    const handleSave = async () => {
+      setSaving(true);
+      try {
+        const authData = await AsyncStorage.getItem('@auth');
+        if (!authData) throw new Error('Authentication required');
+        
+        const { token } = JSON.parse(authData);
+        const response = await axios.put(
+          '/userabout/update-about-data',
+          {
+            educationQualification: about.educationQualification,
+            occupation: about.occupation,
+           // location: about.location,
+            religion: about.religion,
+            smoking: about.smoking,
+            drinks: about.drinks,
+            gender: about.gender,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        if (response.data?.success) {
+          setAboutData(response.data.updatedAbout);
+          await refreshData();
+          navigation.goBack();
+        }
+      } catch (error) {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to save data');
+        console.error('Save error:', error);
+      } finally {
+        setSaving(false);
+      }
+    };
 
   // Pulsing animations for buttons
   useEffect(() => {
@@ -88,10 +146,7 @@ const EditLookingFor = ({ navigation, route }) => {
     pulseAnimation(backPulseAnim);
   }, []);
 
-  const handleSave = () => {
-    navigation.navigate('EditProfile', { updatedLookingFor: lookingFor });
-  };
-
+ 
   const handleBack = () => {
     if (!hasChanges) {
       navigation.goBack();

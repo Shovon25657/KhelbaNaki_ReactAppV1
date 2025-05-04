@@ -23,7 +23,7 @@ import { UserDataContext } from '../../context/UserDataContext';
 
 const Profile = ({ navigation }) => {
   const {
-    profileData,
+    userProfileData,
     aboutData,
     userLookingForData,
     loading,
@@ -68,12 +68,12 @@ const Profile = ({ navigation }) => {
       >
         <View style={styles.coverContainer}>
           <Image
-            source={profileData?.coverImage ? { uri: profileData.coverImage } : coverPhoto}
+            source={userProfileData?.coverImage ? { uri: userProfileData.coverImage } : coverPhoto}
             style={styles.coverPhoto}
           />
           <View style={styles.profilePhotoContainer}>
             <Image
-              source={profileData?.profileImage ? { uri: profileData.profileImage } : profilePhoto}
+              source={userProfileData?.profileImage ? { uri: userProfileData.profileImage } : profilePhoto}
               style={styles.profilePhoto}
             />
           </View>
@@ -82,12 +82,12 @@ const Profile = ({ navigation }) => {
         <View style={styles.nameContainer}>
           <View>
             <Text style={styles.name}>
-              {profileData?.gamingName || 'Unknown Player'}
-              {profileData?.age ? `, ${profileData.age}` : ''}
+              {userProfileData?.gamingName || 'Unknown Player'}
+              {userProfileData?.age ? `, ${profileData.age}` : ''}
             </Text>
             <View style={styles.statusContainer}>
               <View style={styles.onlineDot} />
-              <Text style={styles.status}>{profileData?.status || 'Offline'}</Text>
+              <Text style={styles.status}>{userProfileData?.status || 'Offline'}</Text>
             </View>
           </View>
           <TouchableOpacity
@@ -100,11 +100,11 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {profileData?.bio && (
+        {userProfileData?.bio && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Player Bio</Text>
             <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>{profileData.bio}</Text>
+              <Text style={styles.bioText}>{userProfileData.bio}</Text>
             </View>
           </View>
         )}
@@ -139,17 +139,17 @@ const Profile = ({ navigation }) => {
           />
         )}
 
-        {profileData?.gamesPlayed?.length > 0 && (
+        {userProfileData?.gamesPlayed?.length > 0 && (
           <GamesSection
             title="Games Played"
-            games={profileData.gamesPlayed}
+            games={userProfileData.gamesPlayed}
           />
         )}
 
-        {profileData?.plan?.name && (
+        {userProfileData?.plan?.name && (
           <PlanSection
             title="Gamer Subscription"
-            plan={profileData.plan}
+            plan={userProfileData.plan}
           />
         )}
       </ScrollView>

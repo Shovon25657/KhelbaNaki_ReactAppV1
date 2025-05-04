@@ -1,6 +1,6 @@
 const userAboutModel = require("../models/userAboutModel");
 const userProfileModel = require("../models/userProfileModel");
-const userLookingForModel = require("../models/lookingFor");
+const userLookingForModel = require("../models/lookingFormodel");
 const JWT = require("jsonwebtoken");
 var { expressjwt: jwt } = require("express-jwt");
 
@@ -209,7 +209,7 @@ const getProfileDataController = async (req, res) => {
   try {
     const userProfileData = await userProfileModel.findOne({ user: req.auth._id });
 
-    if (!profileData) {
+    if (!userProfileData) {
       return res.status(404).send({
         success: false,
         message: "Profile not found",
@@ -316,7 +316,7 @@ const createUserLookingForDataController = async (req, res) => {
     }).save();
     res.status(201).send({
       success: true,
-      message: "Post Created Successfully",
+      message: "Looking For Data Created Successfully",
       userLookingForData,
     });
     console.log(req);
