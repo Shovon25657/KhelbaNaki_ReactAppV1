@@ -12,25 +12,24 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { ProfileDataContext } from "../../../context/profileDataContext";
+import { UserDataContext } from "../../../context/UserDataContext";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Reusable Components
 import Header from './EditProfile Common/Header';
 import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
 import CoverImagePicker from './EditProfile Common/CoverImagePicker';
 import EditableSection from './EditProfile Common/EditableSection';
 import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
+import StatusModal from './EditProfile Common/StatusModal';
+import ProfileCard from '../Profile Common/ProfileCard';
+import { FontAwesome5 } from '@expo/vector-icons';
 
-// Default images
 const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  const { profileData, setProfileData, getProfileData, loading: contextLoading } = useContext(ProfileDataContext);
-  
-  // Local state
+  const { userProfileData, aboutData, setUserProfileData, userLookingForData, refreshData } = useContext(UserDataContext);
+
   const [gamingName, setGamingName] = useState('');
   const [age, setAge] = useState('');
   const [bio, setBio] = useState('');
@@ -38,30 +37,127 @@ const EditProfile = ({ navigation }) => {
   const [coverImage, setCoverImage] = useState(defaultCover);
   const [currentStatus, setCurrentStatus] = useState('Online');
   const [saving, setSaving] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [isEditing, setIsEditing] = useState({ bio: false });
   const [wordCount, setWordCount] = useState(0);
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
-  // Initialize form with profile data
   useEffect(() => {
-    if (profileData) {
-      setGamingName(profileData.gamingName || '');
-      setAge(profileData.age ? profileData.age.toString() : '');
-      setBio(profileData.bio || '');
-      setProfileImage(
-        profileData.profileImage ? { uri: profileData.profileImage } : defaultProfile
-      );
-      setCoverImage(
-        profileData.coverImage ? { uri: profileData.coverImage } : defaultCover
-      );
-      setCurrentStatus(profileData.status || 'Online');
-      setWordCount(profileData.bio ? profileData.bio.split(/\s+/).filter(word => word.length > 0).length : 0);
-    }
-  }, [profileData]);
+    if (!userProfileData) return;
 
-  // Update word count when bio changes
+    setGamingName(userProfileData.gamingName || '');
+    setAge(userProfileData.age ? userProfileData.age.toString() : '');
+    setBio(userProfileData.bio || '');
+    setProfileImage(
+      userProfileData.profileImage ? { uri: userProfileData.profileImage } : defaultProfile
+    );
+    setCoverImage(
+      userProfileData.coverImage ? { uri: userProfileData.coverImage } : defaultCover
+    );
+    setCurrentStatus(userProfileData.status || 'Online');
+    setWordCount(
+      userProfileData.bio
+        ? userProfileData.bio.split(/\s+/).filter(word => word.length > 0).length
+        : 0
+    );
+  }, [userProfileData]);
+
   useEffect(() => {
     setWordCount(bio.split(/\s+/).filter(word => word.length > 0).length);
   }, [bio]);
+
+  const validateInputs = () => {
+    if (age && isNaN(age)) {
+      Alert.alert("Invalid Age", "Please enter a valid number for age");
+      return false;
+    }
+    if (wordCount > 150) {
+      Alert.alert("Bio Too Long", "Please keep bio under 150 words");
+      return false;
+    }
+    return true;
+  };
+
+  const uploadImage = async (uri, type) => {
+    const formData = new FormData();
+    formData.append('image', {
+      uri,
+      type: 'image/jpeg',
+      name: `${type}_${Date.now()}.jpg`
+    });
+
+    try {
+      const { data } = await axios.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${await getToken()}`
+        }
+      });
+      return data.imageUrl;
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      throw error;
+    }
+  };
+
+  const getToken = async () => {
+    const authData = await AsyncStorage.getItem('@auth');
+    return authData ? JSON.parse(authData).token : null;
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      if (!validateInputs()) return;
+
+      setSaving(true);
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      setUploadingImages(true);
+      const profileImageUrl = profileImage.uri !== defaultProfile.uri
+        ? await uploadImage(profileImage.uri, 'profile')
+        : userProfileData?.profileImage;
+
+      const coverImageUrl = coverImage.uri !== defaultCover.uri
+        ? await uploadImage(coverImage.uri, 'cover')
+        : userProfileData?.coverImage;
+
+      const { data } = await axios.put(
+        "/userabout/update-profile-data",
+        {
+          gamingName,
+          age: age ? parseInt(age) : null,
+          bio,
+          profileImage: profileImageUrl,
+          coverImage: coverImageUrl,
+          status: currentStatus
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (data?.success) {
+        setUserProfileData(data.updatedProfile);
+        await refreshData();
+        navigation.goBack();  // Removed the Alert line
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || error.message || "Failed to update profile"
+      );
+      console.error("Update profile error:", error);
+    } finally {
+      setSaving(false);
+      setUploadingImages(false);
+    }
+  };
 
   const pickProfileImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -108,52 +204,6 @@ const EditProfile = ({ navigation }) => {
     }
   };
 
-  const getToken = async () => {
-    const authData = await AsyncStorage.getItem('@auth');
-    return authData ? JSON.parse(authData).token : null;
-  };
-
-  const handleCreateProfile = async () => {
-    try {
-      setSaving(true);
-      const token = await getToken();
-      
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
-
-      const { data } = await axios.put(
-        "/userabout/update-profile",
-        {
-          gamingName,
-          age: parseInt(age) || 0,
-          bio,
-          profileImage: profileImage.uri || profileImage,
-          coverImage: coverImage.uri || coverImage,
-          status: currentStatus
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      setProfileData(data?.profile);
-      await getProfileData();
-      setSaving(false);
-      navigation.goBack();
-      Alert.alert("Success", "Profile updated successfully");
-    } catch (error) {
-      setSaving(false);
-      Alert.alert(
-        "Error", 
-        error.response?.data?.message || error.message || "Failed to update profile"
-      );
-      console.log("Update profile error:", error);
-    }
-  };
-
   const getStatusColor = () => {
     const statusOptions = [
       { name: 'Online', color: '#00ff88' },
@@ -164,50 +214,64 @@ const EditProfile = ({ navigation }) => {
     return status ? status.color : '#00ff88';
   };
 
-  const toggleStatus = () => {
-    setCurrentStatus(prev => 
-      prev === 'Online' ? 'Away' : 
-      prev === 'Away' ? 'Offline' : 'Online'
-    );
+  const selectStatus = (status) => {
+    setCurrentStatus(status);
+    setShowStatusModal(false);
   };
 
-  if (contextLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00ff88" />
-      </View>
-    );
-  }
+  // Navigation Functions
+  const navigateToEditAbout = () => navigation.navigate('EditAbout', {
+    about: {
+      educationQualification: aboutData?.educationQualification,
+      occupation: aboutData?.occupation,
+      location: aboutData?.location,
+      religion: aboutData?.religion
+    }
+  });
+  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { 
+    lookingfor: {
+      availability: userLookingForData?.availability,
+      playStyle: userLookingForData?.playStyle,
+      playMode: userLookingForData?.playMode,
+    }
+   });
+
+
+
+
+  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
+  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header 
+      <Header
         title="Edit Profile"
         onBack={() => navigation.goBack()}
-        onSave={handleCreateProfile}
-        saveText={saving ? "Saving..." : "Save"}
+        onSave={async () => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          handleSaveProfile();
+        }}
       />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Cover Photo Section */}
         <View style={styles.coverSection}>
-          <CoverImagePicker 
-            image={coverImage} 
-            onPress={pickCoverImage} 
+          <CoverImagePicker
+            image={coverImage}
+            onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              pickCoverImage();
+            }}
           />
-          <ProfileImagePicker 
-            image={profileImage} 
-            onPress={pickProfileImage}
+          <ProfileImagePicker
+            image={profileImage}
+            onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              pickProfileImage();
+            }}
             style={styles.profileImagePosition}
           />
         </View>
 
-
-        <Text style={{fontFamily: 'monospace', color: '#fff'}}>
-  {JSON.stringify(profileData, null, 4)}
-</Text>
-
-        {/* Name and Age Section */}
         <View style={styles.nameContainer}>
           <View style={styles.nameInputsContainer}>
             <TextInput
@@ -231,16 +295,21 @@ const EditProfile = ({ navigation }) => {
           </View>
           <View style={styles.statusContainer}>
             <View style={[styles.onlineDot, { backgroundColor: getStatusColor() }]} />
-            <TouchableOpacity onPress={toggleStatus}>
+            <TouchableOpacity onPress={async () => {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+              setShowStatusModal(true);
+            }}>
               <Text style={styles.status}>{currentStatus} (Tap to change)</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Bio Section */}
-        <EditableSection 
-          title="Player Bio" 
-          onEdit={() => setIsEditing({...isEditing, bio: !isEditing.bio})}
+        <EditableSection
+          title="Player Bio"
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            setIsEditing({ ...isEditing, bio: !isEditing.bio });
+          }}
           editIcon={isEditing.bio ? "check" : "edit-2"}
         >
           <View style={styles.wordCountContainer}>
@@ -262,20 +331,75 @@ const EditProfile = ({ navigation }) => {
             )}
           </View>
         </EditableSection>
+
+
+        {/* About Section */}
+        <EditableSection
+          title="About"
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            navigateToEditAbout();
+          }}
+          data={[
+            { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || 'Not specified' },
+            { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || 'Not specified' },
+            // { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || 'Not specified' },
+            { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || 'Not specified' },
+            { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || 'Not specified' },
+            { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || 'Not specified' },
+            { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || 'Not specified' },
+          ]}
+          iconComponent={FontAwesome5}
+        />
+
+        {/* Looking For Section */}
+        <EditableSection
+          title="Looking For"
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+            navigateToEditLookingFor();
+          }}
+          data={[
+            { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
+            { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playMode || 'Not specified' },
+            { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playStyle || 'Not specified' },
+
+          ]}
+          iconComponent={FontAwesome5}
+        />
+
+
+
+        {(saving || uploadingImages) && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#00ff88" />
+            <Text style={styles.loadingText}>
+              {uploadingImages ? 'Uploading images...' : 'Saving changes...'}
+            </Text>
+          </View>
+        )}
       </ScrollView>
+
+      <StatusModal
+        visible={showStatusModal}
+        onClose={async () => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          setShowStatusModal(false);
+        }}
+        currentStatus={currentStatus}
+        onSelectStatus={async (status) => {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Add 0.5 second delay
+          selectStatus(status);
+        }}
+      />
     </SafeAreaView>
   );
 };
 
+// Keep all your existing styles from the original EditProfile.js
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgb(1, 12, 20)',
   },
   scrollView: {
@@ -333,8 +457,9 @@ const styles = StyleSheet.create({
     marginRight: responsiveWidth(5),
   },
   status: {
-    fontSize: responsiveFont(14),
+    fontSize: responsiveFont(16),
     color: '#00ff88',
+    fontWeight: 'bold',
     fontStyle: 'italic',
   },
   wordCountContainer: {
@@ -365,6 +490,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'top',
     minHeight: responsiveHeight(100),
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
   },
 });
 

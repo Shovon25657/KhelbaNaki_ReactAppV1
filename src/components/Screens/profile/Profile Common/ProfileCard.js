@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './responsiveDimensions';
 
-const ProfileCard = ({ title, data }) => {
+const ProfileCard = ({ title,data }) => {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     color: 'rgba(206, 201, 201, 0.7)',
     marginTop: responsiveHeight(4),
     textAlign: 'center',
+    width: responsiveWidth(80), // Adjust width to fit the label
   },
   smallGridValue: {
     fontSize: responsiveFont(12),
@@ -73,6 +74,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: responsiveHeight(2),
     textAlign: 'center',
+    width: responsiveWidth(80), // Adjust width to fit the label
   },
 });
 

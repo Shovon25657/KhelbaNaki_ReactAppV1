@@ -1,77 +1,97 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
+import React, { useContext, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
   TouchableOpacity,
-  Dimensions,
-  Platform,
+  ActivityIndicator,
+  SafeAreaView,
   StatusBar,
-  SafeAreaView
+  Platform
 } from 'react-native';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import profilePhoto from '../../../../assets/Alex.jpg';
 import coverPhoto from '../../../../assets/sova_image.jpg';
-import game1 from '../../../../assets/game1.png';
-import game2 from '../../../../assets/game2.png';
-import game3 from '../../../../assets/game3.png';
 import BottomNavBar from '../../common/BottomNavBar';
 import ProfileCard from './Profile Common/ProfileCard';
 import GamesSection from './Profile Common/GamesSection';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
+import { UserDataContext } from '../../context/UserDataContext';
 
 const Profile = ({ navigation }) => {
-  const [user, setUser] = useState({
-    name: '',
-    age: null,
-    bio: '',
-    about: [],
-    lookingFor: [],
-    bestAt: [],
-    plan: {
-      name: '',
-      features: []
-    }
-  });
+  const {
+    userProfileData,
+    aboutData,
+    userLookingForData,
+    loading,
+    error,
+    refreshData
+  } = useContext(UserDataContext);
+
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile', { user });
+    navigation.navigate('EditProfile');
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00ff88" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error loading profile: {error}</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with title only */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gamer Profile</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
       >
-        {/* Cover Photo with Profile Photo overlapping */}
         <View style={styles.coverContainer}>
-          <Image source={coverPhoto} style={styles.coverPhoto} />
+          <Image
+            source={userProfileData?.coverImage ? { uri: userProfileData.coverImage } : coverPhoto}
+            style={styles.coverPhoto}
+          />
           <View style={styles.profilePhotoContainer}>
-            <Image source={profilePhoto} style={styles.profilePhoto} />
+            <Image
+              source={userProfileData?.profileImage ? { uri: userProfileData.profileImage } : profilePhoto}
+              style={styles.profilePhoto}
+            />
           </View>
         </View>
 
-        {/* Name, Age and Edit Profile Button */}
         <View style={styles.nameContainer}>
           <View>
-            <Text style={styles.name}>{user.name}{user.age ? `, ${user.age}` : ''}</Text>
+            <Text style={styles.name}>
+              {userProfileData?.gamingName || 'Unknown Player'}
+              {userProfileData?.age ? `, ${profileData.age}` : ''}
+            </Text>
             <View style={styles.statusContainer}>
               <View style={styles.onlineDot} />
-              <Text style={styles.status}>Online Now</Text>
+              <Text style={styles.status}>{userProfileData?.status || 'Offline'}</Text>
             </View>
           </View>
-          <TouchableOpacity 
-            style={styles.editButton} 
+          <TouchableOpacity
+            style={styles.editButton}
             onPress={handleEditProfile}
             activeOpacity={0.7}
           >
@@ -80,55 +100,66 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Bio Section */}
-        {user.bio ? (
+        {userProfileData?.bio && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Player Bio</Text>
             <View style={styles.bioContainer}>
-              <Text style={styles.bioText}>{user.bio}</Text>
+              <Text style={styles.bioText}>{userProfileData.bio}</Text>
             </View>
           </View>
-        ) : null}
+        )}
 
-        {/* About Section */}
-        {user.about.length > 0 && (
-          <ProfileCard 
-            title="About" 
-            data={user.about}
+        {aboutData && (
+          <ProfileCard
+            title="About"
+            data={[
+              { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || '' },
+              { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || '' },
+              // { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || '' },
+              { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || '' },
+              { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || '' },
+              { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || '' },
+              { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || '' },
+
+            ]}
           />
         )}
 
-        {/* Looking For Section */}
-        {user.lookingFor.length > 0 && (
-          <ProfileCard 
-            title="Looking For" 
-            data={user.lookingFor}
+
+
+        {aboutData && (
+          <ProfileCard
+            title="Looking for"
+            data={[
+              { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
+              { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playMode || 'Not specified' },
+              { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playStyle || 'Not specified' },
+  
+            ]}
           />
         )}
 
-        {/* Games Played Section */}
-        {user.bestAt.length > 0 && (
-          <GamesSection 
-            title="Games Played" 
-            games={user.bestAt}
+        {userProfileData?.gamesPlayed?.length > 0 && (
+          <GamesSection
+            title="Games Played"
+            games={userProfileData.gamesPlayed}
           />
         )}
 
-        {/* My Plan Section */}
-        {user.plan.name && (
-          <PlanSection 
-            title="Gamer Subscription" 
-            plan={user.plan}
+        {userProfileData?.plan?.name && (
+          <PlanSection
+            title="Gamer Subscription"
+            plan={userProfileData.plan}
           />
         )}
       </ScrollView>
 
-      {/* Bottom Navigation Bar */}
       <BottomNavBar />
     </SafeAreaView>
   );
 };
 
+// Keep all your existing styles from the original Profile.js
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -217,6 +248,7 @@ const styles = StyleSheet.create({
     fontSize: responsiveFont(14),
     color: 'rgb(32, 151, 58)',
     fontStyle: 'italic',
+    width: responsiveWidth(100),
   },
   editButton: {
     flexDirection: 'row',
@@ -259,6 +291,18 @@ const styles = StyleSheet.create({
     lineHeight: responsiveFont(24),
     color: '#fff',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    padding: 20,
   },
 });
 

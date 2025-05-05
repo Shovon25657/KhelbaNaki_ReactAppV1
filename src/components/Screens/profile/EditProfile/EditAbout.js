@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  TextInput, 
   ScrollView, 
   Modal, 
   Pressable, 
@@ -14,9 +13,13 @@ import {
   Animated,
   Easing,
   Alert,
-  BackHandler
+  BackHandler,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserDataContext } from '../../../context/UserDataContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -24,19 +27,20 @@ const responsiveWidth = (size) => (width / 375) * size;
 const responsiveHeight = (size) => (height / 812) * size;
 const responsiveFont = (size) => (width / 375) * size;
 
-const EditAbout = ({ navigation, route }) => {
-  const initialAbout = route.params?.about || {};
-  const [about, setAbout] = useState(initialAbout);
+const EditAbout = ({ navigation }) => {
+  const { aboutData, setAboutData, refreshData } = useContext(UserDataContext);
+  const [about, setAbout] = useState(aboutData || {});
   const [modalVisible, setModalVisible] = useState(false);
   const [currentField, setCurrentField] = useState('');
   const [customInput, setCustomInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [unsavedChangesVisible, setUnsavedChangesVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
   const pulseAnim = new Animated.Value(1);
   const backAnim = new Animated.Value(1);
 
-  // Gaming theme colors
+  // Color scheme
   const colors = {
     primary: '#6e44ff',
     secondary: '#b892ff',
@@ -50,61 +54,30 @@ const EditAbout = ({ navigation, route }) => {
     warning: '#f39c12',
   };
 
-  // Options for each field
+  // Field options
   const fieldOptions = {
-    education: ['High School', 'Bachelor Degree', 'Master Degree', 'PhD', 'Other'],
-    smoking: ['Yes', 'No', 'Custom'],
-    drinks: ['Yes', 'No', 'Occasionally', 'Custom'],
-    gender: ['Male', 'Female', 'Non-binary', 'Prefer not to say'],
+    educationQualification: ['High School', 'Bachelor Degree', 'Master Degree', 'PhD', 'Other'],
+    occupation: ['Student', 'Engineer', 'Doctor', 'Teacher', 'Artist', 'Streamer', 'Gamer', 'Developer', 'Other'],
     religion: ['Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Judaism', 'Atheism', 'Other'],
-    occupation: ['Student', 'Engineer', 'Doctor', 'Teacher', 'Artist', 'Streamer', 'Gamer', 'Developer', 'Other']
+    drinks: ['Yes', 'No'],
+    smoking: ['Yes', 'No'],
+    gender: ['Male', 'Female', 'Other'],
+   // location: ['USA', 'Canada', 'UK', 'Australia', 'India', 'Other'],
   };
 
-  // Check for changes
+  // Sync with context data
   useEffect(() => {
-    const changesDetected = JSON.stringify(about) !== JSON.stringify(initialAbout);
+    if (aboutData) setAbout(aboutData);
+  }, [aboutData]);
+
+  // Track changes
+  useEffect(() => {
+    const changesDetected = JSON.stringify(about) !== JSON.stringify(aboutData);
     setHasChanges(changesDetected);
-  }, [about, initialAbout]);
+  }, [about, aboutData]);
 
-  // Pulsing animations
+  // Back button handler
   useEffect(() => {
-    // Save button animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 1000,
-          easing: Easing.ease,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.ease,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Back button animation (subtler)
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(backAnim, {
-          toValue: 1.02,
-          duration: 1500,
-          easing: Easing.ease,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backAnim, {
-          toValue: 1,
-          duration: 1500,
-          easing: Easing.ease,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Handle back button press
     const backAction = () => {
       if (hasChanges) {
         setUnsavedChangesVisible(true);
@@ -113,26 +86,46 @@ const EditAbout = ({ navigation, route }) => {
       return false;
     };
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
-
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
   }, [hasChanges]);
 
-  const handleSave = () => {
-    navigation.navigate('EditProfile', { updatedAbout: about });
-  };
+  // Save to backend
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const authData = await AsyncStorage.getItem('@auth');
+      if (!authData) throw new Error('Authentication required');
+      
+      const { token } = JSON.parse(authData);
+      const response = await axios.put(
+        '/userabout/update-about-data',
+        {
+          educationQualification: about.educationQualification,
+          occupation: about.occupation,
+         // location: about.location,
+          religion: about.religion,
+          smoking: about.smoking,
+          drinks: about.drinks,
+          gender: about.gender,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-  const handleBack = () => {
-    if (hasChanges) {
-      setUnsavedChangesVisible(true);
-    } else {
-      navigation.goBack();
+      if (response.data?.success) {
+        setAboutData(response.data.updatedAbout);
+        await refreshData();
+        navigation.goBack();
+      }
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to save data');
+      console.error('Save error:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
+  // Field selection handlers
   const openModal = (field) => {
     setCurrentField(field);
     setModalVisible(true);
@@ -144,7 +137,6 @@ const EditAbout = ({ navigation, route }) => {
       setIsTyping(true);
       return;
     }
-    
     setAbout({ ...about, [currentField]: option });
     setModalVisible(false);
     setIsTyping(false);
@@ -159,6 +151,7 @@ const EditAbout = ({ navigation, route }) => {
     }
   };
 
+  // Field render helper
   const renderField = (fieldName, label) => (
     <View style={styles.section}>
       <Text style={styles.label}>{label}</Text>
@@ -168,81 +161,111 @@ const EditAbout = ({ navigation, route }) => {
         activeOpacity={0.7}
       >
         <Text style={about[fieldName] ? styles.selectedText : styles.placeholderText}>
-          {about[fieldName] || `Select your ${fieldName.toLowerCase()}`}
+          {about[fieldName] || `Select ${label.toLowerCase()}`}
         </Text>
         <Ionicons name="chevron-down" size={20} color={colors.secondary} />
       </TouchableOpacity>
     </View>
   );
 
+  // Animation setup
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(backAnim, {
+          toValue: 1.02,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header with adjusted spacing */}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <Ionicons name="game-controller" size={28} color={colors.accent} style={styles.gameIcon} />
-            <Text style={styles.title}>About Me</Text>
+            <Text style={styles.title}> About Me </Text>
           </View>
-          <TouchableOpacity 
-            onPress={() => {
-              Alert.alert(
-                "Profile Information Guide",
-                "Please fill out your profile information accurately and truthfully. This helps create a better experience for everyone. Remember:\n\n• Use real details about yourself\n• Select options that genuinely represent you\n• Custom fields are for special cases only",
-                [
-                  { text: "GOT IT", style: "default" }
-                ]
-              );
-            }}
+          <TouchableOpacity
+            onPress={() => Alert.alert('Guide', 'Provide accurate information about yourself')}
             style={styles.helpButton}
           >
             <Ionicons name="information-circle-outline" size={28} color={colors.secondary} />
           </TouchableOpacity>
         </View>
 
-        {/* All fields */}
-        {renderField('education', 'Education Qualification')}
+        {/* Fields */}
+        {renderField('educationQualification', 'Education')}
+        {renderField('occupation', 'Occupation')}
+        {renderField('gender', 'gender')}
+        {renderField('religion', 'Religion')}
         {renderField('smoking', 'Smoking')}
         {renderField('drinks', 'Drinks')}
-        {renderField('gender', 'Gender')}
-        {renderField('religion', 'Religion')}
-        {renderField('occupation', 'Occupation')}
+        {/* {renderField('location', 'Location')} */}
+
 
         {/* Action Buttons */}
         <View style={styles.buttonRow}>
           <Animated.View style={[styles.backButtonContainer, { transform: [{ scale: backAnim }] }]}>
             <TouchableOpacity 
               style={styles.backButton} 
-              onPress={handleBack}
+              onPress={() => hasChanges ? setUnsavedChangesVisible(true) : navigation.goBack()}
               activeOpacity={0.7}
             >
               <Text style={styles.backButtonText}>BACK</Text>
-              <Ionicons name="arrow-back" size={20} color="#fff" style={styles.backIcon} />
+              <Ionicons name="arrow-back" size={20} color="#fff" />
             </TouchableOpacity>
           </Animated.View>
 
           <Animated.View style={[styles.saveButtonContainer, { transform: [{ scale: pulseAnim }] }]}>
             <TouchableOpacity 
-              style={styles.saveButton} 
+              style={[styles.saveButton, saving && styles.disabledButton]} 
               onPress={handleSave}
+              disabled={saving}
               activeOpacity={0.7}
             >
-              <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
-              <Ionicons name="save" size={20} color="#fff" style={styles.saveIcon} />
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Text style={styles.saveButtonText}>SAVE</Text>
+                  <Ionicons name="save" size={20} color="#fff" />
+                </>
+              )}
             </TouchableOpacity>
           </Animated.View>
         </View>
 
-        {/* Unsaved Changes Popup */}
+        {/* Unsaved Changes Modal */}
         <Modal
-          animationType="fade"
-          transparent={true}
+          transparent
           visible={unsavedChangesVisible}
           onRequestClose={() => setUnsavedChangesVisible(false)}
         >
@@ -255,36 +278,27 @@ const EditAbout = ({ navigation, route }) => {
               <Text style={styles.unsavedText}>You have unsaved changes. What would you like to do?</Text>
               
               <View style={styles.unsavedGrid}>
-                {/* Discard Button */}
                 <TouchableOpacity 
                   style={[styles.unsavedButton, styles.discardButton]}
-                  onPress={() => {
-                    setUnsavedChangesVisible(false);
-                    navigation.goBack();
-                  }}
+                  onPress={() => navigation.goBack()}
                 >
-                  <Ionicons name="trash-outline" size={28} color="#fff" style={styles.unsavedButtonIcon} />
-                  <Text style={styles.unsavedButtonText}>Discard Changes</Text>
+                  <Ionicons name="trash-outline" size={24} color="#fff" />
+                  <Text style={styles.unsavedButtonText}>Discard</Text>
                 </TouchableOpacity>
                 
-                {/* Save Button */}
                 <TouchableOpacity 
                   style={[styles.unsavedButton, styles.saveChangesButton]}
-                  onPress={() => {
-                    setUnsavedChangesVisible(false);
-                    handleSave();
-                  }}
+                  onPress={handleSave}
                 >
-                  <Ionicons name="save-outline" size={28} color="#fff" style={styles.unsavedButtonIcon} />
-                  <Text style={styles.unsavedButtonText}>Save Changes</Text>
+                  <Ionicons name="save-outline" size={24} color="#fff" />
+                  <Text style={styles.unsavedButtonText}>Save</Text>
                 </TouchableOpacity>
                 
-                {/* Continue Editing Button */}
                 <TouchableOpacity 
                   style={[styles.unsavedButton, styles.continueButton]}
                   onPress={() => setUnsavedChangesVisible(false)}
                 >
-                  <Ionicons name="pencil-outline" size={28} color="#fff" style={styles.unsavedButtonIcon} />
+                  <Ionicons name="pencil-outline" size={24} color="#fff" />
                   <Text style={styles.unsavedButtonText}>Continue Editing</Text>
                 </TouchableOpacity>
               </View>
@@ -294,74 +308,48 @@ const EditAbout = ({ navigation, route }) => {
 
         {/* Selection Modal */}
         <Modal
-          animationType="fade"
-          transparent={true}
+          transparent
           visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(false);
-            setIsTyping(false);
-          }}
+          onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
             <Pressable 
               style={styles.modalOutside}
-              onPress={() => {
-                setModalVisible(false);
-                setIsTyping(false);
-              }}
+              onPress={() => setModalVisible(false)}
             />
             
             <View style={styles.modalContainer}>
               {isTyping ? (
                 <View style={styles.customInputContainer}>
-                  <Text style={styles.modalTitle}>ENTER YOUR {currentField.toUpperCase()}</Text>
-                  
-                  <View style={styles.typingContainer}>
-                    <TextInput
-                      style={styles.customInput}
-                      placeholder={`Type your ${currentField}...`}
-                      placeholderTextColor={colors.placeholder}
-                      value={customInput}
-                      onChangeText={setCustomInput}
-                      autoFocus={true}
-                      multiline={true}
-                      maxLength={50}
-                      selectionColor={colors.accent}
-                      keyboardAppearance="dark"
-                    />
-                    <View style={styles.characterCount}>
-                      <Text style={styles.countText}>{customInput.length}/50</Text>
-                    </View>
-                  </View>
-                  
+                  <Text style={styles.modalTitle}>ENTER {currentField.toUpperCase()}</Text>
+                  <TextInput
+                    style={styles.customInput}
+                    placeholder={`Type your ${currentField}...`}
+                    placeholderTextColor={colors.placeholder}
+                    value={customInput}
+                    onChangeText={setCustomInput}
+                    autoFocus
+                    maxLength={50}
+                  />
                   <View style={styles.modalButtonRow}>
                     <TouchableOpacity 
                       style={[styles.modalButton, styles.cancelButton]}
-                      onPress={() => {
-                        setIsTyping(false);
-                        setCustomInput('');
-                      }}
+                      onPress={() => setIsTyping(false)}
                     >
                       <Text style={styles.modalButtonText}>CANCEL</Text>
                     </TouchableOpacity>
-                    
                     <TouchableOpacity 
                       style={[styles.modalButton, styles.confirmButton]}
                       onPress={saveCustomInput}
-                      disabled={!customInput.trim()}
                     >
-                      <Text style={styles.modalButtonText}>CONFIRM</Text>
+                      <Text style={styles.modalButtonText}>SAVE</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               ) : (
                 <View style={styles.optionsContainer}>
                   <Text style={styles.modalTitle}>SELECT {currentField.toUpperCase()}</Text>
-                  
-                  <ScrollView 
-                    style={styles.optionsScroll}
-                    showsVerticalScrollIndicator={false}
-                  >
+                  <ScrollView>
                     {fieldOptions[currentField]?.map((option, index) => (
                       <TouchableOpacity
                         key={index}
@@ -370,7 +358,6 @@ const EditAbout = ({ navigation, route }) => {
                           about[currentField] === option && styles.selectedOption
                         ]}
                         onPress={() => handleOptionSelect(option)}
-                        activeOpacity={0.6}
                       >
                         <Text style={styles.optionText}>{option}</Text>
                         {about[currentField] === option && (
@@ -379,13 +366,6 @@ const EditAbout = ({ navigation, route }) => {
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
-                  
-                  <TouchableOpacity 
-                    style={styles.closeModalButton}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Text style={styles.closeModalText}>CLOSE</Text>
-                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -404,14 +384,12 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: 20,
     paddingBottom: 40,
-    paddingTop: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 25,
-    
   },
   titleContainer: {
     flexDirection: 'row',
@@ -424,12 +402,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     color: '#e6e6e6',
-    textShadowColor: 'rgba(44, 18, 138, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-  },
-  helpButton: {
-    padding: 5,
   },
   section: {
     marginBottom: 25,
@@ -439,300 +411,169 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: '600',
     color: 'rgb(1, 225, 255)',
-    letterSpacing: 0.5,
   },
   input: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#0f3460',
     padding: 15,
     borderRadius: 12,
-   // backgroundColor: 'rgba(30, 30, 60, 0.7)',
+    backgroundColor: 'rgba(30, 30, 60, 0.7)',
   },
   selectedText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
   placeholderText: {
-    color: 'rgba(142, 142, 142, 0.7)',
+    color: '#8e8e8e',
     fontSize: 16,
+    fontWeight: '400',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 30,
   },
-  saveButtonContainer: {
-  },
-  backButtonContainer: {
-  },
   saveButton: {
     backgroundColor: '#6e44ff',
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    padding: 15,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 10,
   },
   backButton: {
-    backgroundColor: 'rgb(200, 10, 67)',
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    backgroundColor: '#e74c3c',
+    padding: 15,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-
+    gap: 10,
   },
   saveButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-    letterSpacing: 1,
   },
   backButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-    letterSpacing: 1,
   },
-  saveIcon: {
-    marginLeft: 10,
+  disabledButton: {
+    opacity: 0.6,
   },
-  backIcon: {
-    marginLeft: 10,
-  },
-  // Unsaved Changes Popup Styles
   errorOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   unsavedContainer: {
-    width: width * 0.9,
+    width: '90%',
     backgroundColor: '#16213e',
     borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#0f3460',
   },
   unsavedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 15,
   },
   unsavedTitle: {
     color: '#f39c12',
     fontSize: 20,
-    fontWeight: 'bold',
     marginLeft: 10,
   },
   unsavedText: {
     color: '#fff',
-    fontSize: 16,
     marginBottom: 20,
     textAlign: 'center',
-    lineHeight: 24,
   },
   unsavedGrid: {
-    flexDirection: 'column',
+    gap: 10,
   },
   unsavedButton: {
-    width: '100%',
-    borderRadius: 12,
-    padding: 8,
-    marginBottom: 10,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
+    padding: 15,
+    borderRadius: 12,
+    gap: 10,
   },
   discardButton: {
     backgroundColor: '#e74c3c',
   },
   saveChangesButton: {
     backgroundColor: '#6e44ff',
-  
   },
   continueButton: {
-
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#6e44ff',
   },
-  unsavedButtonIcon: {
-    marginRight: 10,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
   },
-  unsavedButtonText: {
+  modalContainer: {
+    width: '90%',
+    backgroundColor: '#16213e',
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalTitle: {
     color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
-    fontSize: 16,
-  },
-  // Modal Styles
- // Modal styles
- modalOverlay: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.86)',
-},
-modalContainer: {
-  width: responsiveWidth(300),
-  backgroundColor: 'rgb(1, 2, 23)',
-  borderRadius: responsiveWidth(15),
-  padding: responsiveWidth(20),
-  borderWidth: 1,
-  borderColor: '#0f3460',
-},
-modalTitle: {
-  fontSize: responsiveFont(20),
-  fontWeight: 'bold',
-  color: '#fff',
-  marginBottom: responsiveHeight(20),
-  textAlign: 'center',
-},
-statusList: {
-  paddingBottom: responsiveHeight(10),
-},
-statusOption: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingVertical: responsiveHeight(12),
-  paddingHorizontal: responsiveWidth(15),
-  marginBottom: responsiveHeight(5),
-  backgroundColor: '#0f3460',
-  borderRadius: responsiveWidth(10),
-},
-statusOptionText: {
-  fontSize: responsiveFont(16),
-  color: '#fff',
-  marginLeft: responsiveWidth(10),
-  flex: 1,
-},
-statusCheck: {
-  marginLeft: 'auto',
-},
-closeButton: {
-  backgroundColor: 'rgb(77, 20, 232)',
-  padding: responsiveWidth(12),
-  borderRadius: responsiveWidth(10),
-  marginTop: responsiveHeight(10),
-  alignItems: 'center',
-},
-closeButtonText: {
-  color: '#fff',
-  fontWeight: 'bold',
-  fontSize: responsiveFont(16),
-},
-
-  modalOutside: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  
-
-  optionsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-  },
-  optionsScroll: {
-    maxHeight: height * 0.5,
+    marginBottom: 15,
+    textAlign: 'center',
   },
   optionButton: {
-    padding: 16,
-    borderRadius: 10,
+    padding: 15,
+    borderRadius: 12,
     marginBottom: 10,
-    backgroundColor: 'rgba(110, 68, 255, 0.2)',
+    backgroundColor: 'rgba(56, 14, 206, 0.2)',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   selectedOption: {
     backgroundColor: 'rgba(110, 68, 255, 0.5)',
-    borderWidth: 1,
-    borderColor: '#6e44ff',
   },
   optionText: {
-    color: '#e6e6e6',
+    width: '80%',
+    color: '#fff',
     fontSize: 16,
-  },
-  closeModalButton: {
-    marginTop: 15,
-    padding: 14,
-    backgroundColor: 'rgba(231, 76, 60, 0.2)',
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(231, 76, 60, 0.5)',
-  },
-  closeModalText: {
-    color: '#e6e6e6',
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
   customInputContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  typingContainer: {
-    position: 'relative',
+    gap: 15,
   },
   customInput: {
-    borderWidth: 2,
-    borderColor: '#6e44ff',
-    padding: 16,
-    borderRadius: 12,
-    color: '#e6e6e6',
     backgroundColor: 'rgba(30, 30, 60, 0.7)',
-    fontSize: 16,
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  characterCount: {
-    position: 'absolute',
-    right: 10,
-    bottom: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  countText: {
-    color: '#b892ff',
-    fontSize: 12,
+    color: '#fff',
+    padding: 15,
+    borderRadius: 12,
   },
   modalButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
+    gap: 10,
   },
   modalButton: {
-    padding: 14,
-    borderRadius: 10,
+    flex: 1,
+    padding: 15,
+    borderRadius: 12,
     alignItems: 'center',
-    width: '48%',
   },
   cancelButton: {
-    backgroundColor: 'rgba(231, 76, 60, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(231, 76, 60, 0.5)',
+    backgroundColor: '#e74c3c',
   },
   confirmButton: {
-    backgroundColor: 'rgba(46, 204, 113, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(46, 204, 113, 0.5)',
+    backgroundColor: '#6e44ff',
   },
   modalButtonText: {
-    color: '#e6e6e6',
+    color: '#fff',
     fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
 });
 
