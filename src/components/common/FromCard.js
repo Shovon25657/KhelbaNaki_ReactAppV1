@@ -60,14 +60,13 @@ const FormCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(184, 184, 184, 0.06)',
+    backgroundColor: 'transparent', // Removes background
     padding: 20,
     borderRadius: 10,
-    borderColor: 'rgba(47, 91, 214, 0.49)',
-    borderWidth: 0.5,
     width: '100%',
     marginVertical: 10,
   },
+
   stepIndicator: {
     color: '#fff',
     textAlign: 'center',
