@@ -23,7 +23,7 @@ const LoginPage = () => {
   const [state, setState] = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Added this line
+  const [showPassword, setShowPassword] = useState(false);
   const [showSocial, setShowSocial] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -158,16 +158,18 @@ const LoginPage = () => {
                 secureTextEntry={!showPassword}
                 style={styles.passwordInput}
               />
-              <TouchableOpacity 
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Icon 
-                  name={showPassword ? 'eye-off' : 'eye'} 
-                  size={24} 
-                  color="#999" 
-                />
-              </TouchableOpacity>
+              {password.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Icon 
+                    name={showPassword ? 'eye-off' : 'eye'} 
+                    size={24} 
+                    color="#999" 
+                  />
+                </TouchableOpacity>
+              )}
             </View>
 
             <TouchableOpacity onPress={() => setShowForgotPassword(true)}>
