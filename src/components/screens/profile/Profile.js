@@ -83,7 +83,7 @@ const Profile = ({ navigation }) => {
           <View>
             <Text style={styles.name}>
               {userProfileData?.gamingName || 'Unknown Player'}
-              {userProfileData?.age ? `, ${profileData.age}` : ''}
+              {userProfileData?.age ? `, ${userProfileData.age}` : ''}
             </Text>
             <View style={styles.statusContainer}>
               <View style={styles.onlineDot} />
