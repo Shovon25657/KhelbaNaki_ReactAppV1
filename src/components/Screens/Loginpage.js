@@ -17,11 +17,13 @@ import { AuthContext } from '../context/authContext';
 import EmptyField from '../common/Emptyfield';
 import Logo from '../common/Logo';
 import FormCard from '../common/FromCard';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const LoginPage = () => {
   const [state, setState] = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Added this line
   const [showSocial, setShowSocial] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -148,12 +150,25 @@ const LoginPage = () => {
               keyboardType="email-address"
             />
 
-            <EmptyField
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.passwordContainer}>
+              <EmptyField
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                style={styles.passwordInput}
+              />
+              <TouchableOpacity 
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Icon 
+                  name={showPassword ? 'eye-off' : 'eye'} 
+                  size={24} 
+                  color="#999" 
+                />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity onPress={() => setShowForgotPassword(true)}>
               <Text style={styles.forgotText}>Forgot password?</Text>
@@ -202,7 +217,6 @@ const LoginPage = () => {
   );
 };
 
-// Keep all your existing styles from the original code
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -217,10 +231,23 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '95%',
-    backgroundColor: 'transparent', // Removes background
+    backgroundColor: 'transparent',
     padding: 20,
     justifyContent: 'center',
     borderRadius: 10,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 40, // Make space for the eye icon
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 10,
+    top: '50%',
+    transform: [{ translateY: -19 }], // Center vertically
+    zIndex: 1,
   },
   forgotText: {
     color: '#999',
