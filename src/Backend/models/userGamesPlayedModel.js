@@ -1,15 +1,29 @@
 const mongoose = require('mongoose');
 
-const gamesPlayedSchema = new mongoose.Schema({
-    gamesPlayed: {
-        type: [String], // This defines an array of strings
-        default: []     // Default empty array
-    },
-    user: {
-       type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',    // Reference to the User model
-        required: true
-    }
+const gameSchema = new mongoose.Schema({
+  playedGameName: { type: String, required: true, trim: true },
+  levelofGaming: { 
+    type: String, 
+    required: true,
+    enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
+    default: 'Intermediate'
+  },
+  frequency: { 
+    type: String, 
+    required: true,
+    enum: ['Rarely', 'Occasionally', 'Frequently', 'Daily'],
+    default: 'Occasionally'
+  }
+}, { _id: true }); // Ensure each game has its own ID
+
+const userGamesPlayedSchema = new mongoose.Schema({
+  user: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true,
+    unique: true // One document per user
+  },
+  gamesPlayed: [gameSchema]
 }, { timestamps: true });
 
-module.exports = mongoose.model('GamesPlayed', gamesPlayedSchema);
+module.exports = mongoose.model('UserGamesPlayed', userGamesPlayedSchema);
