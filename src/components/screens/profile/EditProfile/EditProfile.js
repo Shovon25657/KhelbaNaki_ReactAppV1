@@ -361,8 +361,8 @@ const EditProfile = ({ navigation }) => {
           }}
           data={[
             { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
-            { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playMode || 'Not specified' },
-            { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playStyle || 'Not specified' },
+            { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playStyle || 'Not specified' },
+            { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playMode || 'Not specified' },
 
           ]}
           iconComponent={FontAwesome5}

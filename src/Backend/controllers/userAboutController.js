@@ -1,6 +1,7 @@
 const userAboutModel = require("../models/userAboutModel");
 const userProfileModel = require("../models/userProfileModel");
 const userLookingForModel = require("../models/lookingFormodel");
+const userGamesPlayedModel = require("../models/userGamesPlayedModel");
 const JWT = require("jsonwebtoken");
 var { expressjwt: jwt } = require("express-jwt");
 
@@ -419,6 +420,122 @@ const updateUserLookingForDataController = async (req, res) => {
 
 
 
+const createUserGamesPlayedController = async (req, res) => {
+  try {
+    // Authentication check
+    if (!req.auth || !req.auth._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - Please login first",
+      });
+    }
+
+    const { gamesPlayed } = req.body;
+
+    // Validation
+    if (!gamesPlayed || !Array.isArray(gamesPlayed)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid games array",
+      });
+    }
+
+    // Validate each game object
+    const invalidGames = gamesPlayed.filter(game => 
+      !game.playedGameName || 
+      !game.levelofGaming || 
+      !game.frequency
+    );
+
+    if (invalidGames.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Each game must have playedGameName, levelofGaming, and frequency",
+        invalidGames
+      });
+    }
+
+    // Find or create user's game data
+    let userGamesData = await userGamesPlayedModel.findOne({ user: req.auth._id });
+
+    if (userGamesData) {
+      // Filter out duplicates (case insensitive)
+      const newGames = gamesPlayed.filter(newGame => 
+        !userGamesData.gamesPlayed.some(existingGame =>
+          existingGame.playedGameName.toLowerCase() === newGame.playedGameName.toLowerCase()
+        )
+      );
+
+      if (newGames.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: "No new games to add",
+          gamesPlayed: userGamesData.gamesPlayed
+        });
+      }
+
+      userGamesData.gamesPlayed.push(...newGames);
+      await userGamesData.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Games updated successfully",
+        gamesPlayed: userGamesData.gamesPlayed
+      });
+    }
+
+    // Create new entry
+    userGamesData = await userGamesPlayedModel.create({
+      gamesPlayed,
+      user: req.auth._id
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Games added successfully",
+      gamesPlayed: userGamesData.gamesPlayed
+    });
+
+  } catch (error) {
+    console.error("Error in game controller:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+
+//Get User Games Played
+const getUserGamesPlayedController = async (req, res) => {
+  try {
+    const gamesPlayed = await userGamesPlayedModel.findOne({ user: req.auth._id });
+
+    if (!gamesPlayed) {
+      return res.status(404).send({
+        success: false,
+        message: "User Games Played data not found",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: 'User Games Played data',
+      gamesPlayed
+    });
+  } catch (error) {
+    console.error("Error in User Games Played data:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error in User Games Played data",
+      error: error.message,
+    });
+  }
+}
+
+
+
 
 
 
@@ -450,5 +567,7 @@ module.exports = {
   updateprofileController,
   createUserLookingForDataController,
   getUserLookingForDataController,
-  updateUserLookingForDataController
+  updateUserLookingForDataController,
+  createUserGamesPlayedController,
+  getUserGamesPlayedController
 };
