@@ -10,6 +10,7 @@ const UserDataProvider = ({ children }) => {
   const [aboutData, setAboutData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [userLookingForData, setUserLookingForData] = useState(null);
+  const [userGamesPlayedData, setUserGamesPlayedData] = useState(null);
   const [error, setError] = useState(null);
 
   // Fetch all user data
@@ -22,18 +23,27 @@ const UserDataProvider = ({ children }) => {
       const { token } = JSON.parse(authData);
       
       // Fetch both endpoints in parallel
-      const [profileDataRes, aboutRes, userProfileRes, userLookingForRes ] = await Promise.all([
+      const [profileDataRes, aboutRes, userProfileRes, userLookingForRes, userGamesPlayedRes ] = await Promise.all([
         axios.get("/userabout/get-profile-data", { headers: { Authorization: `Bearer ${token}` } }),
         axios.get("/userabout/get-about-data", { headers: { Authorization: `Bearer ${token}` } }),
         axios.get("/userabout/get-user-profile", { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get("/userabout/get-user-looking-for", { headers: { Authorization: `Bearer ${token}` } })
+        axios.get("/userabout/get-user-looking-for-data", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("/userabout/get-user-gamesplayed-data", { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       if (profileDataRes.data?.success) setUserProfileData(profileDataRes.data.userProfileData);
       if (aboutRes.data?.success) setAboutData(aboutRes.data.aboutData);
       if (userProfileRes.data?.success) setUserProfile(userProfileRes.data.userProfile);
-      if (userLookingForRes.data?.success) setUserLookingForData(userLookingForRes.data.userLookingForData);
+      if (userLookingForRes.data?.success) {
+        console.log("Setting user looking for data:", userLookingForRes.data.userLookingForData); // Add this line
+      setUserLookingForData(userLookingForRes.data.userLookingForData);
+      }
 
+        setUserLookingForData(userLookingForRes.data.userLookingForData);
+    if (userGamesPlayedRes.data?.success) {
+      console.log("Full games played response:", userGamesPlayedRes.data.gamesPlayed);
+            setUserGamesPlayedData(userGamesPlayedRes.data.gamesPlayed);
+    }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -62,6 +72,10 @@ const UserDataProvider = ({ children }) => {
       // User profile
       userProfile,
       setUserProfile,
+
+      // User games played data
+      userGamesPlayedData,
+      setUserGamesPlayedData,
       
       // Common states
       loading,

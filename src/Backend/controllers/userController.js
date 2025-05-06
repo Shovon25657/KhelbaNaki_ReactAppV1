@@ -5,6 +5,7 @@ var { expressjwt: jwt } = require("express-jwt");
 const userAboutModel = require("../models/userAboutModel");
 const userProfileModel = require("../models/userProfileModel");
 const userLookingForModel = require("../models/lookingFormodel");
+const userGamesPlayedModel = require("../models/userGamesPlayedModel");
 
 //middleware
 const requireSingIn = jwt({
@@ -69,10 +70,18 @@ const registerController = async (req, res) => {
             user: user._id,
         };
 
+        const defaultGamesPlayedData = {
+            playedGameName: "",
+            levelofGaming: "",
+            frequency: "",
+            user: user._id,
+        };
+
         // Create default about and profile data for the user
         await userAboutModel.create(defaultAboutData);
         await userProfileModel.create(defaultProfileData);
         await userLookingForModel.create(defaultLookingForData);
+        await userGamesPlayedModel.create(defaultGamesPlayedData);
 
         return res.status(201).json({
             message: "User registered successfully",
