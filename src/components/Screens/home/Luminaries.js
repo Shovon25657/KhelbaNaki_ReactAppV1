@@ -90,7 +90,7 @@ const Luminaries = ({ navigation }) => {
   };
 
   const handleEmailPress = () => {
-    Linking.openURL('mailto:Contact.Luminaries@gmail.com');
+    Linking.openURL('mailto:khelbanakiinfo@gmail.com');
   };
 
   return (

@@ -23,42 +23,59 @@ const EditPackage = ({ navigation, route }) => {
   const packages = [
     { 
       id: '1', 
-      name: 'Bronze Package', 
+      name: 'ROOME', 
       features: [
-        'Basic Features',
-        'Limited Access',
-        'Standard Support',
-        '5 GB Storage'
+        'Basic matchmaking',
+        'Access to public social feed',
+        'Post/comment on feed',
+        'Send/receive messages',
+        'Group chat & voice calls',
+        'View and purchase gigs',
+        'Limited matchmaking filters'
       ],
-      price: 4.99,
-      color: '#cd7f32'
+      price: 0,
+      color: '#6366f1'
     },
     { 
       id: '2', 
-      name: 'Silver Package', 
+      name: 'CHALLENGER', 
       features: [
-        'Intermediate Features',
-        'Priority Support',
-        'Advanced Analytics',
-        '50 GB Storage',
-        'Ad-free Experience'
+        'Ad-free experience',
+        'Full matchmaking filters',
+        'Basic recruitment tools',
+        'All ROOME features',
+        'Priority support'
       ],
-      price: 9.99,
-      color: '#c0c0c0'
+      price: 4.99,
+      color: '#8b5cf6'
     },
     { 
       id: '3', 
-      name: 'Gold Package', 
+      name: 'PROFESSIONAL', 
       features: [
-        'Advanced Features',
-        'Unlimited Access',
-        '24/7 VIP Support',
-        '1 TB Storage',
-        'Exclusive Content',
-        'Early Access'
+        'Offer gigs',
+        'Advanced recruitment tools',
+        'Create tournaments/scrims',
+        'Advanced profile analytics',
+        'Limited profile highlighting',
+        'All CHALLENGER features'
+      ],
+      price: 9.99,
+      color: '#ec4899'
+    },
+    { 
+      id: '4', 
+      name: 'HALL OF FAMER', 
+      features: [
+        'Exclusive "Hall of Fame" badge',
+        'Custom branding tools',
+        'Featured profile spots',
+        'Early access to new features',
+        'VIP community access',
+        'All PROFESSIONAL features'
       ],
       price: 19.99,
-      color: '#ffd700'
+      color: '#f59e0b'
     },
   ];
 
@@ -68,8 +85,13 @@ const EditPackage = ({ navigation, route }) => {
 
   const handleSelectPackage = (pkg) => {
     setSelectedPackage(pkg);
-    setShowPaymentModal(true);
-    setPaymentSuccess(false);
+    if (pkg.price > 0) {
+      setShowPaymentModal(true);
+      setPaymentSuccess(false);
+    } else {
+      // Free package - immediately complete
+      navigation.navigate('EditProfile', { updatedPlan: pkg });
+    }
   };
 
   const handlePayment = () => {
@@ -86,24 +108,40 @@ const EditPackage = ({ navigation, route }) => {
   const renderPackage = ({ item }) => (
     <TouchableOpacity
       style={[
-        styles.packageCard
+        styles.packageCard,
+        { 
+          borderColor: item.color,
+          shadowColor: item.color,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 8
+        }
       ]}
       onPress={() => handleSelectPackage(item)}
     >
-      <View style={styles.packageHeader}>
+      <View style={[styles.packageHeader, { backgroundColor: item.color }]}>
         <Text style={styles.packageName}>{item.name}</Text>
-        <Text style={styles.packagePrice}>${item.price}/month</Text>
+        <Text style={styles.packagePrice}>
+          {item.price > 0 ? `$${item.price}/month` : 'FREE'}
+        </Text>
       </View>
       <View style={styles.featuresContainer}>
         {item.features.map((feature, index) => (
           <View key={index} style={styles.featureItem}>
-            <Ionicons name="checkmark-circle" size={18} color="#00ff88" />
+            <Ionicons name="checkmark-circle" size={18} color={item.color} />
             <Text style={styles.featureText}>{feature}</Text>
           </View>
         ))}
       </View>
       <TouchableOpacity 
-        style={styles.selectButton}
+        style={[
+          styles.selectButton,
+          { 
+            backgroundColor: item.color,
+            opacity: selectedPackage.id === item.id ? 1 : 0.8
+          }
+        ]}
         onPress={() => handleSelectPackage(item)}
       >
         <Text style={styles.selectButtonText}>
@@ -115,31 +153,30 @@ const EditPackage = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
       <View style={styles.container}>
-        {/* Header with spacing from status bar */}
-        <View style={styles.headerContainer}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#00ff88" />
-            </TouchableOpacity>
-            <Text style={styles.title}>Choose Your Package</Text>
-            <View style={styles.headerRightPlaceholder} />
-          </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={28} color="#94a3b8" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Upgrade Your Plan</Text>
+          <View style={styles.headerRightPlaceholder} />
         </View>
         
-        <Text style={styles.subtitle}>Select the plan that fits your needs</Text>
+        <Text style={styles.subtitle}>Choose the perfect package for your gaming journey</Text>
         
         <FlatList
           data={packages}
           keyExtractor={(item) => item.id}
           renderItem={renderPackage}
           contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
         />
 
         {/* Payment Modal */}
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           visible={showPaymentModal}
           onRequestClose={() => setShowPaymentModal(false)}
@@ -171,7 +208,7 @@ const EditPackage = ({ navigation, route }) => {
                   </View>
                   
                   <TouchableOpacity 
-                    style={styles.payButton} 
+                    style={[styles.payButton, { backgroundColor: selectedPackage.color }]} 
                     onPress={handlePayment}
                   >
                     <Text style={styles.payButtonText}>PAY ${selectedPackage.price}</Text>
@@ -179,14 +216,14 @@ const EditPackage = ({ navigation, route }) => {
                 </>
               ) : (
                 <View style={styles.successContainer}>
-                  <Ionicons name="checkmark-circle" size={80} color="#00ff88" />
+                  <Ionicons name="checkmark-circle" size={80} color="#10b981" />
                   <Text style={styles.successTitle}>Payment Successful!</Text>
                   <Text style={styles.successText}>
                     Thank you for subscribing to {selectedPackage.name}. 
                     Your account has been upgraded.
                   </Text>
                   <TouchableOpacity 
-                    style={styles.doneButton} 
+                    style={[styles.doneButton, { backgroundColor: selectedPackage.color }]} 
                     onPress={handleComplete}
                   >
                     <Text style={styles.doneButtonText}>DONE</Text>
@@ -203,48 +240,48 @@ const EditPackage = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   safeArea: {
-  
     flex: 1,
-    backgroundColor: 'rgb(1, 12, 20)',
-},
-container: {
-  flex: 1,
-  paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 10 : 20,
-},
-  headerContainer: {
-    paddingTop: 10, // Additional padding below status bar
-    paddingHorizontal: 20
+    backgroundColor: '#0f172a',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#0f172a',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 10
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    backgroundColor: '#0f172a',
   },
   backButton: {
-    padding: 5
+    padding: 5,
+    marginRight: 10,
   },
   headerRightPlaceholder: {
-    width: 24
+    width: 28,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#00ff88',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#f8fafc',
     textAlign: 'center',
-    marginTop: 4 // Fine-tuning vertical alignment
+    flex: 1,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 25,
+    fontSize: 14,
+    color: '#94a3b8',
     textAlign: 'center',
-    paddingHorizontal: 20,
-    marginTop: -4 // Adjust spacing from header
+    marginTop: 5,
+    marginBottom: 25,
+    paddingHorizontal: 30,
   },
   listContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20
+    paddingBottom: 30,
   },
   packageCard: {
     width: '100%',
@@ -252,169 +289,168 @@ container: {
     overflow: 'hidden',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#0f3460',
+    backgroundColor: '#1e293b',
   },
   packageHeader: {
-    backgroundColor: 'rgb(26, 9, 97)',
-    padding: 15,
+    padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   packageName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff'
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   packagePrice: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff'
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
   },
   featuresContainer: {
-    padding: 15
+    padding: 18,
   },
   featureItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   featureText: {
-    color: '#fff',
-    fontSize: 16,
-    marginLeft: 10
+    color: '#e2e8f0',
+    fontSize: 14,
+    marginLeft: 10,
+    flexShrink: 1,
+    lineHeight: 20,
   },
   selectButton: {
-    padding: 15,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgb(0, 255, 174)',
   },
   selectButtonText: {
-    color: '#16213e',
-    fontWeight: 'bold',
-    fontSize: 16
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)'
+    backgroundColor: 'rgba(15,23,42,0.9)',
   },
   modalContent: {
     width: width * 0.9,
-    backgroundColor: '#16213e',
-    borderRadius: 15,
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
     padding: 25,
     borderWidth: 1,
-    borderColor: '#0f3460',
+    borderColor: '#334155',
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#f8fafc',
     marginBottom: 20,
-    textAlign: 'center'
+    textAlign: 'center',
   },
   packageSummary: {
     marginBottom: 25,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderColor: '#0f3460',
+    borderColor: '#334155',
   },
   summaryTitle: {
-    color: '#fff',
+    color: '#94a3b8',
     fontSize: 14,
-    marginBottom: 5
+    marginBottom: 5,
   },
   summaryName: {
-    color: 'rgba(255, 255, 255, 0.87)',
-    fontSize: 17,
-    fontWeight: 'bold',
-    marginBottom: 5
+    color: '#f8fafc',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 5,
   },
   summaryPrice: {
-    color: '#00ff88',
+    color: '#10b981',
     fontSize: 22,
-    fontWeight: 'bold'
+    fontWeight: '700',
   },
   paymentForm: {
-    marginBottom: 25
+    marginBottom: 25,
   },
   paymentTitle: {
-    color: '#fff',
+    color: '#f8fafc',
     fontSize: 16,
-    marginBottom: 15
+    fontWeight: '500',
+    marginBottom: 15,
   },
   cardInput: {
-    backgroundColor: 'rgba(30, 30, 60, 0.39)',
-    borderWidth: 1,
-    borderColor: '#0f3460',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15
+    backgroundColor: '#334155',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 15,
   },
   cardDetails: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   cardDetailInput: {
     width: '48%',
-    backgroundColor: 'rgba(30, 30, 60, 0.39)',
-    borderWidth: 1,
-    borderColor: '#0f3460',
-    borderRadius: 8,
-    borderRadius: 8,
-    padding: 15
+    backgroundColor: '#334155',
+    borderRadius: 10,
+    padding: 16,
   },
   cardText: {
-    color: '#e6e6e6',
-    fontSize: 16
+    color: '#e2e8f0',
+    fontSize: 16,
   },
   payButton: {
-    backgroundColor: '#00ff88',
-    padding: 15,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginTop: 10,
   },
   payButtonText: {
-    color: '#16213e',
-    fontWeight: 'bold',
-    fontSize: 18
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
   successContainer: {
     alignItems: 'center',
-    padding: 10
+    padding: 10,
   },
   successTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#00ff88',
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#10b981',
     marginTop: 15,
     marginBottom: 10,
-    textAlign: 'center'
+    textAlign: 'center',
   },
   successText: {
-    color: '#e6e6e6',
-    fontSize: 16,
+    color: '#e2e8f0',
+    fontSize: 15,
     textAlign: 'center',
     marginBottom: 25,
-    lineHeight: 24
+    lineHeight: 22,
+    paddingHorizontal: 10,
   },
   doneButton: {
-    backgroundColor: '#6e44ff',
-    padding: 15,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   doneButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16
-  }
+    fontWeight: '600',
+    fontSize: 16,
+  },
 });
 
 export default EditPackage;

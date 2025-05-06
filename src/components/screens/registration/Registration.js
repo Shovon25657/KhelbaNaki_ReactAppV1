@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, TouchableOpacity, Platform } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import FormCard from '../../common/FromCard';
@@ -11,6 +11,9 @@ const Registration = () => {
     email: '',
     password: '',
     confirmPassword: ''
+  });
+  const [showPassword, setShowPassword] = useState({
+    confirmPassword: false
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
@@ -28,14 +31,31 @@ const Registration = () => {
     },
     {
       inputs: [
-        { name: 'password', placeholder: 'Password', secureTextEntry: true },
-        { name: 'confirmPassword', placeholder: 'Confirm password', secureTextEntry: true }
+        { 
+          name: 'password', 
+          placeholder: 'Password', 
+          secureTextEntry: true
+        },
+        { 
+          name: 'confirmPassword', 
+          placeholder: 'Confirm password', 
+          secureTextEntry: !showPassword.confirmPassword,
+          showPasswordToggle: true,
+          showPasswordValue: showPassword.confirmPassword
+        }
       ]
     }
   ];
 
   const handleChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPassword(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
   const validateStep = () => {
@@ -48,13 +68,12 @@ const Registration = () => {
       }
     }
 
-    // Add specific validations for each step
-    if (currentStep === 3 && !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (currentStep === 1 && !/\S+@\S+\.\S+/.test(formData.email)) {
       Alert.alert('Error', 'Please enter a valid email!');
       return false;
     }
 
-    if (currentStep === 4) {
+    if (currentStep === 2) {
       if (formData.password.length < 6) {
         Alert.alert('Error', 'Password should be at least 6 characters long!');
         return false;
@@ -76,7 +95,7 @@ const Registration = () => {
     } else {
       try {
         setIsLoading(true);
-         const { data } = await axios.post('/auth/register', formData);
+        const { data } = await axios.post('/auth/register', formData);
         
         if (data?.message) {
           Alert.alert('Success', data.message);
@@ -100,7 +119,6 @@ const Registration = () => {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        
         <FormCard
           currentStep={currentStep}
           fields={formSteps}
@@ -110,9 +128,9 @@ const Registration = () => {
           handlePrev={handlePrev}
           isLastStep={currentStep === formSteps.length - 1}
           isLoading={isLoading}
+          togglePasswordVisibility={togglePasswordVisibility}
         />
         
-
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.signInText}>Already have an Account?</Text>
         </TouchableOpacity>
@@ -121,7 +139,6 @@ const Registration = () => {
   );
 };
 
-// Keep your existing styles, add any new ones if needed
 const styles = StyleSheet.create({
   container: {
     flex: 1,
