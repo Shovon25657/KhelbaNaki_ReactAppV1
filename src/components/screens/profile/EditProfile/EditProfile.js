@@ -19,6 +19,7 @@ import Header from './EditProfile Common/Header';
 import ProfileImagePicker from './EditProfile Common/ProfileImagePicker';
 import CoverImagePicker from './EditProfile Common/CoverImagePicker';
 import EditableSection from './EditProfile Common/EditableSection';
+import EditableSectionforplayedgame from './EditProfile Common/EditableSectionforplayedgame';
 import { responsiveFont, responsiveWidth, responsiveHeight } from './EditProfile Common/Metrics';
 import StatusModal from './EditProfile Common/StatusModal';
 import ProfileCard from '../Profile Common/ProfileCard';
@@ -28,7 +29,7 @@ const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  const { userProfileData, aboutData, setUserProfileData, userLookingForData, refreshData } = useContext(UserDataContext);
+  const { userProfileData, aboutData, setUserProfileData, userLookingForData, userGamesPlayedData, refreshData } = useContext(UserDataContext);
 
   const [gamingName, setGamingName] = useState('');
   const [age, setAge] = useState('');
@@ -228,18 +229,29 @@ const EditProfile = ({ navigation }) => {
       religion: aboutData?.religion
     }
   });
-  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', { 
+  const navigateToEditLookingFor = () => navigation.navigate('EditLookingFor', {
     lookingfor: {
       availability: userLookingForData?.availability,
       playStyle: userLookingForData?.playStyle,
       playMode: userLookingForData?.playMode,
     }
-   });
+  });
+
+
+  const navigateToEditGames = () => navigation.navigate('EditGames', {
+    gamesPlayed: {
+      games: userGamesPlayedData?.games,
+      frequency: userGamesPlayedData?.frequency,
+      level: userGamesPlayedData?.level,
+    }
+  });
 
 
 
 
-  const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
+
+
+  // const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
   const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
 
   return (
@@ -368,6 +380,19 @@ const EditProfile = ({ navigation }) => {
           iconComponent={FontAwesome5}
         />
 
+
+        <EditableSectionforplayedgame
+          title="Games Played"
+          onEdit={async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Smooth delay
+            navigateToEditGames();
+            console.log("User Games Played Data:", userGamesPlayedData);
+          }}
+          data={userGamesPlayedData}
+          
+        />
+
+        
 
 
         {(saving || uploadingImages) && (

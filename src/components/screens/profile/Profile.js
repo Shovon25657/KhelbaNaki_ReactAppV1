@@ -16,7 +16,7 @@ import profilePhoto from '../../../../assets/Alex.jpg';
 import coverPhoto from '../../../../assets/sova_image.jpg';
 import BottomNavBar from '../../common/BottomNavBar';
 import ProfileCard from './Profile Common/ProfileCard';
-import GamesSection from './Profile Common/GamesSection';
+import GamesSection from './Profile Common/Sectionforplayedgame';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
 import { UserDataContext } from '../../context/UserDataContext';
@@ -26,6 +26,7 @@ const Profile = ({ navigation }) => {
     userProfileData,
     aboutData,
     userLookingForData,
+    userGamesPlayedData,
     loading,
     error,
     refreshData
@@ -134,17 +135,19 @@ const Profile = ({ navigation }) => {
               { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
               { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playMode || 'Not specified' },
               { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playStyle || 'Not specified' },
-  
+
             ]}
           />
         )}
 
-        {userProfileData?.gamesPlayed?.length > 0 && (
+        
           <GamesSection
             title="Games Played"
-            games={userProfileData.gamesPlayed}
+            data={userGamesPlayedData}
           />
-        )}
+        
+      
+        
 
         {userProfileData?.plan?.name && (
           <PlanSection
