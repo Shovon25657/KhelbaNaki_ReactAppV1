@@ -25,7 +25,7 @@ const Explore = ({ navigation }) => {
   const [trendingPosts, setTrendingPosts] = useState([
     {
       id: '1',
-      username: 'ProGamer99',
+      username: 'Madmax',
       avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
       time: '2h ago',
       content: 'Just built my dream gaming PC! RTX 4090, i9-13900K, 32GB DDR5. Can\'t wait to test it on Cyberpunk!',
@@ -41,7 +41,7 @@ const Explore = ({ navigation }) => {
     },
     {
       id: '2',
-      username: 'ConsoleQueen',
+      username: 'Dark Rebel',
       avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
       time: '5h ago',
       content: 'Finally got my hands on the new Zelda game! Who else is playing?',
@@ -60,7 +60,7 @@ const Explore = ({ navigation }) => {
   const [recentPosts, setRecentPosts] = useState([
     {
       id: '3',
-      username: 'EsportsPro',
+      username: 'Secret Soldiar',
       avatar: 'https://randomuser.me/api/portraits/men/75.jpg',
       time: '30m ago',
       content: 'Just finished streaming Valorant tournament qualifiers! GG to all participants!',
@@ -73,7 +73,7 @@ const Explore = ({ navigation }) => {
     },
     {
       id: '4',
-      username: 'IndieDev',
+      username: 'Secret Agent',
       avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
       time: '1h ago',
       content: 'Check out my new indie game demo! Would love your feedback #gamedev #indiedev',
@@ -91,7 +91,7 @@ const Explore = ({ navigation }) => {
   const [followingPosts, setFollowingPosts] = useState([
     {
       id: '5',
-      username: 'GamerFriend1',
+      username: 'Bangla Mama',
       avatar: 'https://randomuser.me/api/portraits/men/22.jpg',
       time: '2h ago',
       content: 'Finally reached Diamond rank in League of Legends! So pumped!',

@@ -40,28 +40,28 @@ const HomeScreen = () => {
   const [profiles] = useState([
     {
       id: 1,
-      name: 'xXProGamerXx',
+      name: 'Ryan',
       age: 28,
       games: ['Fortnite', 'Valorant', 'Apex Legends'],
       image: person1
     },
     {
       id: 2,
-      name: 'PixelQueen',
+      name: 'KMS',
       age: 24,
       games: ['League of Legends', 'Overwatch', 'Dota 2'],
       image: person2
     },
     {
       id: 3,
-      name: 'HeadshotHunter',
+      name: 'FHT',
       age: 26,
       games: ['Call of Duty', 'PUBG', 'CS:GO'],
       image: person3
     },
     {
       id: 4,
-      name: 'NoobSlayer',
+      name: 'Robin the gamer',
       age: 25,
       games: ['Rocket League', 'FIFA', 'NBA 2K'],
       image: person1
