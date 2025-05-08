@@ -13,15 +13,15 @@ import { Ionicons } from '@expo/vector-icons';
 import BottomNavBar from '../../common/BottomNavBar';
 import person1 from '../../../../assets/Alex.jpg';
 import person2 from '../../../../assets/Angry_Avater.jpg';
-import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
-import person4 from '../../../../assets/group_photo.jpg';
+import person3 from '../../../../assets/group_photo.jpg';
+import person4 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
 const Chat = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [chats, setChats] = useState([
     {
       id: 1,
-      name: 'Alex Johnson',
-      lastMessage: 'Hey, are we still on for the tournament?',
+      name: 'Ryan',
+      lastMessage: 'Hey, Khelba Naki??',
       time: '2h ago',
       unread: true,
       avatar: person1,
@@ -29,8 +29,8 @@ const Chat = ({ navigation }) => {
     },
     {
       id: 2,
-      name: 'Sarah Miller',
-      lastMessage: 'I found a great strategy for the new map',
+      name: 'FHT',
+      lastMessage: 'Koi re!! Tuio ki helicopter niye palai geli?',
       time: '5h ago',
       unread: false,
       avatar: person2,
@@ -38,8 +38,8 @@ const Chat = ({ navigation }) => {
     },
     {
       id: 3,
-      name: 'Team Alpha',
-      lastMessage: 'Michael: Let me know when you guys are online',
+      name: 'Pagla Gamers',
+      lastMessage: 'MODI: IND vs PAK War!!',
       time: '1d ago',
       unread: true,
       avatar: person3,
@@ -47,8 +47,8 @@ const Chat = ({ navigation }) => {
     },
     {
       id: 4,
-      name: 'David Wilson',
-      lastMessage: 'Thanks for the tips!',
+      name: 'KMS007',
+      lastMessage: 'Khela dhula e Jibon!',
       time: '2d ago',
       unread: false,
       avatar: person4,

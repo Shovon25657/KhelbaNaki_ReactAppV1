@@ -25,8 +25,8 @@ import StatusModal from './EditProfile Common/StatusModal';
 import ProfileCard from '../Profile Common/ProfileCard';
 import { FontAwesome5 } from '@expo/vector-icons';
 
-const defaultProfile = require('../../../../../assets/profile1.jpg');
-const defaultCover = require('../../../../../assets/profile3.jpg');
+const defaultProfile = require('../../../../../assets/Alex.jpg');
+const defaultCover = require('../../../../../assets/sova_image.jpg');
 
 const EditProfile = ({ navigation }) => {
   const { userProfileData, aboutData, setUserProfileData, userLookingForData, userGamesPlayedData, refreshData } = useContext(UserDataContext);
