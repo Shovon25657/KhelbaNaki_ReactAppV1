@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useCallback } from 'react';
+import React, { useContext, useState, useRef, useCallback, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -9,7 +9,9 @@ import {
   TouchableOpacity,
   Text,
   Vibration,
-  Platform
+  Platform,
+  Image,
+  ActivityIndicator
 } from 'react-native';
 import { AuthContext } from '../../context/authContext';
 import { UserDataContext } from '../../context/UserDataContext';
@@ -21,247 +23,299 @@ import BottomNavBar from '../../common/BottomNavBar';
 import person1 from '../../../../assets/Alex.jpg';
 import person2 from '../../../../assets/Angry_Avater.jpg';
 import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
-
 import CardSwiper from '../../Screens/home/common/CardSwiper';
-import ProfileCard from '../../Screens/home/common/ProfileCard';
 import ActionButtons from '../../Screens/home/common/ActionButtons';
 import SlideInMenu from '../../Screens/home/common/SlideInMenu';
 import ConfirmationModal from '../../Screens/home/common/ConfirmationModal';
 import Header from '../../Screens/home/common/Header';
-import Luminaries from '../../Screens/home/Luminaries';
 
 const { width, height } = Dimensions.get('window');
 
 const HomeScreen = () => {
   const [state, setState] = useContext(AuthContext);
-  const { userProfile, loading, error, refreshData } = useContext(UserDataContext);
+  const { 
+    allUsers,
+    allUsersLoading,
+    allUsersError,
+    refreshAllUsers,
+    loading,
+    error
+  } = useContext(UserDataContext);
+  
   const navigation = useNavigation();
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  
-  // Transform userProfile data into the format expected by the component
-  const transformProfileData = (profile) => {
-    if (!profile) return null;
-    
-    return {
-      id: profile.id || profile._id,
-      name: profile.gamingName || 'Anonymous',
-      age: profile.age || 'Not specified',
-      bio: profile.bio || 'No bio provided',
-      occupation: profile.occupation || 'Not specified',
-      location: profile.location || 'Not specified',
-      gender: profile.gender || 'Not specified',
-      religion: profile.religion || 'Not specified',
-      // Using placeholder images since the actual image might not be in the profile data
-      image: [person1, person2, person3][Math.floor(Math.random() * 3)]
-    };
-  };
-
-  // Create profiles array from userProfile data
-  const profiles = userProfile ? [transformProfileData(userProfile)] : [];
-  
   const [currentIndex, setCurrentIndex] = useState(0);
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const [isTransitioning, setIsTransitioning] = useState(false);
   const swipeRef = useRef(null);
+  const [profileQueue, setProfileQueue] = useState([null, null, 'loading']);
+  const [isFetching, setIsFetching] = useState(false);
 
+  // Transform user data for display
+  const transformUserData = useCallback((user) => {
+    if (!user) return null;
+    
+    let games = [];
+    // FIRST check the "games" field from the API response
+    if (user.games) {
+      games = user.games.map(g => g || 'Unknown Game');
+    } 
+    // Fallback to nested data (if backend changes)
+    else if (user.gamesPlayed?.gamesPlayed) {
+      games = user.gamesPlayed.gamesPlayed.map(g => g.playedGameName || 'Unknown Game');
+    }
+
+    return {
+      id: user.id || user._id,
+      gamingName: user.gamingName || user.username || 'Anonymous',
+      age: user.age || 'Not specified',
+      games: games,
+      image: user.avatar ? { uri: user.avatar } : [person1][Math.floor(Math.random() * 3)]
+    };
+  }, []);
+
+  // Fetch next profile for the queue
+  const fetchNextProfile = useCallback(async () => {
+    if (isFetching || !allUsers || profileQueue[2] !== 'loading') return;
+    
+    setIsFetching(true);
+    try {
+      // Find next user not already in queue
+      const nextUser = allUsers.find(user => 
+        !profileQueue.some(item => item && item.id === (user.id || user._id))
+      );
+
+      if (nextUser) {
+        const transformed = transformUserData(nextUser);
+        setProfileQueue(prev => [prev[0], prev[1], transformed]);
+      } else {
+        // No more users available
+        setProfileQueue(prev => [prev[0], prev[1], null]);
+      }
+    } finally {
+      setIsFetching(false);
+    }
+  }, [allUsers, isFetching, profileQueue, transformUserData]);
+
+  // Initialize queue when data loads
+  useEffect(() => {
+    if (!allUsersLoading && allUsers?.length > 0) {
+      const firstUser = transformUserData(allUsers[0]);
+      const secondUser = allUsers.length > 1 ? transformUserData(allUsers[1]) : null;
+      setProfileQueue([firstUser, secondUser, 'loading']);
+    }
+  }, [allUsers, allUsersLoading, transformUserData]);
+
+  // Fetch next profile when needed
+  useEffect(() => {
+    if (profileQueue[2] === 'loading' && !isFetching) {
+      fetchNextProfile();
+    }
+  }, [profileQueue, isFetching, fetchNextProfile]);
+
+  // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       nextCardScale.setValue(0.9);
-      // Refresh data when screen comes into focus
-      refreshData();
+      refreshAllUsers();
       return () => {};
-    }, [])
+    }, [refreshAllUsers, nextCardScale])
   );
 
   const handleLike = () => {
-    console.log('Liked:', profiles[currentIndex].name);
-    // Here you would typically make an API call to record the like
+    console.log('Liked:', profileQueue[0]?.gamingName);
+    handleSwipeComplete();
   };
 
   const handleDislike = () => {
-    console.log('Disliked:', profiles[currentIndex].name);
-    // Here you would typically make an API call to record the dislike
+    console.log('Disliked:', profileQueue[0]?.gamingName);
+    handleSwipeComplete();
   };
 
   const handleSwipeComplete = () => {
-    // Since we're only showing one profile at a time, reset to 0
-    setCurrentIndex(0);
-    // You might want to fetch a new profile here
+    setProfileQueue(prev => {
+      // Shift queue forward and set last slot to loading
+      const newQueue = [prev[1], prev[2], 'loading'];
+      return newQueue;
+    });
   };
 
   const handleButtonSwipe = (direction) => {
-    if (isTransitioning) return;
-    
+    if (isTransitioning || !profileQueue[0]) return;
     setIsTransitioning(true);
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       Vibration.vibrate(50);
     }
-    
-    // Trigger swipe animation programmatically
     if (swipeRef.current) {
       swipeRef.current.triggerSwipe(direction);
     }
   };
 
-  const handleLogout = () => {
-    setShowLogoutModal(true);
-    setShowSideMenu(false);
-  };
-
-  const navigateToLuminaries = () => {
-    setShowSideMenu(false);
-    navigation.navigate('Luminaries');
-  };
-
-  const confirmLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('@auth');
-      setState({ ...state, user: null, token: '' });
-      navigation.navigate('Welcome');
-      setShowLogoutModal(false);
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
-  const navigateToProfile = (profile) => {
-    navigation.navigate('Profile', { profile: profile || profiles[currentIndex] });
-  };
-
-  const navigateToPrivacyPolicy = () => {
-    setShowSideMenu(false);
-    navigation.navigate('Privacy');
-  };
-
-  const renderNextProfile = () => {
-    // Since we're only showing one profile at a time, next profile is the same
-    const nextProfile = profiles[0];
-    
-    if (!nextProfile) return null;
-    
-    return (
-      <Animated.View style={[styles.card, styles.nextCard, { transform: [{ scale: nextCardScale }] }]}>
-        <ProfileCard 
-          profile={nextProfile} 
-          onPress={navigateToProfile} 
-          showBadges={false}
-        />
-      </Animated.View>
-    );
-  };
+  const ProfileCard = ({ profile }) => (
+    <View style={styles.profileCardContainer}>
+      <Image 
+        source={profile.image} 
+        style={styles.profileImage} 
+        resizeMode="cover"
+        defaultSource={person1}
+      />
+      <View style={styles.profileInfoContainer}>
+        <Text style={styles.profileName}>
+          {profile.gamingName}, {profile.age}
+        </Text>
+        {profile.games && profile.games.length > 0 ? (
+          <View style={styles.gamesContainer}>
+            <Text style={styles.gamesTitle}>TOP GAMES:</Text>
+            {profile.games.slice(0, 3).map((game, index) => (
+              <Text key={`${profile.id}-${index}`} style={styles.gameText}>
+                • {game}
+              </Text>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.noGamesText}>No games listed</Text>
+        )}
+      </View>
+    </View>
+  );
 
   const renderProfileCard = () => {
-    if (loading) {
+    const currentProfile = profileQueue[0];
+    
+    if (allUsersLoading) {
       return (
-        <View style={styles.card}>
-          <Text style={styles.loadingText}>Loading profile...</Text>
+        <View style={[styles.card, styles.centerContent]}>
+          <ActivityIndicator size="large" color="#01e1ff" />
+          <Text style={styles.loadingText}>Loading users...</Text>
         </View>
       );
     }
-    
-    if (error) {
+
+    if (allUsersError) {
       return (
-        <View style={styles.card}>
-          <Text style={styles.errorText}>Error loading profile</Text>
+        <View style={[styles.card, styles.centerContent]}>
+          <Icon name="error-outline" size={40} color="#ff3b30" />
+          <Text style={styles.errorText}>Failed to load users</Text>
+          <Text style={styles.errorSubText}>
+            {allUsersError.message || allUsersError.toString()}
+          </Text>
           <TouchableOpacity 
-            style={styles.resetButton}
-            onPress={refreshData}
+            style={styles.resetButton} 
+            onPress={refreshAllUsers}
           >
-            <Text style={styles.resetButtonText}>RETRY</Text>
+            <Text style={styles.resetButtonText}>TRY AGAIN</Text>
           </TouchableOpacity>
         </View>
       );
     }
-    
-    if (profiles.length === 0) {
+
+    if (!currentProfile) {
       return (
-        <View style={styles.noProfiles}>
-          <Text style={styles.noProfilesText}>No profile to show</Text>
+        <View style={[styles.card, styles.centerContent]}>
+          <Icon2 name="user-x" size={50} color="#01e1ff" />
+          <Text style={styles.noProfilesText}>No users available</Text>
+          <TouchableOpacity 
+            style={styles.refreshButton} 
+            onPress={refreshAllUsers}
+          >
+            <Icon name="refresh" size={20} color="white" />
+            <Text style={styles.refreshButtonText}>REFRESH</Text>
+          </TouchableOpacity>
         </View>
       );
     }
+
+    return <ProfileCard profile={currentProfile} />;
+  };
+
+  const renderNextCard = () => {
+    const nextProfile = profileQueue[1];
     
+    if (!nextProfile) return null;
+
     return (
-      <View style={styles.card}>
-        <ProfileCard 
-          profile={profiles[currentIndex]} 
-          onPress={navigateToProfile}
-        />
-      </View>
+      <Animated.View style={[styles.card, styles.nextCard, { transform: [{ scale: nextCardScale }] }]}>
+        <ProfileCard profile={nextProfile} />
+      </Animated.View>
     );
   };
 
-  const menuItems = [
-    {
-      icon: 'account-circle',
-      label: 'ACCOUNT',
-      onPress: () => {
-        setShowSideMenu(false);
-        navigation.navigate('Profile');
-      }
-    },
-    {
-      icon: 'settings',
-      label: 'SETTINGS',
-      onPress: () => {
-        setShowSideMenu(false);
-        navigation.navigate('Settings');
-      }
+  const renderLoadingCard = () => {
+    if (profileQueue[2] === 'loading') {
+      return (
+        <View style={[styles.card, styles.loadingCard]}>
+          <ActivityIndicator size="large" color="#01e1ff" />
+          <Text style={styles.loadingText}>Finding more users...</Text>
+        </View>
+      );
     }
+    return null;
+  };
+
+  const menuItems = [
+    { icon: 'account-circle', label: 'ACCOUNT', onPress: () => navigation.navigate('Profile') },
+    { icon: 'settings', label: 'SETTINGS', onPress: () => navigation.navigate('Settings') }
   ];
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
       <View style={styles.mainContainer}>
-        <View style={styles.container}>
-          <Header 
-            title="HOME"
-            onMenuPress={() => setShowSideMenu(true)}
-            onActionPress={() => navigation.navigate('EditPackage')}
-          />
-          
-          <View style={styles.cardContainer}>
-            {profiles.length > 0 && renderNextProfile()}
-            <CardSwiper
-              ref={swipeRef}
-              onSwipeLeft={handleDislike}
-              onSwipeRight={handleLike}
-              onSwipeComplete={handleSwipeComplete}
-              currentIndex={currentIndex}
-              nextCardScale={nextCardScale}
-              onAnimationComplete={() => setIsTransitioning(false)}
-            >
+        <Header 
+          title="HOME"
+          onMenuPress={() => setShowSideMenu(true)}
+          onActionPress={() => navigation.navigate('EditPackage')}
+        />
+        
+        <View style={styles.cardContainer}>
+          {renderNextCard()}
+          {renderLoadingCard()}
+          <CardSwiper
+            ref={swipeRef}
+            onSwipeLeft={handleDislike}
+            onSwipeRight={handleLike}
+            onSwipeComplete={handleSwipeComplete}
+            currentIndex={currentIndex}
+            nextCardScale={nextCardScale}
+            onAnimationComplete={() => setIsTransitioning(false)}
+          >
+            <View style={styles.card}>
               {renderProfileCard()}
-            </CardSwiper>
-          </View>
-          
-          <ActionButtons 
-            onLike={() => handleButtonSwipe(1)}
-            onDislike={() => handleButtonSwipe(-1)}
-            isTransitioning={isTransitioning}
-            disabled={profiles.length === 0 || loading || error}
-          />
+            </View>
+          </CardSwiper>
         </View>
         
-        <SlideInMenu
-          visible={showSideMenu}
-          onClose={() => setShowSideMenu(false)}
-          menuItems={menuItems}
-          onLogout={handleLogout}
-          onPrivacyPolicy={navigateToPrivacyPolicy}
-          onLuminaries={navigateToLuminaries} 
-        />
-
-        <ConfirmationModal
-          visible={showLogoutModal}
-          title="CONFIRM LOGOUT"
-          message="Are you sure you want to logout?"
-          onConfirm={confirmLogout}
-          onCancel={() => setShowLogoutModal(false)}
+        <ActionButtons 
+          onLike={() => handleButtonSwipe(1)}
+          onDislike={() => handleButtonSwipe(-1)}
+          isTransitioning={isTransitioning}
+          disabled={!profileQueue[0] || allUsersLoading || allUsersError}
         />
       </View>
+
+      <SlideInMenu
+        visible={showSideMenu}
+        onClose={() => setShowSideMenu(false)}
+        menuItems={menuItems}
+        onLogout={() => setShowLogoutModal(true)}
+        onPrivacyPolicy={() => navigation.navigate('Privacy')}
+        onLuminaries={() => navigation.navigate('Luminaries')}
+      />
+
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="CONFIRM LOGOUT"
+        message="Are you sure you want to logout?"
+        onConfirm={async () => {
+          await AsyncStorage.removeItem('@auth');
+          setState({ ...state, user: null, token: '' });
+          navigation.navigate('Welcome');
+          setShowLogoutModal(false);
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
+      
       <BottomNavBar />
     </SafeAreaView>
   );
@@ -276,15 +330,11 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: 0,
   },
-  container: {
-    flex: 1,
-  },
   cardContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: '2%',
-    marginTop: '2%',
+    marginVertical: '2%',
   },
   card: {
     width: width * 0.85,
@@ -299,55 +349,112 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(86, 57, 246, 0.28)',
+  },
+  loadingCard: {
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'absolute',
+    opacity: 0.7,
+  },
+  profileCardContainer: {
+    width: '100%',
+    height: '100%',
+  },
+  profileImage: {
+    width: '100%',
+    height: '70%',
+  },
+  profileInfoContainer: {
+    padding: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    height: '30%',
+    justifyContent: 'center',
+  },
+  profileName: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  gamesContainer: {
+    marginTop: 5,
+  },
+  gamesTitle: {
+    color: '#01e1ff',
+    fontWeight: 'bold',
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  gameText: {
+    color: 'white',
+    fontSize: 14,
+    marginLeft: 5,
+  },
+  noGamesText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontStyle: 'italic',
   },
   nextCard: {
     position: 'absolute',
     opacity: 0.85,
-    borderColor: 'rgba(86, 57, 246, 0.28)',
   },
-  noProfiles: {
+  centerContent: {
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#0f3460',
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: 'rgb(1, 225, 255)',
-    width: width * 0.85,
-    height: height * 0.6,
-    justifyContent: 'center',
-  },
-  noProfilesText: {
-    color: 'rgb(1, 225, 255)',
-    fontSize: 18,
-    marginBottom: 20,
-    fontWeight: 'bold',
   },
   loadingText: {
-    color: 'rgb(1, 225, 255)',
+    color: '#01e1ff',
     fontSize: 18,
+    marginTop: 10,
     fontWeight: 'bold',
   },
   errorText: {
-    color: 'red',
+    color: '#ff3b30',
     fontSize: 18,
-    marginBottom: 20,
+    marginVertical: 10,
+    fontWeight: 'bold',
+  },
+  errorSubText: {
+    color: 'rgba(255, 59, 48, 0.7)',
+    fontSize: 14,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  noProfilesText: {
+    color: '#01e1ff',
+    fontSize: 18,
+    marginVertical: 10,
     fontWeight: 'bold',
   },
   resetButton: {
-    backgroundColor: 'rgba(1, 225, 255, 0.2)',
+    backgroundColor: 'rgba(255, 59, 48, 0.2)',
     padding: 12,
     borderRadius: 25,
-    width: 120,
+    width: 150,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ff3b30',
+    marginTop: 10,
+  },
+  resetButtonText: {
+    color: '#ff3b30',
+    fontWeight: 'bold',
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(1, 225, 255, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: 'rgb(1, 225, 255)',
   },
-  resetButtonText: {
+  refreshButtonText: {
     color: 'rgb(1, 225, 255)',
+    marginLeft: 10,
     fontWeight: 'bold',
-    fontSize: 16,
   },
 });
 

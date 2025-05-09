@@ -23,7 +23,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserDataContext } from '../../../context/UserDataContext';
 
 const { width, height } = Dimensions.get('window');
-
 const responsiveWidth = (size) => (width / 375) * size;
 const responsiveHeight = (size) => (height / 812) * size;
 const responsiveFont = (size) => (width / 375) * size;
@@ -40,13 +39,12 @@ const EditGames = ({ navigation }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [currentField, setCurrentField] = useState('');
-  const [customInput, setCustomInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [errorVisible, setErrorVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const backPulseAnim = new Animated.Value(1);
 
   // Gaming theme colors
@@ -63,47 +61,54 @@ const EditGames = ({ navigation }) => {
     warning: '#f39c12',
   };
 
-  // Popular game suggestions
+  // Game suggestions and options
   const gameSuggestions = [
     'League of Legends', 'Valorant', 'Fortnite', 'Call of Duty: Warzone',
     'Apex Legends', 'Dota 2', 'Counter-Strike 2', 'Overwatch 2', 'Minecraft',
     'Genshin Impact', 'Roblox', 'PUBG Mobile', 'Free Fire', 'Rocket League',
     'Rainbow Six Siege', 'World of Warcraft', 'Destiny 2', 'GTA V', 'Valheim', 'Elden Ring'
   ];
-
-  // Updated to match backend enums
+  
   const levelOptions = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
   const frequencyOptions = ['Rarely', 'Occasionally', 'Frequently', 'Daily'];
 
   // Animation for back button
   useEffect(() => {
-    const pulseAnimation = (anim) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1.05,
-            duration: 1000,
-            easing: Easing.ease,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 1000,
-            easing: Easing.ease,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    };
-    pulseAnimation(backPulseAnim);
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(backPulseAnim, {
+          toValue: 1.05,
+          duration: 1000,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backPulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseAnimation.start();
+    return () => pulseAnimation.stop();
   }, []);
 
+  // Check for duplicate games (case-insensitive)
+  const isGameDuplicate = (gameName) => {
+    return games.some(game => 
+      game.playedGameName.toLowerCase().trim() === gameName.toLowerCase().trim()
+    );
+  };
+
+  // Show error message
   const showError = (message) => {
     setErrorMessage(message);
     setErrorVisible(true);
     setTimeout(() => setErrorVisible(false), 3000);
   };
 
+  // Save games to backend
   const saveGamesToBackend = async (gamesList) => {
     setLoading(true);
     try {
@@ -112,22 +117,58 @@ const EditGames = ({ navigation }) => {
       
       const { token } = JSON.parse(authData);
       const response = await axios.post(
-        '/userabout/create-gamesplayed',
+        '/userabout/create-usergamesplayed',
         { gamesPlayed: gamesList },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data?.success) {
-        setUserGamesPlayedData(response.data.updatedGamesPlayed);
+        setUserGamesPlayedData(response.data.gamesPlayed);
         await refreshData();
+        return true;
       }
     } catch (error) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to save games');
+      if (error.response?.data?.message?.includes('already exists')) {
+        showError('This game has already been added');
+      } else {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to save games');
+      }
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
+  // Delete game from backend
+  const deleteGame = async (gameId) => {
+    setDeleteLoading(true);
+    try {
+      const authData = await AsyncStorage.getItem('@auth');
+      if (!authData) throw new Error('Authentication required');
+      
+      const { token } = JSON.parse(authData);
+      const response = await axios.delete(
+        `/userabout/delete-game/${gameId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data?.success) {
+        // Update local state by filtering out the deleted game
+        setGames(prevGames => prevGames.filter(game => game._id !== gameId));
+        setUserGamesPlayedData(response.data.updatedGames);
+        await refreshData();
+        Alert.alert('Success', 'Game deleted successfully');
+        return true;
+      }
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to delete game');
+      return false;
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Handle game name input changes
   const handleGameNameChange = (text) => {
     setNewGame({ ...newGame, playedGameName: text });
     if (text.length > 1) {
@@ -141,13 +182,21 @@ const EditGames = ({ navigation }) => {
     }
   };
 
+  // Select a game from suggestions
   const selectGame = (game) => {
+    if (isGameDuplicate(game)) {
+      showError('This game has already been added');
+      return;
+    }
     setNewGame({ ...newGame, playedGameName: game });
     setShowSuggestions(false);
   };
 
+  // Add a new game
   const addGame = async () => {
-    if (!newGame.playedGameName) {
+    const trimmedGameName = newGame.playedGameName.trim();
+    
+    if (!trimmedGameName) {
       showError('Please enter a game name');
       return;
     }
@@ -160,33 +209,52 @@ const EditGames = ({ navigation }) => {
       return;
     }
 
-    const updatedGames = [...games, newGame];
-    setGames(updatedGames);
-    setNewGame({ playedGameName: '', levelofGaming: '', frequency: '' });
-    setShowSuggestions(false);
+    if (isGameDuplicate(trimmedGameName)) {
+      showError('This game has already been added');
+      return;
+    }
+
+    const gameToAdd = {
+      playedGameName: trimmedGameName,
+      levelofGaming: newGame.levelofGaming,
+      frequency: newGame.frequency
+    };
+
+    const success = await saveGamesToBackend([gameToAdd]);
     
-    // Save to backend immediately
-    await saveGamesToBackend(updatedGames);
+    if (success) {
+      setGames([...games, gameToAdd]);
+      setNewGame({ playedGameName: '', levelofGaming: '', frequency: '' });
+      setShowSuggestions(false);
+    }
   };
 
+  // Show delete confirmation
+  const showDeleteConfirmation = (gameId) => {
+    setGameToDelete(gameId);
+    setDeleteConfirmVisible(true);
+  };
+
+  // Confirm game deletion
   const confirmDeleteGame = async () => {
-    const updatedGames = [...games];
-    updatedGames.splice(gameToDelete, 1);
-    setGames(updatedGames);
+    await deleteGame(gameToDelete);
     setDeleteConfirmVisible(false);
     setGameToDelete(null);
-    
-    // Save to backend immediately
-    await saveGamesToBackend(updatedGames);
   };
 
+  // Cancel game deletion
+  const cancelDeleteGame = () => {
+    setDeleteConfirmVisible(false);
+    setGameToDelete(null);
+  };
+
+  // Open modal for level/frequency selection
   const openModal = (field) => {
     setCurrentField(field);
     setModalVisible(true);
-    setCustomInput('');
-    setIsTyping(false);
   };
 
+  // Handle option selection in modal
   const handleOptionSelect = (option) => {
     setNewGame({ ...newGame, [currentField]: option });
     setModalVisible(false);
@@ -203,14 +271,14 @@ const EditGames = ({ navigation }) => {
             </TouchableOpacity>
           </Animated.View>
           <Text style={styles.title}>Games Played</Text>
-          <View style={{ width: 28 }} /> {/* Spacer for alignment */}
+          <View style={{ width: 28 }} />
         </View>
 
         {/* Current Games List */}
         <FlatList
           data={games}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item, index }) => (
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
             <View style={styles.gameCard}>
               <View style={styles.gameInfo}>
                 <Text style={styles.gameName}>{item.playedGameName}</Text>
@@ -219,9 +287,14 @@ const EditGames = ({ navigation }) => {
               </View>
               <TouchableOpacity 
                 style={styles.removeButton}
-                onPress={() => showDeleteConfirmation(index)}
+                onPress={() => showDeleteConfirmation(item._id)}
+                disabled={deleteLoading}
               >
-                <Ionicons name="trash" size={20} color={colors.danger} />
+                {deleteLoading && gameToDelete === item._id ? (
+                  <ActivityIndicator size="small" color={colors.danger} />
+                ) : (
+                  <Ionicons name="trash" size={20} color={colors.danger} />
+                )}
               </TouchableOpacity>
             </View>
           )}
@@ -304,7 +377,7 @@ const EditGames = ({ navigation }) => {
             <View style={styles.errorContainer}>
               <View style={styles.errorHeader}>
                 <Ionicons name="warning" size={28} color={colors.danger} />
-                <Text style={styles.errorTitle}>Missing Information</Text>
+                <Text style={styles.errorTitle}>Duplicate Game</Text>
               </View>
               <Text style={styles.errorText}>{errorMessage}</Text>
               <TouchableOpacity 
@@ -334,15 +407,20 @@ const EditGames = ({ navigation }) => {
               <View style={styles.confirmButtonRow}>
                 <TouchableOpacity 
                   style={[styles.confirmButton, styles.cancelDeleteButton]}
-                  onPress={() => setDeleteConfirmVisible(false)}
+                  onPress={cancelDeleteGame}
                 >
                   <Text style={styles.confirmButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.confirmButton, styles.deleteButton]}
                   onPress={confirmDeleteGame}
+                  disabled={deleteLoading}
                 >
-                  <Text style={styles.confirmButtonText}>Delete</Text>
+                  {deleteLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.confirmButtonText}>Delete</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -354,18 +432,12 @@ const EditGames = ({ navigation }) => {
           animationType="fade"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(false);
-            setIsTyping(false);
-          }}
+          onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
             <Pressable 
               style={styles.modalOutside}
-              onPress={() => {
-                setModalVisible(false);
-                setIsTyping(false);
-              }}
+              onPress={() => setModalVisible(false)}
             />
             
             <View style={styles.modalContainer}>
@@ -411,7 +483,6 @@ const EditGames = ({ navigation }) => {
   );
 };
 
-// Your existing styles remain exactly the same
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -561,6 +632,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(242, 0, 0, 0.45)',
+    shadowColor: '#ff0000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
   },
   errorHeader: {
     flexDirection: 'row',
@@ -568,10 +644,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   errorTitle: {
-    color: '#e74c3c',
+    color: '#ff5555',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 10,
+    textShadowColor: 'rgba(255, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
   },
   warningTitle: {
     color: '#f39c12',

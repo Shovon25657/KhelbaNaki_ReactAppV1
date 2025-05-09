@@ -5,13 +5,13 @@ const gameSchema = new mongoose.Schema({
   levelofGaming: { 
     type: String, 
     required: true,
-    enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
+   // enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
     default: 'Intermediate'
   },
   frequency: { 
     type: String, 
     required: true,
-    enum: ['Rarely', 'Occasionally', 'Frequently', 'Daily'],
+   // enum: ['Rarely', 'Occasionally', 'Frequently', 'Always'],
     default: 'Occasionally'
   }
 }, { _id: true }); // Ensure each game has its own ID

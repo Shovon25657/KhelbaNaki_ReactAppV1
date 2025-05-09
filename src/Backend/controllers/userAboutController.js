@@ -420,92 +420,55 @@ const updateUserLookingForDataController = async (req, res) => {
 
 
 
+// In userAboutController.js
 const createUserGamesPlayedController = async (req, res) => {
   try {
-    // Authentication check
-    if (!req.auth || !req.auth._id) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized - Please login first",
-      });
-    }
-
     const { gamesPlayed } = req.body;
+    const userId = req.auth._id; // Changed from req.user.id to req.auth._id
 
-    // Validation
     if (!gamesPlayed || !Array.isArray(gamesPlayed)) {
       return res.status(400).json({
         success: false,
-        message: "Please provide a valid games array",
+        message: "Games played data is required and must be an array"
       });
     }
 
-    // Validate each game object
-    const invalidGames = gamesPlayed.filter(game => 
-      !game.playedGameName || 
-      !game.levelofGaming || 
-      !game.frequency
-    );
+    // Find existing user games or create new entry
+    let userGames = await userGamesPlayedModel.findOne({ user: userId });
 
-    if (invalidGames.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Each game must have playedGameName, levelofGaming, and frequency",
-        invalidGames
+    if (!userGames) {
+      userGames = new userGamesPlayedModel({
+        user: userId,
+        gamesPlayed: gamesPlayed
+      });
+    } else {
+      // Check for duplicates and merge games
+      gamesPlayed.forEach(game => {
+        const isDuplicate = userGames.gamesPlayed.some(
+          g => g.playedGameName.toLowerCase() === game.playedGameName.toLowerCase()
+        );
+        if (!isDuplicate) {
+          userGames.gamesPlayed.push(game);
+        }
       });
     }
 
-    // Find or create user's game data
-    let userGamesData = await userGamesPlayedModel.findOne({ user: req.auth._id });
+    await userGames.save();
 
-    if (userGamesData) {
-      // Filter out duplicates (case insensitive)
-      const newGames = gamesPlayed.filter(newGame => 
-        !userGamesData.gamesPlayed.some(existingGame =>
-          existingGame.playedGameName.toLowerCase() === newGame.playedGameName.toLowerCase()
-        )
-      );
-
-      if (newGames.length === 0) {
-        return res.status(200).json({
-          success: true,
-          message: "No new games to add",
-          gamesPlayed: userGamesData.gamesPlayed
-        });
-      }
-
-      userGamesData.gamesPlayed.push(...newGames);
-      await userGamesData.save();
-
-      return res.status(200).json({
-        success: true,
-        message: "Games updated successfully",
-        gamesPlayed: userGamesData.gamesPlayed
-      });
-    }
-
-    // Create new entry
-    userGamesData = await userGamesPlayedModel.create({
-      gamesPlayed,
-      user: req.auth._id
-    });
-
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
-      message: "Games added successfully",
-      gamesPlayed: userGamesData.gamesPlayed
+      message: "Games played updated successfully",
+      gamesPlayed: userGames.gamesPlayed
     });
 
   } catch (error) {
-    console.error("Error in game controller:", error);
+    console.error("Error in createUserGamesPlayedController:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: error.message || "Failed to update games played"
     });
   }
 };
-
 
 //Get User Games Played
 const getUserGamesPlayedController = async (req, res) => {
@@ -534,6 +497,55 @@ const getUserGamesPlayedController = async (req, res) => {
   }
 }
 
+
+
+// Delete Game from Games Played
+const deleteGameController = async (req, res) => {
+  try {
+    const { gameId } = req.params;
+
+    // Find the user's games data
+    const userGamesData = await userGamesPlayedModel.findOne({ user: req.auth._id });
+
+    if (!userGamesData) {
+      return res.status(404).json({
+        success: false,
+        message: "User games data not found",
+      });
+    }
+
+    // Filter out the game to be deleted
+    const initialCount = userGamesData.gamesPlayed.length;
+    userGamesData.gamesPlayed = userGamesData.gamesPlayed.filter(
+      game => game._id.toString() !== gameId
+    );
+
+    // Check if game was actually removed
+    if (userGamesData.gamesPlayed.length === initialCount) {
+      return res.status(404).json({
+        success: false,
+        message: "Game not found in your list",
+      });
+    }
+
+    // Save the updated document
+    await userGamesData.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Game deleted successfully",
+      updatedGames: userGamesData.gamesPlayed,
+    });
+
+  } catch (error) {
+    console.error("Error in deleteGameController:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting game",
+      error: error.message,
+    });
+  }
+};
 
 
 
@@ -569,5 +581,6 @@ module.exports = {
   getUserLookingForDataController,
   updateUserLookingForDataController,
   createUserGamesPlayedController,
-  getUserGamesPlayedController
+  getUserGamesPlayedController,
+  deleteGameController
 };
