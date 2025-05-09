@@ -1,7 +1,7 @@
-import React, { createContext, useState, useEffect } from "react";
+
+import React, { createContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 const UserDataContext = createContext();
 
@@ -16,169 +16,181 @@ const UserDataProvider = ({ children }) => {
   const [allUsersLoading, setAllUsersLoading] = useState(false);
   const [allUsersError, setAllUsersError] = useState(null);
   const [error, setError] = useState(null);
-  
+  const [isFetching, setIsFetching] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState(null);
 
-  // Fetch current user data
-  const getUserData = async () => {
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  const API_TIMEOUT = 10000; // 10 seconds
+
+  const getUserData = useCallback(async () => {
+    if (isFetching || loading) {
+      console.log('Skipping getUserData: Fetch in progress');
+      return;
+    }
+    // Skip if data is fresh
+    if (lastFetchTime && Date.now() - lastFetchTime < CACHE_DURATION && userProfileData && aboutData && userLookingForData && userGamesPlayedData) {
+      console.log('Skipping getUserData: Using cached data');
+      return;
+    }
+
+    console.log('Fetching user data...');
+    setIsFetching(true);
     setLoading(true);
-    setError(null); // Reset error state before new request
-    
+    setError(null);
+
     try {
       const authData = await AsyncStorage.getItem('@auth');
       if (!authData) {
         console.log('No auth data found in AsyncStorage');
         setLoading(false);
+        setIsFetching(false);
         return;
       }
-      
+
       const { token } = JSON.parse(authData);
       if (!token) {
         console.log('No token found in auth data');
         setLoading(false);
+        setIsFetching(false);
         return;
       }
-      
+
       const headers = { Authorization: `Bearer ${token}` };
-      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
       try {
-        // Fetch profile data
-        const profileDataRes = await axios.get("/userabout/get-profile-data", { headers });
+        const profileDataRes = await axios.get("/userabout/get-profile-data", { headers, signal: controller.signal });
         console.log('Profile data response:', profileDataRes.data);
         if (profileDataRes.data?.success) {
           setUserProfileData(profileDataRes.data.userProfileData);
-        } else {
-          console.log('Profile data fetch unsuccessful:', profileDataRes.data);
+          setUserProfile(profileDataRes.data.userProfileData);
         }
       } catch (err) {
         console.error('Error fetching profile data:', err);
       }
-      
+
       try {
-        // Fetch about data
-        const aboutRes = await axios.get("/userabout/get-about-data", { headers });
+        const aboutRes = await axios.get("/userabout/get-about-data", { headers, signal: controller.signal });
         console.log('About data response:', aboutRes.data);
         if (aboutRes.data?.success) {
           setAboutData(aboutRes.data.aboutData);
-        } else {
-          console.log('About data fetch unsuccessful:', aboutRes.data);
         }
       } catch (err) {
         console.error('Error fetching about data:', err);
       }
-      
+
       try {
-        // Fetch user profile
-        const userProfileRes = await axios.get("/userabout/get-profile-data", { headers });
-        console.log('User profile response:', userProfileRes.data);
-        if (userProfileRes.data?.success) {
-          setUserProfile(userProfileRes.data.userProfile);
-        } else {
-          console.log('User profile fetch unsuccessful:', userProfileRes.data);
-        }
-      } catch (err) {
-        console.error('Error fetching user profile:', err);
-      }
-      
-      try {
-        // Fetch looking for data
-        const userLookingForRes = await axios.get("/userabout/get-user-looking-for-data", { headers });
+        const userLookingForRes = await axios.get("/userabout/get-user-looking-for-data", { headers, signal: controller.signal });
         console.log('Looking for data response:', userLookingForRes.data);
         if (userLookingForRes.data?.success) {
           setUserLookingForData(userLookingForRes.data.userLookingForData);
-        } else {
-          console.log('Looking for data fetch unsuccessful:', userLookingForRes.data);
         }
       } catch (err) {
         console.error('Error fetching looking for data:', err);
       }
-      
+
       try {
-        // Fetch games played data
-        const userGamesPlayedRes = await axios.get("/userabout/get-user-gamesplayed-data", { headers });
+        const userGamesPlayedRes = await axios.get("/userabout/get-user-gamesplayed-data", { headers, signal: controller.signal });
         console.log('Games played data response:', userGamesPlayedRes.data);
         if (userGamesPlayedRes.data?.success) {
           setUserGamesPlayedData(userGamesPlayedRes.data.gamesPlayed);
-        } else {
-          console.log('Games played data fetch unsuccessful:', userGamesPlayedRes.data);
         }
       } catch (err) {
         console.error('Error fetching games played data:', err);
       }
-      
+
+      clearTimeout(timeoutId);
+      setLastFetchTime(Date.now());
     } catch (error) {
       console.error('Main error in getUserData:', error);
       setError(error.message || 'An error occurred while fetching user data');
     } finally {
       setLoading(false);
+      setIsFetching(false);
+      console.log('User data fetch complete');
     }
-  };
+  }, [isFetching, loading, userProfileData, aboutData, userLookingForData, userGamesPlayedData, lastFetchTime]);
 
-  // Fetch all users (for discovery/matching)
-  const getAllUsers = async () => {
-   // setAllUsersLoading(true);
+  const getAllUsers = useCallback(async () => {
+    if (isFetching || allUsersLoading) {
+      console.log('Skipping getAllUsers: Fetch in progress');
+      return;
+    }
+    // Skip if data is fresh
+    if (lastFetchTime && Date.now() - lastFetchTime < CACHE_DURATION && allUsers.length > 0) {
+      console.log('Skipping getAllUsers: Using cached data');
+      return;
+    }
+
+    console.log('Fetching all users...');
+    setIsFetching(true);
+    setAllUsersLoading(true);
     setAllUsersError(null);
-    
+
     try {
       const authData = await AsyncStorage.getItem('@auth');
       if (!authData) throw new Error('No authentication data');
-      
+
       const { token } = JSON.parse(authData);
       const headers = { Authorization: `Bearer ${token}` };
-      
-      const response = await axios.get("/userabout/get-all-users", { headers });
-      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+      const response = await axios.get("/userabout/get-all-users", { headers, signal: controller.signal });
+
       if (response.data?.success) {
         setAllUsers(response.data.data);
       } else {
         throw new Error(response.data?.message || 'Failed to fetch users');
       }
+
+      clearTimeout(timeoutId);
+      setLastFetchTime(Date.now());
     } catch (error) {
       setAllUsersError(error.message);
     } finally {
       setAllUsersLoading(false);
+      setIsFetching(false);
+      console.log('All users fetch complete');
     }
-  };
+  }, [isFetching, allUsersLoading, allUsers, lastFetchTime]);
 
   useEffect(() => {
-    getUserData();
-    getAllUsers(); // Fetch all users when component mounts
-    
-  }, []);
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (isMounted) {
+        await Promise.all([getUserData(), getAllUsers()]);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getUserData, getAllUsers]);
 
   return (
     <UserDataContext.Provider value={{
-      // Profile data
       userProfileData,
       setUserProfileData,
-      
-      // About data
       aboutData,
       setAboutData,
-
-      // User looking for data
       userLookingForData,
       setUserLookingForData,
-
-      // User profile
       userProfile,
       setUserProfile,
-
-      // User games played data
       userGamesPlayedData,
       setUserGamesPlayedData,
-      
-      // All users data (for discovery/matching)
       allUsers,
       allUsersLoading,
       allUsersError,
       refreshAllUsers: getAllUsers,
-      
-      // Common states
       loading,
       error,
       refreshData: getUserData
-
-
     }}>
       {children}
     </UserDataContext.Provider>
@@ -186,4 +198,3 @@ const UserDataProvider = ({ children }) => {
 };
 
 export { UserDataContext, UserDataProvider };
-

@@ -1,10 +1,12 @@
+
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Animated, PanResponder, Dimensions, Vibration, Platform, Text, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
-const SWIPE_THRESHOLD = width * 0.25;
-const SWIPE_OUT_DURATION = 250;
+const SWIPE_THRESHOLD = width * 0.3;
+const SWIPE_OUT_DURATION = 300;
+const ANIMATION_DEBOUNCE = 100;
 
 const CardSwiper = forwardRef(({ 
   children, 
@@ -20,23 +22,26 @@ const CardSwiper = forwardRef(({
   const cardOpacity = useRef(new Animated.Value(1)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
   const tapTimestamp = useRef(0);
+  const isSwiping = useRef(false);
 
-  // Expose functions via ref
   useImperativeHandle(ref, () => ({
     triggerSwipe: (direction) => {
-      performSwipe(direction);
+      if (!isSwiping.current) {
+        performSwipe(direction);
+      }
     }
   }));
 
-  // Reset animation values when currentIndex changes
   useEffect(() => {
     swipe.setValue({ x: 0, y: 0 });
     tilt.setValue(0);
     cardOpacity.setValue(1);
     cardScale.setValue(1);
+    isSwiping.current = false;
   }, [currentIndex]);
 
   const performSwipe = (direction) => {
+    isSwiping.current = true;
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       Vibration.vibrate(50);
     }
@@ -59,9 +64,12 @@ const CardSwiper = forwardRef(({
         useNativeDriver: true
       })
     ]).start(() => {
-      direction > 0 ? onSwipeRight() : onSwipeLeft();
-      onSwipeComplete();
-      if (onAnimationComplete) onAnimationComplete();
+      setTimeout(() => {
+        direction > 0 ? onSwipeRight() : onSwipeLeft();
+        onSwipeComplete();
+        if (onAnimationComplete) onAnimationComplete();
+        isSwiping.current = false;
+      }, ANIMATION_DEBOUNCE);
     });
   };
 
@@ -72,10 +80,10 @@ const CardSwiper = forwardRef(({
         return true;
       },
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        const hasMovedEnough = Math.abs(gestureState.dx) > 10;
+        const hasMovedEnough = Math.abs(gestureState.dx) > 15;
         const isDraggingHorizontally = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
         const isQuickTap = Date.now() - tapTimestamp.current < 150;
-        return hasMovedEnough && isDraggingHorizontally && !isQuickTap;
+        return hasMovedEnough && isDraggingHorizontally && !isQuickTap && !isSwiping.current;
       },
       onPanResponderMove: (_, { dx, dy }) => {
         swipe.setValue({ x: dx, y: dy / 3 });
@@ -91,7 +99,7 @@ const CardSwiper = forwardRef(({
       onPanResponderRelease: (_, { dx, dy, vx }) => {
         const direction = Math.sign(dx);
         const speed = Math.abs(vx);
-        const isActionActive = Math.abs(dx) > SWIPE_THRESHOLD || speed > 0.5;
+        const isActionActive = Math.abs(dx) > SWIPE_THRESHOLD || speed > 0.4;
         
         if (isActionActive) {
           performSwipe(direction);
@@ -99,7 +107,10 @@ const CardSwiper = forwardRef(({
           resetCardPosition();
         }
       },
-      onPanResponderTerminate: resetCardPosition
+      onPanResponderTerminate: () => {
+        console.log('PanResponder terminated unexpectedly');
+        resetCardPosition();
+      }
     })
   ).current;
 
@@ -129,7 +140,9 @@ const CardSwiper = forwardRef(({
         tension: 40,
         useNativeDriver: true
       })
-    ]).start();
+    ]).start(() => {
+      isSwiping.current = false;
+    });
   };
 
   const rotateCard = tilt.interpolate({
@@ -148,7 +161,6 @@ const CardSwiper = forwardRef(({
     opacity: cardOpacity
   };
 
-  // Swipe indicator animations
   const likeOpacity = swipe.x.interpolate({
     inputRange: [0, SWIPE_THRESHOLD],
     outputRange: [0, 1],
@@ -180,7 +192,6 @@ const CardSwiper = forwardRef(({
       key={`profile-card-${currentIndex}`}
     >
       {children}
-      {/* Swipe Indicators */}
       <Animated.View 
         style={[
           styles.likeBadge, 
@@ -209,60 +220,54 @@ const CardSwiper = forwardRef(({
 });
 
 const styles = {
-    likeBadge: {
-        position: 'absolute',
-        top: '22%',
-        left: 20,
-        zIndex: 2,
-        backgroundColor: 'rgba(76, 175, 80, 0.15)', // soft green tint
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(76, 175, 80, 0.5)',
-        backdropFilter: 'blur(6px)', // for web, ignored on native
-        shadowColor: '#4CAF50',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      
-      likeText: {
-        color: '#4CAF50',
-        fontWeight: '700',
-        fontSize: 18,
-        textShadowColor: 'rgba(0, 0, 0, 0.25)',
-        textShadowOffset: { width: 0.5, height: 0.5 },
-        textShadowRadius: 1,
-      },
-      
-      dislikeBadge: {
-        position: 'absolute',
-        top: '22%',
-        right: 20,
-        zIndex: 2,
-        backgroundColor: 'rgba(244, 67, 54, 0.15)', // soft red tint
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(244, 67, 54, 0.5)',
-        backdropFilter: 'blur(6px)', // for web, ignored on native
-        shadowColor: '#F44336',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      
-      dislikeText: {
-        color: '#F44336',
-        fontWeight: '700',
-        fontSize: 18,
-        textShadowColor: 'rgba(0, 0, 0, 0.25)',
-        textShadowOffset: { width: 0.5, height: 0.5 },
-        textShadowRadius: 1,
-      },
-      
+  likeBadge: {
+    position: 'absolute',
+    top: '22%',
+    left: 20,
+    zIndex: 2,
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.5)',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  likeText: {
+    color: '#4CAF50',
+    fontWeight: '700',
+    fontSize: 18,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
+  },
+  dislikeBadge: {
+    position: 'absolute',
+    top: '22%',
+    right: 20,
+    zIndex: 2,
+    backgroundColor: 'rgba(244, 67, 54, 0.15)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 67, 54, 0.5)',
+    shadowColor: '#F44336',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  dislikeText: {
+    color: '#F44336',
+    fontWeight: '700',
+    fontSize: 18,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
+  },
 };
 
 export default CardSwiper;
