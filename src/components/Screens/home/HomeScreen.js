@@ -132,7 +132,7 @@ const HomeScreen = () => {
       if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
       queueUpdateTimeout.current = setTimeout(() => {
         updateProfileQueue();
-      }, 500); // Debounce queue updates
+      }, 500);
     }
     return () => {
       if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
@@ -181,7 +181,7 @@ const HomeScreen = () => {
     }
     
     if (swipeRef.current) {
-     SwipeRef.current.triggerSwipe(direction);
+      swipeRef.current.triggerSwipe(direction); // Fixed typo: SwipeRef → swipeRef
     }
   }, [isTransitioning, profileQueue]);
 
