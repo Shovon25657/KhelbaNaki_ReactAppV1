@@ -1,20 +1,29 @@
 const mongoose = require('mongoose');
 
 const gameSchema = new mongoose.Schema({
-  playedGameName: { type: String, required: true, trim: true },
+  playedGameName: { 
+    type: String, 
+    required: true, 
+    trim: true 
+  },
   levelofGaming: { 
     type: String, 
     required: true,
-   // enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
+    enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
     default: 'Intermediate'
   },
   frequency: { 
     type: String, 
     required: true,
-   // enum: ['Rarely', 'Occasionally', 'Frequently', 'Always'],
+    enum: ['Rarely', 'Occasionally', 'Frequently', 'Always'],
     default: 'Occasionally'
+  },
+  // Add a field to allow sorting by preference
+  preference: {
+    type: Number,
+    default: 0
   }
-}, { _id: true }); // Ensure each game has its own ID
+}, { timestamps: true });
 
 const userGamesPlayedSchema = new mongoose.Schema({
   user: { 
@@ -25,5 +34,16 @@ const userGamesPlayedSchema = new mongoose.Schema({
   },
   gamesPlayed: [gameSchema]
 }, { timestamps: true });
+
+// Index for faster lookups
+userGamesPlayedSchema.index({ user: 1 });
+
+// Method to get top games
+userGamesPlayedSchema.methods.getTopGames = function(limit = 3) {
+  // Sort by preference (higher is more preferred) and return top N
+  return this.gamesPlayed
+    .sort((a, b) => b.preference - a.preference)
+    .slice(0, limit);
+};
 
 module.exports = mongoose.model('UserGamesPlayed', userGamesPlayedSchema);
