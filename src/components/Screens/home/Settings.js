@@ -18,11 +18,11 @@ const SettingsScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
+      <StatusBar backgroundColor="rgb(14, 3, 52)" barStyle="light-content" />
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={28} color="#FFD700" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Icon name="arrow-back" size={28} color="rgb(1, 225, 255)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>SETTINGS</Text>
           <View style={{ width: 28 }} />
@@ -30,10 +30,10 @@ const SettingsScreen = () => {
         
         <View style={styles.content}>
           <View style={styles.settingsItem}>
-            <Icon name="notifications" size={24} color="#FFD700" />
+            <Icon name="notifications" size={24} color="rgb(1, 225, 255)" />
             <Text style={styles.settingsItemText}>Notifications</Text>
             <Switch
-              trackColor={{ false: "#767577", true: "#4CAF50" }}
+              trackColor={{ false: "#767577", true: "rgb(1, 225, 255)" }}
               thumbColor={notificationsEnabled ? "#FFF" : "#f4f3f4"}
               onValueChange={() => setNotificationsEnabled(!notificationsEnabled)}
               value={notificationsEnabled}
@@ -41,10 +41,10 @@ const SettingsScreen = () => {
           </View>
           
           <View style={styles.settingsItem}>
-            <Icon name="dark-mode" size={24} color="#FFD700" />
+            <Icon name="dark-mode" size={24} color="rgb(1, 225, 255)" />
             <Text style={styles.settingsItemText}>Dark Mode</Text>
             <Switch
-              trackColor={{ false: "#767577", true: "#4CAF50" }}
+              trackColor={{ false: "#767577", true: "rgb(1, 225, 255)" }}
               thumbColor={darkModeEnabled ? "#FFF" : "#f4f3f4"}
               onValueChange={() => setDarkModeEnabled(!darkModeEnabled)}
               value={darkModeEnabled}
@@ -55,18 +55,27 @@ const SettingsScreen = () => {
             style={styles.settingsItem}
             onPress={() => navigation.navigate('HelpSupport')}
           >
-            <Icon name="help" size={24} color="#FFD700" />
+            <Icon name="help" size={24} color="rgb(1, 225, 255)" />
             <Text style={styles.settingsItemText}>Help & Support</Text>
-            <Icon name="chevron-right" size={24} color="#FFD700" />
+            <Icon name="chevron-right" size={24} color="rgb(1, 225, 255)" />
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.settingsItem}
             onPress={() => navigation.navigate('About')}
           >
-            <Icon name="info" size={24} color="#FFD700" />
+            <Icon name="info" size={24} color="rgb(1, 225, 255)" />
             <Text style={styles.settingsItemText}>About</Text>
-            <Icon name="chevron-right" size={24} color="#FFD700" />
+            <Icon name="chevron-right" size={24} color="rgb(1, 225, 255)" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.settingsItem}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
+            <Icon name="privacy-tip" size={24} color="rgb(1, 225, 255)" />
+            <Text style={styles.settingsItemText}>Legal Documents</Text>
+            <Icon name="chevron-right" size={24} color="rgb(1, 225, 255)" />
           </TouchableOpacity>
         </View>
       </View>
@@ -86,23 +95,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#16213e',
-    borderBottomWidth: 2,
-    borderBottomColor: '#FFD700',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+    backgroundColor: 'rgb(14, 3, 52)',
+  },
+  backButton: {
+    padding: 5,
   },
   headerTitle: {
-    color: '#FFD700',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#FFF',
     textAlign: 'center',
     flex: 1,
-    fontFamily: 'Arial',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: {width: 1, height: 1},
-    textShadowRadius: 3,
-    letterSpacing: 1,
   },
   content: {
     flex: 1,
@@ -114,7 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 215, 0, 0.2)',
+    borderBottomColor: 'rgba(1, 225, 255, 0.2)',
   },
   settingsItemText: {
     color: '#FFF',

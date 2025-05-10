@@ -36,7 +36,7 @@ const SlideInMenu = ({
               style={styles.slideInMenuItem}
               onPress={item.onPress}
             >
-              <Icon name={item.icon} size={24} color="#FFD700" />
+              <Icon name={item.icon} size={24} color="rgb(1, 225, 255)" />
               <Text style={styles.slideInMenuItemText}>{item.label}</Text>
             </TouchableOpacity>
           ))}
@@ -46,7 +46,7 @@ const SlideInMenu = ({
             style={styles.slideInMenuItem}
             onPress={onLuminaries}
           >
-            <Icon name="people" size={24} color="#FFD700" />
+            <Icon name="people" size={24} color="rgb(1, 225, 255)" />
             <Text style={styles.slideInMenuItemText}>LUMINARIES</Text>
           </TouchableOpacity>
           
@@ -54,7 +54,7 @@ const SlideInMenu = ({
             style={styles.slideInMenuItem}
             onPress={onLogout}
           >
-            <Icon name="logout" size={24} color="#FFD700" />
+            <Icon name="logout" size={24} color="rgb(1, 225, 255)" />
             <Text style={styles.slideInMenuItemText}>LOGOUT</Text>
           </TouchableOpacity>
         </View>
@@ -64,7 +64,7 @@ const SlideInMenu = ({
             style={styles.slideInPrivacyButton}
             onPress={onPrivacyPolicy}
           >
-            <Icon name="privacy-tip" size={20} color="#FFD700" />
+            <Icon name="privacy-tip" size={20} color="rgb(1, 225, 255)" />
             <Text style={styles.slideInPrivacyText}>PRIVACY POLICY</Text>
           </TouchableOpacity>
         </View>
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   slideInPrivacyText: {
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     fontSize: 16,
     marginLeft: 10,
   },
