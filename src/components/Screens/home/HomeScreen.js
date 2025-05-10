@@ -31,6 +31,8 @@ import Header from '../../Screens/home/common/Header';
 
 const { width, height } = Dimensions.get('window');
 
+const defaultImages = [person1, person2, person3];
+
 const HomeScreen = () => {
   const [state, setState] = useContext(AuthContext);
   const { 
@@ -38,8 +40,7 @@ const HomeScreen = () => {
     allUsersLoading,
     allUsersError,
     refreshAllUsers,
-    loading,
-    error
+    userProfile
   } = useContext(UserDataContext);
   
   const navigation = useNavigation();
@@ -49,108 +50,149 @@ const HomeScreen = () => {
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const [isTransitioning, setIsTransitioning] = useState(false);
   const swipeRef = useRef(null);
-  const [profileQueue, setProfileQueue] = useState([null, null, 'loading']);
-  const [isFetching, setIsFetching] = useState(false);
+  const [profileQueue, setProfileQueue] = useState([]);
+  const [isFetchingNext, setIsFetchingNext] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const processedUserIds = useRef(new Set());
+  const dislikedProfiles = useRef([]);
+  const queueUpdateTimeout = useRef(null);
 
-  // Transform user data for display
   const transformUserData = useCallback((user) => {
     if (!user) return null;
     
     let games = [];
-    // FIRST check the "games" field from the API response
-    if (user.games) {
-      games = user.games.map(g => g || 'Unknown Game');
-    } 
-    // Fallback to nested data (if backend changes)
-    else if (user.gamesPlayed?.gamesPlayed) {
-      games = user.gamesPlayed.gamesPlayed.map(g => g.playedGameName || 'Unknown Game');
+    if (user.games && Array.isArray(user.games)) {
+      games = user.games.filter(g => g).map(g => g || 'Unknown Game');
+    } else if (user.gamesPlayed?.gamesPlayed && Array.isArray(user.gamesPlayed.gamesPlayed)) {
+      games = user.gamesPlayed.gamesPlayed
+        .filter(g => g)
+        .map(g => g.playedGameName || 'Unknown Game');
     }
+
+    const randomDefaultImage = defaultImages[Math.floor(Math.random() * defaultImages.length)];
 
     return {
       id: user.id || user._id,
       gamingName: user.gamingName || user.username || 'Anonymous',
       age: user.age || 'Not specified',
       games: games,
-      image: user.avatar ? { uri: user.avatar } : [person1][Math.floor(Math.random() * 3)]
+      image: user.avatar ? { uri: user.avatar } : randomDefaultImage
     };
   }, []);
 
-  // Fetch next profile for the queue
-  const fetchNextProfile = useCallback(async () => {
-    if (isFetching || !allUsers || profileQueue[2] !== 'loading') return;
+  const updateProfileQueue = useCallback(() => {
+    if (allUsersLoading || !allUsers || !allUsers.length || isFetchingNext || isTransitioning) return;
     
-    setIsFetching(true);
+    setIsFetchingNext(true);
+    
     try {
-      // Find next user not already in queue
-      const nextUser = allUsers.find(user => 
-        !profileQueue.some(item => item && item.id === (user.id || user._id))
-      );
-
-      if (nextUser) {
-        const transformed = transformUserData(nextUser);
-        setProfileQueue(prev => [prev[0], prev[1], transformed]);
-      } else {
-        // No more users available
-        setProfileQueue(prev => [prev[0], prev[1], null]);
+      const currentUserId = userProfile?.id || userProfile?._id;
+      const availableUsers = allUsers.filter(user => {
+        const userId = user.id || user._id;
+        return userId !== currentUserId && !processedUserIds.current.has(userId);
+      });
+      
+      const currentQueueSize = profileQueue.length;
+      const neededProfiles = Math.max(0, 3 - currentQueueSize);
+      
+      if (neededProfiles > 0 && availableUsers.length > 0) {
+        const newUsers = availableUsers.slice(0, neededProfiles);
+        
+        const newProfiles = newUsers.map(user => {
+          const userId = user.id || user._id;
+          processedUserIds.current.add(userId);
+          return transformUserData(user);
+        }).filter(profile => profile !== null);
+        
+        setProfileQueue(prev => [...prev, ...newProfiles]);
+      } else if (neededProfiles > 0 && availableUsers.length === 0 && dislikedProfiles.current.length > 0) {
+        setProfileQueue(prev => [...prev, ...dislikedProfiles.current]);
+        dislikedProfiles.current = [];
       }
+    } catch (error) {
+      console.error('Error updating profile queue:', error);
     } finally {
-      setIsFetching(false);
+      setIsFetchingNext(false);
     }
-  }, [allUsers, isFetching, profileQueue, transformUserData]);
+  }, [allUsers, allUsersLoading, isFetchingNext, profileQueue.length, transformUserData, userProfile, isTransitioning]);
 
-  // Initialize queue when data loads
   useEffect(() => {
-    if (!allUsersLoading && allUsers?.length > 0) {
-      const firstUser = transformUserData(allUsers[0]);
-      const secondUser = allUsers.length > 1 ? transformUserData(allUsers[1]) : null;
-      setProfileQueue([firstUser, secondUser, 'loading']);
+    if (!hasInitialized && !allUsersLoading && allUsers?.length > 0) {
+      setProfileQueue([]);
+      processedUserIds.current.clear();
+      dislikedProfiles.current = [];
+      setHasInitialized(true);
+      updateProfileQueue();
     }
-  }, [allUsers, allUsersLoading, transformUserData]);
+  }, [allUsers, allUsersLoading, hasInitialized, updateProfileQueue]);
 
-  // Fetch next profile when needed
   useEffect(() => {
-    if (profileQueue[2] === 'loading' && !isFetching) {
-      fetchNextProfile();
+    if (hasInitialized && profileQueue.length < 2 && !isFetchingNext && !allUsersLoading && !isTransitioning) {
+      if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
+      queueUpdateTimeout.current = setTimeout(() => {
+        updateProfileQueue();
+      }, 500);
     }
-  }, [profileQueue, isFetching, fetchNextProfile]);
+    return () => {
+      if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
+    };
+  }, [hasInitialized, profileQueue.length, updateProfileQueue, isFetchingNext, allUsersLoading, isTransitioning]);
 
-  // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
+      if (!allUsersLoading && !hasInitialized) {
+        refreshAllUsers();
+      }
       nextCardScale.setValue(0.9);
-      refreshAllUsers();
       return () => {};
-    }, [refreshAllUsers, nextCardScale])
+    }, [refreshAllUsers, nextCardScale, allUsersLoading, hasInitialized])
   );
 
-  const handleLike = () => {
-    console.log('Liked:', profileQueue[0]?.gamingName);
-    handleSwipeComplete();
-  };
+  const handleLike = useCallback(() => {
+    if (profileQueue[0] && !isTransitioning) {
+      console.log('Liked:', profileQueue[0]?.gamingName);
+      setIsTransitioning(true);
+      handleSwipeComplete();
+    }
+  }, [profileQueue, isTransitioning]);
 
-  const handleDislike = () => {
-    console.log('Disliked:', profileQueue[0]?.gamingName);
-    handleSwipeComplete();
-  };
+  const handleDislike = useCallback(() => {
+    if (profileQueue[0] && !isTransitioning) {
+      console.log('Disliked:', profileQueue[0]?.gamingName);
+      dislikedProfiles.current.push(profileQueue[0]);
+      setIsTransitioning(true);
+      handleSwipeComplete();
+    }
+  }, [profileQueue, isTransitioning]);
 
-  const handleSwipeComplete = () => {
-    setProfileQueue(prev => {
-      // Shift queue forward and set last slot to loading
-      const newQueue = [prev[1], prev[2], 'loading'];
-      return newQueue;
-    });
-  };
+  const handleSwipeComplete = useCallback(() => {
+    setProfileQueue(prev => prev.slice(1));
+    setCurrentIndex(prev => prev + 1);
+  }, []);
 
-  const handleButtonSwipe = (direction) => {
+  const handleButtonSwipe = useCallback((direction) => {
     if (isTransitioning || !profileQueue[0]) return;
+    
     setIsTransitioning(true);
+    
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       Vibration.vibrate(50);
     }
+    
     if (swipeRef.current) {
-      swipeRef.current.triggerSwipe(direction);
+      swipeRef.current.triggerSwipe(direction); // Fixed typo: SwipeRef → swipeRef
     }
-  };
+  }, [isTransitioning, profileQueue]);
+
+  const handleRefresh = useCallback(() => {
+    setProfileQueue([]);
+    processedUserIds.current.clear();
+    dislikedProfiles.current = [];
+    setHasInitialized(false);
+    setCurrentIndex(0);
+    setIsTransitioning(false);
+    refreshAllUsers();
+  }, [refreshAllUsers]);
 
   const ProfileCard = ({ profile }) => (
     <View style={styles.profileCardContainer}>
@@ -183,7 +225,7 @@ const HomeScreen = () => {
   const renderProfileCard = () => {
     const currentProfile = profileQueue[0];
     
-    if (allUsersLoading) {
+    if (allUsersLoading && profileQueue.length === 0 && !isFetchingNext) {
       return (
         <View style={[styles.card, styles.centerContent]}>
           <ActivityIndicator size="large" color="#01e1ff" />
@@ -198,11 +240,11 @@ const HomeScreen = () => {
           <Icon name="error-outline" size={40} color="#ff3b30" />
           <Text style={styles.errorText}>Failed to load users</Text>
           <Text style={styles.errorSubText}>
-            {allUsersError.message || allUsersError.toString()}
+            {allUsersError.toString()}
           </Text>
           <TouchableOpacity 
             style={styles.resetButton} 
-            onPress={refreshAllUsers}
+            onPress={handleRefresh}
           >
             <Text style={styles.resetButtonText}>TRY AGAIN</Text>
           </TouchableOpacity>
@@ -217,7 +259,7 @@ const HomeScreen = () => {
           <Text style={styles.noProfilesText}>No users available</Text>
           <TouchableOpacity 
             style={styles.refreshButton} 
-            onPress={refreshAllUsers}
+            onPress={handleRefresh}
           >
             <Icon name="refresh" size={20} color="white" />
             <Text style={styles.refreshButtonText}>REFRESH</Text>
@@ -241,18 +283,6 @@ const HomeScreen = () => {
     );
   };
 
-  const renderLoadingCard = () => {
-    if (profileQueue[2] === 'loading') {
-      return (
-        <View style={[styles.card, styles.loadingCard]}>
-          <ActivityIndicator size="large" color="#01e1ff" />
-          <Text style={styles.loadingText}>Finding more users...</Text>
-        </View>
-      );
-    }
-    return null;
-  };
-
   const menuItems = [
     { icon: 'account-circle', label: 'ACCOUNT', onPress: () => navigation.navigate('Profile') },
     { icon: 'settings', label: 'SETTINGS', onPress: () => navigation.navigate('Settings') }
@@ -270,7 +300,6 @@ const HomeScreen = () => {
         
         <View style={styles.cardContainer}>
           {renderNextCard()}
-          {renderLoadingCard()}
           <CardSwiper
             ref={swipeRef}
             onSwipeLeft={handleDislike}
@@ -349,12 +378,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(86, 57, 246, 0.28)',
-  },
-  loadingCard: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    opacity: 0.7,
   },
   profileCardContainer: {
     width: '100%',
