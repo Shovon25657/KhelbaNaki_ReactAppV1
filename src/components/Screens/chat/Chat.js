@@ -15,6 +15,7 @@ import person1 from '../../../../assets/Alex.jpg';
 import person2 from '../../../../assets/Angry_Avater.jpg';
 import person3 from '../../../../assets/group_photo.jpg';
 import person4 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
+
 const Chat = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [chats, setChats] = useState([
@@ -54,7 +55,6 @@ const Chat = ({ navigation }) => {
       avatar: person4,
       online: false
     },
-
   ]);
 
   const filteredChats = chats.filter(chat =>
@@ -66,12 +66,12 @@ const Chat = ({ navigation }) => {
       chatId: chat.id,
       userName: chat.name,
       userAvatar: chat.avatar,
-      online: chat.online
+      online: chat.online,
+      userId: 456 // Current user ID
     });
   };
 
   const handleCreateGroup = () => {
-    // Navigate to group creation screen
     navigation.navigate('CreateGroup');
   };
 
@@ -87,7 +87,7 @@ const Chat = ({ navigation }) => {
           style={styles.newGroupButton}
           onPress={handleCreateGroup}
         >
-          <Ionicons name="people-outline" size={24} color="#fff" />
+          <Ionicons name="people-outline" size={24} color="rgb(1, 225, 255)" />
         </TouchableOpacity>
       </View>
 
@@ -112,7 +112,7 @@ const Chat = ({ navigation }) => {
             onPress={() => handleChatPress(chat)}
           >
             <View style={styles.avatarContainer}>
-              <Image source={ chat.avatar } style={styles.avatar} />
+              <Image source={chat.avatar} style={styles.avatar} />
               {chat.online && <View style={styles.onlineIndicator} />}
             </View>
             <View style={styles.chatContent}>
@@ -143,7 +143,7 @@ const Chat = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   header: {
     flexDirection: 'row',
@@ -151,7 +151,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#252538',
+    borderBottomColor: 'rgb(14, 3, 52)',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   backButton: {
     padding: 5,
@@ -167,12 +168,14 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(14, 3, 52)',
     borderRadius: 20,
     marginHorizontal: 15,
     marginVertical: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgb(1, 12, 20)',
   },
   searchIcon: {
     marginRight: 10,
@@ -185,13 +188,14 @@ const styles = StyleSheet.create({
   chatList: {
     flex: 1,
     paddingHorizontal: 15,
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   chatItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#252538',
+    borderBottomColor: 'rgb(14, 3, 52)',
   },
   avatarContainer: {
     position: 'relative',
@@ -209,9 +213,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'rgb(1, 225, 255)',
     borderWidth: 2,
-    borderColor: '#0f0f1a',
+    borderColor: 'rgb(1, 12, 20)',
   },
   chatContent: {
     flex: 1,
@@ -235,14 +239,14 @@ const styles = StyleSheet.create({
     color: '#aaa',
   },
   unreadMessage: {
-    color: '#fff',
+    color: 'rgb(1, 225, 255)',
     fontWeight: '500',
   },
   unreadBadge: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#4a80f0',
+    backgroundColor: 'rgb(1, 225, 255)',
     marginLeft: 10,
   },
 });

@@ -23,7 +23,6 @@ import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
-
 const { width, height } = Dimensions.get('window');
 
 const emojis = [
@@ -34,21 +33,21 @@ const emojis = [
 ];
 
 const quickMessages = [
-  { text: "Let's play!", color: "#FF6B6B", icon: "game-controller" },
-  { text: "Good game!", color: "#4ECDC4", icon: "trophy" },
-  { text: "Rematch?", color: "#FFD166", icon: "refresh" },
-  { text: "I'm ready", color: "#06D6A0", icon: "checkmark" },
-  { text: "Nice move!", color: "#118AB2", icon: "thumbs-up" },
-  { text: "Oops!", color: "#EF476F", icon: "alert" },
-  { text: "Well played", color: "#073B4C", icon: "happy" },
-  { text: "Too easy!", color: "#7209B7", icon: "flash" },
+  { text: "Let's play!", color: "rgb(1, 225, 255)", icon: "game-controller" },
+  { text: "Good game!", color: "rgb(120, 1, 255)", icon: "trophy" },
+  { text: "Rematch?", color: "rgb(1, 225, 255)", icon: "refresh" },
+  { text: "I'm ready", color: "rgb(120, 1, 255)", icon: "checkmark" },
+  { text: "Nice move!", color: "rgb(1, 225, 255)", icon: "thumbs-up" },
+  { text: "Oops!", color: "rgb(120, 1, 255)", icon: "alert" },
+  { text: "Well played", color: "rgb(1, 225, 255)", icon: "happy" },
+  { text: "Too easy!", color: "rgb(120, 1, 255)", icon: "flash" },
 ];
 
 const confirmationColors = [
-  { cancel: "#4ECDC4", action: "#FF6B6B" },
-  { cancel: "#118AB2", action: "#EF476F" },
-  { cancel: "#06D6A0", action: "#7209B7" },
-  { cancel: "#FFD166", action: "#FF6B6B" },
+  { cancel: "rgb(14, 3, 52)", action: "rgb(120, 1, 255)" },
+  { cancel: "rgb(14, 3, 52)", action: "rgb(1, 225, 255)" },
+  { cancel: "rgb(14, 3, 52)", action: "rgb(120, 1, 255)" },
+  { cancel: "rgb(14, 3, 52)", action: "rgb(1, 225, 255)" },
 ];
 
 const ChatInterface = ({ route, navigation }) => {
@@ -588,20 +587,20 @@ const ChatInterface = ({ route, navigation }) => {
               <Image source={userAvatar } style={styles.headerAvatar} />
               <View style={styles.headerUserInfo}>
                 <Text style={styles.headerUserName}>{userName}</Text>
-                <Text style={[styles.headerUserStatus, { color: online ? '#4CAF50' : '#888' }]}>
+                <Text style={[styles.headerUserStatus, { color: online ? 'rgb(1, 225, 255)' : '#888' }]}>
                   {online ? 'Online' : 'Offline'}
                 </Text>
               </View>
             </TouchableOpacity>
             <View style={styles.headerActions}>
               <TouchableOpacity style={styles.actionButton} onPress={makeCall}>
-                <Ionicons name="call-outline" size={24} color="#fff" />
+                <Ionicons name="call-outline" size={24} color="rgb(1, 225, 255)" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} onPress={makeVideoCall}>
-                <Ionicons name="videocam-outline" size={24} color="#fff" />
+                <Ionicons name="videocam-outline" size={24} color="rgb(1, 225, 255)" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} onPress={toggleMenu}>
-                <FontAwesome name="ellipsis-v" size={20} color="#fff" />
+                <FontAwesome name="ellipsis-v" size={20} color="rgb(1, 225, 255)" />
               </TouchableOpacity>
             </View>
           </View>
@@ -618,14 +617,14 @@ const ChatInterface = ({ route, navigation }) => {
                 style={styles.menuOption}
                 onPress={handleUnmatch}
               >
-                <Ionicons name="person-remove" size={20} color="#ff4444" style={styles.menuOptionIcon} />
+                <Ionicons name="person-remove" size={20} color="rgb(1, 225, 255)" style={styles.menuOptionIcon} />
                 <Text style={styles.menuOptionText}>Unmatch this Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.menuOption}
                 onPress={handleDeleteConversation}
               >
-                <Ionicons name="trash" size={20} color="#ff4444" style={styles.menuOptionIcon} />
+                <Ionicons name="trash" size={20} color="rgb(1, 225, 255)" style={styles.menuOptionIcon} />
                 <Text style={styles.menuOptionText}>Delete Conversation</Text>
               </TouchableOpacity>
             </Animated.View>
@@ -703,7 +702,7 @@ const ChatInterface = ({ route, navigation }) => {
                   <Ionicons 
                     name="add" 
                     size={28} 
-                    color={showMediaOptions ? '#4a80f0' : '#888'} 
+                    color={showMediaOptions ? 'rgb(1, 225, 255)' : '#888'} 
                   />
                 </TouchableOpacity>
                 <TouchableOpacity 
@@ -713,7 +712,7 @@ const ChatInterface = ({ route, navigation }) => {
                   <Ionicons 
                     name="flash" 
                     size={24} 
-                    color={showQuickMessages ? '#4a80f0' : '#888'} 
+                    color={showQuickMessages ? 'rgb(1, 225, 255)' : '#888'} 
                   />
                 </TouchableOpacity>
               </View>
@@ -738,7 +737,7 @@ const ChatInterface = ({ route, navigation }) => {
                 <Ionicons 
                   name="happy-outline" 
                   size={24} 
-                  color={showEmojiPicker ? '#4a80f0' : '#888'} 
+                  color={showEmojiPicker ? 'rgb(1, 225, 255)' : '#888'} 
                 />
               </TouchableOpacity>
               <TouchableOpacity 
@@ -749,42 +748,42 @@ const ChatInterface = ({ route, navigation }) => {
                 <Ionicons 
                   name="send" 
                   size={24} 
-                  color={newMessage.trim() === '' ? '#888' : '#4a80f0'} 
+                  color={newMessage.trim() === '' ? '#888' : 'rgb(1, 225, 255)'} 
                 />
               </TouchableOpacity>
             </View>
 
             {/* Media Options */}
             {showMediaOptions && (
-  <Animated.View 
-    style={[
-      styles.mediaOptionsContainer,
-      mediaOptionsAnimatedStyle,
-      { bottom: keyboardHeight }
-    ]}
-  >
-    <View style={styles.mediaOptionsContent}>
-      <TouchableOpacity style={styles.mediaOption} onPress={pickImage}>
-        <View style={styles.mediaOptionIcon}>
-          <Ionicons name="image" size={28} color="#4a80f0" />
-        </View>
-        <Text style={styles.mediaOptionText}>Photo Library</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.mediaOption} onPress={takePhoto}>
-        <View style={styles.mediaOptionIcon}>
-          <Ionicons name="camera" size={28} color="#4a80f0" />
-        </View>
-        <Text style={styles.mediaOptionText}>Camera</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.mediaOption} onPress={sendFile}>
-        <View style={styles.mediaOptionIcon}>
-          <MaterialIcons name="insert-drive-file" size={28} color="#4a80f0" />
-        </View>
-        <Text style={styles.mediaOptionText}>Document</Text>
-      </TouchableOpacity>
-    </View>
-  </Animated.View>
-)}
+              <Animated.View 
+                style={[
+                  styles.mediaOptionsContainer,
+                  mediaOptionsAnimatedStyle,
+                  { bottom: keyboardHeight }
+                ]}
+              >
+                <View style={styles.mediaOptionsContent}>
+                  <TouchableOpacity style={styles.mediaOption} onPress={pickImage}>
+                    <View style={styles.mediaOptionIcon}>
+                      <Ionicons name="image" size={28} color="rgb(1, 225, 255)" />
+                    </View>
+                    <Text style={styles.mediaOptionText}>Photo Library</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.mediaOption} onPress={takePhoto}>
+                    <View style={styles.mediaOptionIcon}>
+                      <Ionicons name="camera" size={28} color="rgb(1, 225, 255)" />
+                    </View>
+                    <Text style={styles.mediaOptionText}>Camera</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.mediaOption} onPress={sendFile}>
+                    <View style={styles.mediaOptionIcon}>
+                      <MaterialIcons name="insert-drive-file" size={28} color="rgb(1, 225, 255)" />
+                    </View>
+                    <Text style={styles.mediaOptionText}>Document</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            )}
 
             {/* Quick Messages */}
             {showQuickMessages && (
@@ -862,7 +861,7 @@ const ChatInterface = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -872,8 +871,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#252538',
-    backgroundColor: '#0f0f1a',
+    borderBottomColor: 'rgb(14, 3, 52)',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   backButton: {
     marginRight: 10,
@@ -912,7 +911,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 70,
     right: 15,
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(1, 12, 20)',
     borderRadius: 10,
     paddingVertical: 5,
     zIndex: 100,
@@ -921,6 +920,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    borderWidth: 1,
+    borderColor: 'rgb(14, 3, 52)',
   },
   menuOption: {
     flexDirection: 'row',
@@ -938,6 +939,7 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     paddingHorizontal: 15,
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   messagesContent: {
     paddingBottom: '2%',
@@ -965,11 +967,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   myMessageContent: {
-    backgroundColor: '#4a80f0',
+    backgroundColor: 'rgb(120, 1, 255)',
     borderBottomRightRadius: 0,
   },
   theirMessageContent: {
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(14, 3, 52)',
     borderBottomLeftRadius: 2,
   },
   messageText: {
@@ -1000,10 +1002,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(1, 12, 20)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgb(14, 3, 52)',
   },
   mediaOptionsContent: {
     flexDirection: 'row',
@@ -1014,7 +1018,7 @@ const styles = StyleSheet.create({
     width: 80,
   },
   mediaOptionIcon: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(14, 3, 52)',
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -1031,10 +1035,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 15,
     right: 15,
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(1, 12, 20)',
     borderRadius: 20,
     padding: 15,
     zIndex: 10,
+    borderWidth: 1,
+    borderColor: 'rgb(14, 3, 52)',
   },
   quickMessagesGrid: {
     flexDirection: 'row',
@@ -1065,11 +1071,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmationContainer: {
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(1, 12, 20)',
     borderRadius: 20,
     padding: 25,
     width: '85%',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgb(14, 3, 52)',
   },
   confirmationTitle: {
     color: '#fff',
@@ -1122,9 +1130,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 50,
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(1, 12, 20)',
     borderTopWidth: 1,
-    borderTopColor: '#1a1a2e',
+    borderTopColor: 'rgb(14, 3, 52)',
   },
   emojiPickerContent: {
     paddingHorizontal: 10,
@@ -1141,9 +1149,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(14, 3, 52)',
     borderTopWidth: 1,
-    borderTopColor: '#1a1a2e',
+    borderTopColor: 'rgb(1, 12, 20)',
   },
   inputLeftButtons: {
     flexDirection: 'row',
@@ -1160,13 +1168,15 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(1, 12, 20)',
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
     color: '#fff',
     fontSize: 16,
     marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: 'rgb(14, 3, 52)',
   },
   emojiButton: {
     padding: 6,
