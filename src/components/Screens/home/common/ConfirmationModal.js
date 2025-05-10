@@ -13,7 +13,7 @@ const ConfirmationModal = ({
   onConfirm,
   onCancel,
   iconName = 'warning',
-  iconColor = '#FFD700'
+  iconColor = 'rgb(1, 225, 255)'
 }) => {
   if (!visible) return null;
 
@@ -64,14 +64,14 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: width * 0.8,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgb(14, 3, 52)',
     borderRadius: 20,
     padding: 25,
-    borderWidth: 3,
-    borderColor: '#FFD700',
-    shadowColor: '#FFD700',
+    borderWidth: 2,
+    borderColor: 'rgb(1, 225, 255)',
+    shadowColor: 'rgb(1, 225, 255)',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 10,
   },
@@ -84,9 +84,9 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     marginLeft: 10,
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowColor: 'rgba(1, 225, 255, 0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
   },
@@ -106,15 +106,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginHorizontal: 5,
-    borderWidth: 2,
+    borderWidth: 1,
   },
   cancelButton: {
-    backgroundColor: '#0f3460',
-    borderColor: '#2196F3',
+    backgroundColor: 'rgb(1, 12, 20)',
+    borderColor: 'rgb(1, 225, 255)',
   },
   confirmButton: {
-    backgroundColor: '#0f3460',
-    borderColor: '#F44336',
+    backgroundColor: 'rgb(120, 1, 255)',
+    borderColor: 'rgb(120, 1, 255)',
   },
   modalButtonText: {
     color: '#FFF',
