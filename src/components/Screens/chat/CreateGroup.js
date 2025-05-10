@@ -27,10 +27,10 @@ const CreateGroup = ({ navigation }) => {
   
   // Sample friends data
   const [friends, setFriends] = useState([
-    { id: 1, name: 'Alex Johnson', avatar: person1, selected: false },
-    { id: 2, name: 'Sarah Miller', avatar: person2, selected: false },
-    { id: 3, name: 'David Wilson', avatar:  person3, selected: false },
-    { id: 4, name: 'Emma Thompson', avatar: person4 , selected: false },
+    { id: 1, name: 'Ryan', avatar: person1, selected: false },
+    { id: 2, name: 'FHT', avatar: person2, selected: false },
+    { id: 3, name: 'KMS', avatar:  person3, selected: false },
+    { id: 4, name: 'Pagla Gamer', avatar: person4 , selected: false },
   ]);
 
   // Filter friends based on search query

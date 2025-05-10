@@ -23,7 +23,7 @@ const EditPackage = ({ navigation, route }) => {
   const packages = [
     { 
       id: '1', 
-      name: 'ROOME', 
+      name: 'ROOKIE', 
       features: [
         'Basic matchmaking',
         'Access to public social feed',

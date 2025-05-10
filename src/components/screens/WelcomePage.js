@@ -15,13 +15,19 @@ const features = [
   {
     id: 2,
     title: "Marketplace",
-    description: "Buy, sell, and trade gaming items and accounts securely",
+    description: "Platform for professional gamer to sell their skills to the world",
     image: require('../../../assets/partner.png'), // Make sure this path is correct
   },
   {
     id: 3,
     title: "Recruitment",
-    description: "Find teammates or join esports organizations",
+    description: "Find the best esports players for your team",
+    image: require('../../../assets/partner.png'), // Make sure this path is correct
+  },
+  {
+    id: 4,
+    title: "Explore",
+    description: "Share your gaming experience with the world",
     image: require('../../../assets/partner.png'), // Make sure this path is correct
   }
 ];
