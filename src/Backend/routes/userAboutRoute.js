@@ -15,7 +15,11 @@ const {
   updateUserLookingForDataController,
   createUserGamesPlayedController,
   getUserGamesPlayedController,
-  deleteGameController
+  deleteGameController,
+  likeUserController,
+  dislikeUserController,
+  getMatchesController,
+  getPotentialMatchesController
 } = require("../controllers/userAboutController");
 const getUserProfileController = require("../controllers/getUserProfileController");
 
@@ -47,4 +51,18 @@ router.put("/update-about-data", requireSingIn, updateAboutDataController);
 router.put("/update-looking-for-data", requireSingIn, updateUserLookingForDataController);
 router.delete("/delete-game/:gameId", requireSingIn, deleteGameController);
 //export
+
+
+
+// Match routes
+router.post("/like-user", requireSingIn, likeUserController);
+router.post("/dislike-user", requireSingIn, dislikeUserController);
+router.get("/matches", requireSingIn, getMatchesController);
+router.get("/potential-matches", requireSingIn, getPotentialMatchesController);
+
+
+
+
+
+
 module.exports = router;

@@ -2,6 +2,9 @@ const userAboutModel = require("../models/userAboutModel");
 const userProfileModel = require("../models/userProfileModel");
 const userLookingForModel = require("../models/lookingFormodel");
 const userGamesPlayedModel = require("../models/userGamesPlayedModel");
+const UserInteraction = require("../models/userInteractionModel");
+const Match = require("../models/matchModel");
+const User = require("../models/userModel");
 const JWT = require("jsonwebtoken");
 var { expressjwt: jwt } = require("express-jwt");
 
@@ -549,11 +552,239 @@ const deleteGameController = async (req, res) => {
 
 
 
+// Like a user
+const likeUserController = async (req, res) => {
+  try {
+    const { targetUserId } = req.body;
+    const userId = req.auth._id;
 
+    // Validate input
+    if (!targetUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "Target user ID is required"
+      });
+    }
 
+    // Check if user is trying to like themselves
+    if (userId.toString() === targetUserId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot like yourself"
+      });
+    }
 
+    // Check if target user exists
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Target user not found"
+      });
+    }
 
+    // Check if interaction already exists
+    const existingInteraction = await UserInteraction.findOne({
+      user: userId,
+      targetUser: targetUserId
+    });
 
+    if (existingInteraction) {
+      return res.status(400).json({
+        success: false,
+        message: `You have already ${existingInteraction.action}ed this user`
+      });
+    }
+
+    // Create the like
+    await UserInteraction.create({
+      user: userId,
+      targetUser: targetUserId,
+      action: 'like'
+    });
+
+    // Check if the other user has also liked this user (mutual like)
+    const mutualLike = await UserInteraction.findOne({
+      user: targetUserId,
+      targetUser: userId,
+      action: 'like'
+    });
+
+    if (mutualLike) {
+      // Create a match
+      const newMatch = await Match.create({
+        user1: userId,
+        user2: targetUserId
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "It's a match!",
+        match: newMatch
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Like recorded successfully"
+    });
+
+  } catch (error) {
+    console.error("Error in likeUserController:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error processing like",
+      error: error.message
+    });
+  }
+};
+
+// Dislike a user
+const dislikeUserController = async (req, res) => {
+  try {
+    const { targetUserId } = req.body;
+    const userId = req.auth._id;
+
+    // Validate input
+    if (!targetUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "Target user ID is required"
+      });
+    }
+
+    // Check if user is trying to dislike themselves
+    if (userId.toString() === targetUserId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot dislike yourself"
+      });
+    }
+
+    // Check if interaction already exists
+    const existingInteraction = await UserInteraction.findOne({
+      user: userId,
+      targetUser: targetUserId
+    });
+
+    if (existingInteraction && existingInteraction.action === 'dislike') {
+      return res.status(400).json({
+        success: false,
+        message: "You have already disliked this user"
+      });
+    }
+
+    // Create or update the interaction
+    if (existingInteraction) {
+      existingInteraction.action = 'dislike';
+      await existingInteraction.save();
+    } else {
+      await UserInteraction.create({
+        user: userId,
+        targetUser: targetUserId,
+        action: 'dislike'
+      });
+    }
+
+    // Remove any existing match if it exists
+    await Match.findOneAndRemove({
+      $or: [
+        { user1: userId, user2: targetUserId },
+        { user1: targetUserId, user2: userId }
+      ]
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Dislike recorded successfully"
+    });
+
+  } catch (error) {
+    console.error("Error in dislikeUserController:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error processing dislike",
+      error: error.message
+    });
+  }
+};
+
+// Get all matches for a user
+const getMatchesController = async (req, res) => {
+  try {
+    const userId = req.auth._id;
+
+    // Find all matches where the user is involved
+    const matches = await Match.find({
+      $or: [{ user1: userId }, { user2: userId }],
+      isActive: true
+    })
+    .populate('user1', 'username')
+    .populate('user2', 'username')
+    .sort({ createdAt: -1 });
+
+    // Format the matches to show the other user's info
+    const formattedMatches = matches.map(match => {
+      const otherUser = match.user1._id.toString() === userId.toString() ? match.user2 : match.user1;
+      return {
+        matchId: match._id,
+        user: {
+          id: otherUser._id,
+          username: otherUser.username
+        },
+        matchedAt: match.createdAt
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      matches: formattedMatches
+    });
+
+  } catch (error) {
+    console.error("Error in getMatchesController:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving matches",
+      error: error.message
+    });
+  }
+};
+
+// Get potential matches (users you haven't interacted with)
+const getPotentialMatchesController = async (req, res) => {
+  try {
+    const userId = req.auth._id;
+
+    // Get all users the current user has interacted with (liked or disliked)
+    const interactions = await UserInteraction.find({ user: userId });
+    const interactedUserIds = interactions.map(i => i.targetUser);
+
+    // Add current user to the list to exclude themselves
+    interactedUserIds.push(userId);
+
+    // Find users who haven't been interacted with
+    const potentialMatches = await User.find({
+      _id: { $nin: interactedUserIds },
+      role: 'gamer' // Optional: only match with gamers if you have other roles
+    })
+    .select('username')
+    .limit(20); // Limit the number of potential matches returned
+
+    res.status(200).json({
+      success: true,
+      potentialMatches
+    });
+
+  } catch (error) {
+    console.error("Error in getPotentialMatchesController:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving potential matches",
+      error: error.message
+    });
+  }
+};
 
 
 
@@ -582,5 +813,9 @@ module.exports = {
   updateUserLookingForDataController,
   createUserGamesPlayedController,
   getUserGamesPlayedController,
-  deleteGameController
+  deleteGameController,
+  likeUserController,
+  dislikeUserController,
+  getMatchesController,
+  getPotentialMatchesController
 };
