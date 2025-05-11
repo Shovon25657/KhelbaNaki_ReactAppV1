@@ -1,4 +1,3 @@
-// Chat.js
 import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
@@ -49,16 +48,20 @@ const Chat = ({ navigation }) => {
 
   // Update local chats when matches change
   useEffect(() => {
-    const formattedChats = matches.map(match => ({
-      id: match._id,
-      userId: match.userId,
-      name: match.gamingName,
-      lastMessage: match.lastMessage || 'Start the conversation!',
-      time: formatTime(match.lastMessageAt || match.matchedAt),
-      avatar: match.avatar ? { uri: match.avatar } : require('../../../../assets/default-avatar.png'),
-      unread: unseenMatches > 0 // Simple unread indicator
-    }));
-    setLocalChats(formattedChats);
+    if (matches && matches.length > 0) {
+      const formattedChats = matches.map((match, index) => ({
+        id: match._id || `temp-${index}`, // Fallback for missing _id
+        userId: match.userId,
+        name: match.gamingName || `User ${index}`,
+        lastMessage: match.lastMessage || 'Start the conversation!',
+        time: formatTime(match.lastMessageAt || match.matchedAt),
+        avatar: match.avatar ? { uri: match.avatar } : require('../../../../assets/default-avatar.png'),
+        unread: unseenMatches > 0
+      }));
+      setLocalChats(formattedChats);
+    } else {
+      setLocalChats([]);
+    }
   }, [matches, unseenMatches]);
 
   const filteredChats = localChats.filter(chat =>
@@ -73,6 +76,14 @@ const Chat = ({ navigation }) => {
       userAvatar: chat.avatar,
     });
   };
+
+  if (!matches) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#4a80f0" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -123,7 +134,7 @@ const Chat = ({ navigation }) => {
         {filteredChats.length > 0 ? (
           filteredChats.map((chat) => (
             <TouchableOpacity 
-              key={chat.id} 
+              key={`chat-${chat.id}`}
               style={styles.chatItem}
               onPress={() => handleChatPress(chat)}
             >
@@ -133,8 +144,6 @@ const Chat = ({ navigation }) => {
                   style={styles.avatar}
                   defaultSource={require('../../../../assets/default-avatar.png')}
                 />
-                {/* Online status would need additional backend support */}
-                {/* {chat.online && <View style={styles.onlineIndicator} />} */}
               </View>
               <View style={styles.chatContent}>
                 <View style={styles.chatHeader}>
@@ -268,6 +277,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   chatTime: {
+    width: 80,
+    textAlign: 'right',
     fontSize: 12,
     color: '#888',
   },

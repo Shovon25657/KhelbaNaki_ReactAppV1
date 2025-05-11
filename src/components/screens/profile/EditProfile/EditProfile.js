@@ -29,7 +29,16 @@ const defaultProfile = require('../../../../../assets/profile1.jpg');
 const defaultCover = require('../../../../../assets/profile3.jpg');
 
 const EditProfile = ({ navigation }) => {
-  const { userProfileData, aboutData, setUserProfileData, userLookingForData, userGamesPlayedData, refreshData } = useContext(UserDataContext);
+  const {
+    userProfileData,
+    aboutData,
+    setUserProfileData,
+    userLookingForData,
+    userGamesPlayedData,
+    refreshData,
+    loading, // Added from context
+    error // Added from context
+  } = useContext(UserDataContext);
 
   const [gamingName, setGamingName] = useState('');
   const [age, setAge] = useState('');
@@ -42,6 +51,11 @@ const EditProfile = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState({ bio: false });
   const [wordCount, setWordCount] = useState(0);
   const [showStatusModal, setShowStatusModal] = useState(false);
+
+  // Fetch data on mount
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   useEffect(() => {
     if (!userProfileData) return;
@@ -146,7 +160,7 @@ const EditProfile = ({ navigation }) => {
       if (data?.success) {
         setUserProfileData(data.updatedProfile);
         await refreshData();
-        navigation.goBack();  // Removed the Alert line
+        navigation.goBack();
       }
     } catch (error) {
       Alert.alert(
@@ -237,7 +251,6 @@ const EditProfile = ({ navigation }) => {
     }
   });
 
-
   const navigateToEditGames = () => navigation.navigate('EditGames', {
     gamesPlayed: {
       games: userGamesPlayedData?.games,
@@ -246,13 +259,29 @@ const EditProfile = ({ navigation }) => {
     }
   });
 
+  // Render loading or error states
+  if (loading) {
+    return (
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" color="#00ff88" />
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
 
-
-
-
-
-  // const navigateToEditGames = () => navigation.navigate('EditGames', { games: user.bestAt });
-  const navigateToEditPackage = () => navigation.navigate('EditPackage', { plan: user.plan });
+  if (error) {
+    return (
+      <View style={styles.loadingOverlay}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={refreshData}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -344,7 +373,6 @@ const EditProfile = ({ navigation }) => {
           </View>
         </EditableSection>
 
-
         {/* About Section */}
         <EditableSection
           title="About"
@@ -375,11 +403,9 @@ const EditProfile = ({ navigation }) => {
             { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
             { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playStyle || 'Not specified' },
             { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playMode || 'Not specified' },
-
           ]}
           iconComponent={FontAwesome5}
         />
-
 
         <EditableSectionforplayedgame
           title="Games Played"
@@ -389,11 +415,7 @@ const EditProfile = ({ navigation }) => {
             console.log("User Games Played Data:", userGamesPlayedData);
           }}
           data={userGamesPlayedData}
-          
         />
-
-        
-
 
         {(saving || uploadingImages) && (
           <View style={styles.loadingOverlay}>
@@ -421,7 +443,6 @@ const EditProfile = ({ navigation }) => {
   );
 };
 
-// Keep all your existing styles from the original EditProfile.js
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -526,6 +547,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 10,
     fontSize: 16,
+  },
+  errorText: {
+    color: '#ff0000',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#00ff88',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
