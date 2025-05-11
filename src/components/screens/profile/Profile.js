@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from 'react';
+
+import React, { useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,6 +21,7 @@ import GamesSection from './Profile Common/Sectionforplayedgame';
 import PlanSection from './Profile Common/PlanSection';
 import { responsiveWidth, responsiveHeight, responsiveFont } from './Profile Common/responsiveDimensions';
 import { UserDataContext } from '../../context/UserDataContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Profile = ({ navigation }) => {
   const {
@@ -32,15 +34,30 @@ const Profile = ({ navigation }) => {
     refreshData
   } = useContext(UserDataContext);
 
-  useEffect(() => {
+  const handleRefreshData = useCallback(() => {
+    // Skip refresh if data is already available
+    if (userProfileData && aboutData && userLookingForData && userGamesPlayedData) {
+      console.log('Skipping refresh: Data already available');
+      return;
+    }
+    console.log('Refreshing profile data...');
     refreshData();
-  }, []);
+  }, [userProfileData, aboutData, userLookingForData, userGamesPlayedData, refreshData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const timeout = setTimeout(() => {
+        handleRefreshData();
+      }, 500); // Debounce refresh
+      return () => clearTimeout(timeout);
+    }, [handleRefreshData])
+  );
 
   const handleEditProfile = () => {
     navigation.navigate('EditProfile');
   };
 
-  if (loading) {
+  if (loading && !userProfileData) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#00ff88" />
@@ -116,38 +133,31 @@ const Profile = ({ navigation }) => {
             data={[
               { icon: 'graduation-cap', label: 'Education', value: aboutData?.educationQualification || '' },
               { icon: 'briefcase', label: 'Occupation', value: aboutData?.occupation || '' },
-              // { icon: 'map-marker-alt', label: 'Location', value: aboutData?.location || '' },
               { icon: 'praying-hands', label: 'Religion', value: aboutData?.religion || '' },
               { icon: 'smoking', label: 'Smoking', value: aboutData?.smoking || '' },
               { icon: 'glass-cheers', label: 'Drinks', value: aboutData?.drinks || '' },
-              { icon: 'venus-mars', label: 'gender', value: aboutData?.gender || '' },
-
+              { icon: 'venus-mars', label: 'Gender', value: aboutData?.gender || '' },
             ]}
           />
         )}
 
-
-
-        {aboutData && (
+        {userLookingForData && (
           <ProfileCard
             title="Looking for"
             data={[
-              { icon: 'moon', label: 'Avilablity', value: userLookingForData?.availability || 'Not specified' },
+              { icon: 'moon', label: 'Availability', value: userLookingForData?.availability || 'Not specified' },
               { icon: 'gamepad', label: 'Play Style', value: userLookingForData?.playMode || 'Not specified' },
               { icon: 'headset', label: 'Play Mode', value: userLookingForData?.playStyle || 'Not specified' },
-
             ]}
           />
         )}
 
-        
+        {userGamesPlayedData && (
           <GamesSection
             title="Games Played"
             data={userGamesPlayedData}
           />
-        
-      
-        
+        )}
 
         {userProfileData?.plan?.name && (
           <PlanSection
@@ -162,7 +172,6 @@ const Profile = ({ navigation }) => {
   );
 };
 
-// Keep all your existing styles from the original Profile.js
 const styles = StyleSheet.create({
   container: {
     flex: 1,

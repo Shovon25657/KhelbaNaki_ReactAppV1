@@ -23,7 +23,7 @@ const EditPackage = ({ navigation, route }) => {
   const packages = [
     { 
       id: '1', 
-      name: 'ROOME', 
+      name: 'ROOKIE', 
       features: [
         'Basic matchmaking',
         'Access to public social feed',
@@ -43,7 +43,7 @@ const EditPackage = ({ navigation, route }) => {
         'Ad-free experience',
         'Full matchmaking filters',
         'Basic recruitment tools',
-        'All ROOME features',
+        'All ROOKIE features',
         'Priority support'
       ],
       price: 4.99,

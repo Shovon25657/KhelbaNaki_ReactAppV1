@@ -19,8 +19,8 @@ const FeedProfile = ({ route, navigation }) => {
   // Default user data
   const defaultUser = {
     id: '1',
-    username: 'ProGamer99',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+    username: 'Beekeeper58',
+    avatar: 'thumbnail1.jpg',
     followers: 1245,
     following: 342,
     posts: 56,

@@ -1,3 +1,4 @@
+
 import React, { useContext, useState, useRef, useCallback, useEffect } from 'react';
 import { 
   View, 
@@ -216,7 +217,7 @@ const HomeScreen = () => {
     }
     
     if (swipeRef.current) {
-      swipeRef.current.triggerSwipe(direction);
+      swipeRef.current.triggerSwipe(direction); // Fixed typo: SwipeRef → swipeRef
     }
   }, [isTransitioning, profileQueue]);
 

@@ -51,8 +51,10 @@ const UserDataProvider = ({ children }) => {
       setError(error.message || 'Failed to fetch user data');
     } finally {
       setLoading(false);
+      setIsFetching(false);
+      console.log('User data fetch complete');
     }
-  };
+  }, [isFetching, loading, userProfileData, aboutData, userLookingForData, userGamesPlayedData, lastFetchTime]);
 
   // User matching system functions
   const refreshMatches = async () => {
@@ -127,11 +129,11 @@ const UserDataProvider = ({ children }) => {
   const refreshAllUsers = async () => {
     setAllUsersLoading(true);
     setAllUsersError(null);
-    
+
     try {
       const authData = await AsyncStorage.getItem('@auth');
       if (!authData) throw new Error('No authentication data');
-      
+
       const { token } = JSON.parse(authData);
       const headers = { Authorization: `Bearer ${token}` };
 
@@ -142,28 +144,26 @@ const UserDataProvider = ({ children }) => {
       } else {
         throw new Error(response.data?.message || 'Failed to fetch users');
       }
+
+      clearTimeout(timeoutId);
+      setLastFetchTime(Date.now());
     } catch (error) {
       setAllUsersError(error.message);
     } finally {
       setAllUsersLoading(false);
+      setIsFetching(false);
+      console.log('All users fetch complete');
     }
-  };
+  }, [isFetching, allUsersLoading, allUsers, lastFetchTime]);
 
   return (
     <UserDataContext.Provider value={{
-      // Profile data
       userProfileData,
       setUserProfileData,
-      
-      // About data
       aboutData,
       setAboutData,
-
-      // User looking for data
       userLookingForData,
       setUserLookingForData,
-
-      // User profile
       userProfile,
       setUserProfile,
 

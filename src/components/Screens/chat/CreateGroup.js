@@ -27,10 +27,10 @@ const CreateGroup = ({ navigation }) => {
   
   // Sample friends data
   const [friends, setFriends] = useState([
-    { id: 1, name: 'Alex Johnson', avatar: person1, selected: false },
-    { id: 2, name: 'Sarah Miller', avatar: person2, selected: false },
-    { id: 3, name: 'David Wilson', avatar:  person3, selected: false },
-    { id: 4, name: 'Emma Thompson', avatar: person4 , selected: false },
+    { id: 1, name: 'Ryan', avatar: person1, selected: false },
+    { id: 2, name: 'FHT', avatar: person2, selected: false },
+    { id: 3, name: 'KMS', avatar: person3, selected: false },
+    { id: 4, name: 'Pagla Gamer', avatar: person4, selected: false },
   ]);
 
   // Filter friends based on search query
@@ -136,7 +136,7 @@ const CreateGroup = ({ navigation }) => {
           >
             {selectedFriends.map(friend => (
               <View key={friend.id} style={styles.selectedFriend}>
-                <Image source={ friend.avatar } style={styles.selectedAvatar} />
+                <Image source={friend.avatar} style={styles.selectedAvatar} />
                 <Text style={styles.selectedName} numberOfLines={1}>{friend.name}</Text>
                 <TouchableOpacity 
                   style={styles.removeButton}
@@ -159,7 +159,7 @@ const CreateGroup = ({ navigation }) => {
             style={styles.friendItem}
             onPress={() => toggleFriendSelection(friend.id)}
           >
-            <Image source={friend.avatar } style={styles.avatar} />
+            <Image source={friend.avatar} style={styles.avatar} />
             <Text style={styles.friendName}>{friend.name}</Text>
             <View style={[
               styles.checkbox,
@@ -202,7 +202,7 @@ const CreateGroup = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   header: {
     flexDirection: 'row',
@@ -210,7 +210,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#252538',
+    borderBottomColor: 'rgb(14, 3, 52)',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   headerTitle: {
     fontSize: 18,
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   createButton: {
-    color: '#4a80f0',
+    color: 'rgb(1, 225, 255)',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -226,21 +227,25 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   input: {
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(14, 3, 52)',
     color: '#fff',
     borderRadius: 10,
     padding: 15,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'rgb(1, 12, 20)',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#252538',
+    backgroundColor: 'rgb(14, 3, 52)',
     borderRadius: 20,
     marginHorizontal: 15,
     marginBottom: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgb(1, 12, 20)',
   },
   searchIcon: {
     marginRight: 10,
@@ -251,14 +256,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sectionTitle: {
-    color: '#fff',
+    color: 'rgb(1, 225, 255)',
     fontWeight: '600',
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
   selectedContainer: {
     borderBottomWidth: 1,
-    borderBottomColor: '#252538',
+    borderBottomColor: 'rgb(14, 3, 52)',
     paddingBottom: 10,
   },
   selectedFriendsScroll: {
@@ -285,7 +290,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: 5,
-    backgroundColor: '#f05a5a',
+    backgroundColor: 'rgb(1, 225, 255)',
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -295,13 +300,14 @@ const styles = StyleSheet.create({
   friendsList: {
     flex: 1,
     paddingHorizontal: 15,
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   friendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#252538',
+    borderBottomColor: 'rgb(14, 3, 52)',
   },
   avatar: {
     width: 40,
@@ -324,8 +330,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#4a80f0',
-    borderColor: '#4a80f0',
+    backgroundColor: 'rgb(1, 225, 255)',
+    borderColor: 'rgb(1, 225, 255)',
   },
   modalOverlay: {
     flex: 1,
@@ -347,10 +353,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   errorAlert: {
-    backgroundColor: '#f05a5a',
+    backgroundColor: 'rgb(1, 225, 255)',
   },
   successAlert: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'rgb(120, 1, 255)',
   },
   alertIcon: {
     marginRight: 10,
