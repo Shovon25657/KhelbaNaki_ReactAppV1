@@ -1,0 +1,9 @@
+{
+  "name": "KhelbaNaki",
+  "displayName": "KhelbaNaki",
+  "extra": {
+    "eas": {
+      "projectId": "cf2787df-288e-4367-ab82-424de404aaec"
+    }
+  }
+}

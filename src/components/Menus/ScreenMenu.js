@@ -1,5 +1,5 @@
 import React from "react";
-import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
+import { createStackNavigator } from '@react-navigation/stack'; // Replacing shared-element navigator
 
 // Import Screens
 import SplashScreen from '../Screens/SplashScreen';
@@ -27,8 +27,8 @@ import MyLibrary from "../Screens/marketplace/MyLibrary";
 import FeedProfile from "../Screens/newsfeed/FeedProfile";
 import Luminaries from "../Screens/home/Luminaries";
 
-// Use SharedElement stack navigator for smart animations
-const Stack = createSharedElementStackNavigator();
+// Use standard stack navigator
+const Stack = createStackNavigator();
 
 const ScreenMenu = () => {
   return (
@@ -37,7 +37,6 @@ const ScreenMenu = () => {
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
-        // Default transition configuration
         cardStyleInterpolator: ({ current, next, layouts }) => {
           return {
             cardStyle: {
@@ -89,53 +88,15 @@ const ScreenMenu = () => {
       <Stack.Screen name="Login" component={LoginPage} />
       <Stack.Screen name="Register" component={Registration} />
       <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen 
-        name="Chat" 
-        component={Chat} 
-        sharedElements={(route) => {
-          return ['chat-header-icon'];
-        }}
-      />
-      <Stack.Screen
-        name="Explore"
-        component={Explore}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="FeedProfile"
-        component={FeedProfile}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Settings"
-        component={Settings}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Privacy"
-        component={PrivacyPolicy}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Luminaries"
-        component={Luminaries}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Marketplace"
-        component={Marketplace}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="PurchaseGig"
-        component={PurchaseGig}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="BuyGig"
-        component={BuyGig}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="Chat" component={Chat} />
+      <Stack.Screen name="Explore" component={Explore} options={{ headerShown: false }} />
+      <Stack.Screen name="FeedProfile" component={FeedProfile} options={{ headerShown: false }} />
+      <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
+      <Stack.Screen name="Privacy" component={PrivacyPolicy} options={{ headerShown: false }} />
+      <Stack.Screen name="Luminaries" component={Luminaries} options={{ headerShown: false }} />
+      <Stack.Screen name="Marketplace" component={Marketplace} options={{ headerShown: false }} />
+      <Stack.Screen name="PurchaseGig" component={PurchaseGig} options={{ headerShown: false }} />
+      <Stack.Screen name="BuyGig" component={BuyGig} options={{ headerShown: false }} />
       <Stack.Screen name="MyLibrary" component={MyLibrary} />
       <Stack.Screen 
         name="EditProfile" 
@@ -156,35 +117,14 @@ const ScreenMenu = () => {
             };
           },
         }}
-        sharedElements={(route) => {
-          return ['profile-picture', 'profile-name', 'edit-button'];
-        }}
       />
       <Stack.Screen name="EditAbout" component={EditAbout} />
       <Stack.Screen name="EditLookingFor" component={EditLookingFor} />
       <Stack.Screen name="EditGames" component={EditGames} />
       <Stack.Screen name="EditPackage" component={EditPackage} />
-      <Stack.Screen 
-        name="ChatInterface" 
-        component={ChatInterface}
-        sharedElements={(route) => {
-          const { chatId } = route.params || {};
-          return chatId ? [`chat-avatar-${chatId}`, `chat-name-${chatId}`] : [];
-        }}
-      />
+      <Stack.Screen name="ChatInterface" component={ChatInterface} />
       <Stack.Screen name="CreateGroup" component={CreateGroup} />
-      <Stack.Screen 
-        name="Profile" 
-        component={ProfilePage}
-        sharedElements={(route) => {
-          const { userId } = route.params || {};
-          return [
-            `user-avatar-${userId}`,
-            `user-name-${userId}`,
-            `user-bio-${userId}`
-          ];
-        }}
-      />
+      <Stack.Screen name="Profile" component={ProfilePage} />
       <Stack.Screen name="Account" component={EditProfile} />
     </Stack.Navigator>
   );
