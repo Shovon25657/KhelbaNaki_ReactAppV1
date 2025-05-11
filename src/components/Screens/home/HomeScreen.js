@@ -11,7 +11,7 @@ import {
   Vibration,
   Platform,
   Image,
-  ActivityIndicator
+  Alert
 } from 'react-native';
 import { AuthContext } from '../../context/authContext';
 import { UserDataContext } from '../../context/UserDataContext';
@@ -48,7 +48,7 @@ const HomeScreen = () => {
     refreshMatches
   } = useContext(UserDataContext);
   
-   const navigation = useNavigation();
+  const navigation = useNavigation();
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -58,11 +58,11 @@ const HomeScreen = () => {
   const [profileQueue, setProfileQueue] = useState([]);
   const [isFetchingNext, setIsFetchingNext] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [isQueueExhausted, setIsQueueExhausted] = useState(false);
   const processedUserIds = useRef(new Set());
   const dislikedProfiles = useRef([]);
   const queueUpdateTimeout = useRef(null);
 
- // Existing transformUserData function remains the same
   const transformUserData = useCallback((user) => {
     if (!user) return null;
     
@@ -87,7 +87,7 @@ const HomeScreen = () => {
   }, []);
 
   const updateProfileQueue = useCallback(() => {
-    if (allUsersLoading || !allUsers || !allUsers.length || isFetchingNext || isTransitioning) return;
+    if (allUsersLoading || !allUsers || isFetchingNext || isTransitioning || isQueueExhausted) return;
     
     setIsFetchingNext(true);
     
@@ -111,29 +111,36 @@ const HomeScreen = () => {
         }).filter(profile => profile !== null);
         
         setProfileQueue(prev => [...prev, ...newProfiles]);
+        setIsQueueExhausted(false);
       } else if (neededProfiles > 0 && availableUsers.length === 0 && dislikedProfiles.current.length > 0) {
         setProfileQueue(prev => [...prev, ...dislikedProfiles.current]);
         dislikedProfiles.current = [];
+        setIsQueueExhausted(false);
+      } else if (neededProfiles > 0 && availableUsers.length === 0 && dislikedProfiles.current.length === 0) {
+        setIsQueueExhausted(true);
       }
     } catch (error) {
       console.error('Error updating profile queue:', error);
     } finally {
       setIsFetchingNext(false);
     }
-  }, [allUsers, allUsersLoading, isFetchingNext, profileQueue.length, transformUserData, userProfile, isTransitioning]);
+  }, [allUsers, allUsersLoading, isFetchingNext, profileQueue.length, transformUserData, userProfile, isTransitioning, isQueueExhausted]);
 
   useEffect(() => {
-    if (!hasInitialized && !allUsersLoading && allUsers?.length > 0) {
+    if (!hasInitialized && !allUsersLoading && allUsers?.length >= 0) {
       setProfileQueue([]);
       processedUserIds.current.clear();
       dislikedProfiles.current = [];
       setHasInitialized(true);
-      updateProfileQueue();
+      setIsQueueExhausted(allUsers.length === 0);
+      if (!allUsersLoading && allUsers.length > 0) {
+        updateProfileQueue();
+      }
     }
   }, [allUsers, allUsersLoading, hasInitialized, updateProfileQueue]);
 
   useEffect(() => {
-    if (hasInitialized && profileQueue.length < 2 && !isFetchingNext && !allUsersLoading && !isTransitioning) {
+    if (hasInitialized && profileQueue.length < 2 && !isFetchingNext && !allUsersLoading && !isTransitioning && !isQueueExhausted) {
       if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
       queueUpdateTimeout.current = setTimeout(() => {
         updateProfileQueue();
@@ -142,7 +149,7 @@ const HomeScreen = () => {
     return () => {
       if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
     };
-  }, [hasInitialized, profileQueue.length, updateProfileQueue, isFetchingNext, allUsersLoading, isTransitioning]);
+  }, [hasInitialized, profileQueue.length, updateProfileQueue, isFetchingNext, allUsersLoading, isTransitioning, isQueueExhausted]);
 
   useFocusEffect(
     useCallback(() => {
@@ -154,9 +161,9 @@ const HomeScreen = () => {
     }, [refreshAllUsers, nextCardScale, allUsersLoading, hasInitialized])
   );
 
-  // Function to handle like action
   const handleLike = useCallback(async () => {
     if (profileQueue[0] && !isTransitioning) {
+      setIsTransitioning(true);
       try {
         const result = await likeUser(profileQueue[0].id);
         
@@ -169,47 +176,46 @@ const HomeScreen = () => {
         }
         
         console.log('Liked:', profileQueue[0]?.gamingName);
-        setIsTransitioning(true);
         handleSwipeComplete();
       } catch (error) {
         console.error('Like error:', error);
         Alert.alert('Error', error.response?.data?.message || 'Failed to like user');
+        setIsTransitioning(false);
       }
     }
-  }, [profileQueue, isTransitioning, handleSwipeComplete, likeUser]);
+  }, [profileQueue, isTransitioning, handleSwipeComplete, likeUser, refreshMatches]);
 
-  // Function to handle dislike action
-const handleDislike = useCallback(async () => {
-  if (profileQueue[0] && !isTransitioning) {
-    try {
-      await dislikeUser(profileQueue[0].id);
-      console.log('Disliked:', profileQueue[0]?.gamingName);
-      dislikedProfiles.current.push(profileQueue[0]); // Add this back
+  const handleDislike = useCallback(async () => {
+    if (profileQueue[0] && !isTransitioning) {
       setIsTransitioning(true);
-      handleSwipeComplete();
-    } catch (error) {
-      console.error('Dislike error:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to dislike user');
+      try {
+        await dislikeUser(profileQueue[0].id);
+        console.log('Disliked:', profileQueue[0]?.gamingName);
+        dislikedProfiles.current.push(profileQueue[0]);
+        handleSwipeComplete();
+      } catch (error) {
+        console.error('Dislike error:', error);
+        Alert.alert('Error', error.response?.data?.message || 'Failed to dislike user');
+        setIsTransitioning(false);
+      }
     }
-  }
-}, [profileQueue, isTransitioning, handleSwipeComplete, dislikeUser]);
+  }, [profileQueue, isTransitioning, handleSwipeComplete, dislikeUser]);
 
   const handleSwipeComplete = useCallback(() => {
     setProfileQueue(prev => prev.slice(1));
     setCurrentIndex(prev => prev + 1);
+    setTimeout(() => setIsTransitioning(false), 300);
   }, []);
 
   const handleButtonSwipe = useCallback((direction) => {
     if (isTransitioning || !profileQueue[0]) return;
-    
-    setIsTransitioning(true);
     
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       Vibration.vibrate(50);
     }
     
     if (swipeRef.current) {
-      swipeRef.current.triggerSwipe(direction); // Fixed typo: SwipeRef → swipeRef
+      swipeRef.current.triggerSwipe(direction);
     }
   }, [isTransitioning, profileQueue]);
 
@@ -220,44 +226,50 @@ const handleDislike = useCallback(async () => {
     setHasInitialized(false);
     setCurrentIndex(0);
     setIsTransitioning(false);
+    setIsQueueExhausted(false);
     refreshAllUsers();
   }, [refreshAllUsers]);
 
-  const ProfileCard = ({ profile }) => (
-    <View style={styles.profileCardContainer}>
-      <Image 
-        source={profile.image} 
-        style={styles.profileImage} 
-        resizeMode="cover"
-        defaultSource={person1}
-      />
-      <View style={styles.profileInfoContainer}>
-        <Text style={styles.profileName}>
-          {profile.gamingName}, {profile.age}
-        </Text>
-        {profile.games && profile.games.length > 0 ? (
-          <View style={styles.gamesContainer}>
-            <Text style={styles.gamesTitle}>TOP GAMES:</Text>
-            {profile.games.slice(0, 3).map((game, index) => (
-              <Text key={`${profile.id}-${index}`} style={styles.gameText}>
-                • {game}
-              </Text>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.noGamesText}>No games listed</Text>
-        )}
+  const ProfileCard = ({ profile }) => {
+    if (!profile || !profile.image) {
+      return null;
+    }
+
+    return (
+      <View style={styles.profileCardContainer}>
+        <Image 
+          source={profile.image} 
+          style={styles.profileImage} 
+          resizeMode="cover"
+          defaultSource={person1}
+        />
+        <View style={styles.profileInfoContainer}>
+          <Text style={styles.profileName}>
+            {profile.gamingName}, {profile.age}
+          </Text>
+          {profile.games && profile.games.length > 0 ? (
+            <View style={styles.gamesContainer}>
+              <Text style={styles.gamesTitle}>TOP GAMES:</Text>
+              {profile.games.slice(0, 3).map((game, index) => (
+                <Text key={`${profile.id}-${index}`} style={styles.gameText}>
+                  • {game}
+                </Text>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noGamesText}>No games listed</Text>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderProfileCard = () => {
     const currentProfile = profileQueue[0];
     
-    if (allUsersLoading && profileQueue.length === 0 && !isFetchingNext) {
+    if (allUsersLoading && profileQueue.length === 0) {
       return (
         <View style={[styles.card, styles.centerContent]}>
-          <ActivityIndicator size="large" color="#01e1ff" />
           <Text style={styles.loadingText}>Loading users...</Text>
         </View>
       );
@@ -281,11 +293,11 @@ const handleDislike = useCallback(async () => {
       );
     }
 
-    if (!currentProfile) {
+    if (!currentProfile && isQueueExhausted) {
       return (
         <View style={[styles.card, styles.centerContent]}>
           <Icon2 name="user-x" size={50} color="#01e1ff" />
-          <Text style={styles.noProfilesText}>No users available</Text>
+          <Text style={styles.noProfilesText}>Looking for new users</Text>
           <TouchableOpacity 
             style={styles.refreshButton} 
             onPress={handleRefresh}
@@ -297,13 +309,15 @@ const handleDislike = useCallback(async () => {
       );
     }
 
-    return <ProfileCard profile={currentProfile} />;
+    return currentProfile ? <ProfileCard profile={currentProfile}or /> : null;
   };
 
   const renderNextCard = () => {
     const nextProfile = profileQueue[1];
     
-    if (!nextProfile) return null;
+    if (!nextProfile || !nextProfile.image) {
+      return null;
+    }
 
     return (
       <Animated.View style={[styles.card, styles.nextCard, { transform: [{ scale: nextCardScale }] }]}>
@@ -317,7 +331,7 @@ const handleDislike = useCallback(async () => {
     { icon: 'settings', label: 'SETTINGS', onPress: () => navigation.navigate('Settings') }
   ];
 
-    return (
+  return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
       <View style={styles.mainContainer}>
@@ -325,7 +339,7 @@ const handleDislike = useCallback(async () => {
           title="HOME"
           onMenuPress={() => setShowSideMenu(true)}
           onActionPress={() => navigation.navigate('EditPackage')}
-          badgeCount={unseenMatches} // Added match badge
+          badgeCount={unseenMatches}
         />
         
         <View style={styles.cardContainer}>

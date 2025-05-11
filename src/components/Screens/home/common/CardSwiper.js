@@ -21,14 +21,12 @@ const CardSwiper = forwardRef(({
   const cardScale = useRef(new Animated.Value(1)).current;
   const tapTimestamp = useRef(0);
 
-  // Expose functions via ref
   useImperativeHandle(ref, () => ({
     triggerSwipe: (direction) => {
       performSwipe(direction);
     }
   }));
 
-  // Reset animation values when currentIndex changes
   useEffect(() => {
     swipe.setValue({ x: 0, y: 0 });
     tilt.setValue(0);
@@ -148,7 +146,6 @@ const CardSwiper = forwardRef(({
     opacity: cardOpacity
   };
 
-  // Swipe indicator animations
   const likeOpacity = swipe.x.interpolate({
     inputRange: [0, SWIPE_THRESHOLD],
     outputRange: [0, 1],
@@ -180,7 +177,6 @@ const CardSwiper = forwardRef(({
       key={`profile-card-${currentIndex}`}
     >
       {children}
-      {/* Swipe Indicators */}
       <Animated.View 
         style={[
           styles.likeBadge, 
@@ -209,60 +205,54 @@ const CardSwiper = forwardRef(({
 });
 
 const styles = {
-    likeBadge: {
-        position: 'absolute',
-        top: '22%',
-        left: 20,
-        zIndex: 2,
-        backgroundColor: 'rgba(76, 175, 80, 0.15)', // soft green tint
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(76, 175, 80, 0.5)',
-        backdropFilter: 'blur(6px)', // for web, ignored on native
-        shadowColor: '#4CAF50',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      
-      likeText: {
-        color: '#4CAF50',
-        fontWeight: '700',
-        fontSize: 18,
-        textShadowColor: 'rgba(0, 0, 0, 0.25)',
-        textShadowOffset: { width: 0.5, height: 0.5 },
-        textShadowRadius: 1,
-      },
-      
-      dislikeBadge: {
-        position: 'absolute',
-        top: '22%',
-        right: 20,
-        zIndex: 2,
-        backgroundColor: 'rgba(244, 67, 54, 0.15)', // soft red tint
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(244, 67, 54, 0.5)',
-        backdropFilter: 'blur(6px)', // for web, ignored on native
-        shadowColor: '#F44336',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      
-      dislikeText: {
-        color: '#F44336',
-        fontWeight: '700',
-        fontSize: 18,
-        textShadowColor: 'rgba(0, 0, 0, 0.25)',
-        textShadowOffset: { width: 0.5, height: 0.5 },
-        textShadowRadius: 1,
-      },
-      
+  likeBadge: {
+    position: 'absolute',
+    top: '22%',
+    left: 20,
+    zIndex: 2,
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.5)',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  likeText: {
+    color: '#4CAF50',
+    fontWeight: '700',
+    fontSize: 18,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
+  },
+  dislikeBadge: {
+    position: 'absolute',
+    top: '22%',
+    right: 20,
+    zIndex: 2,
+    backgroundColor: 'rgba(244, 67, 54, 0.15)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 67, 54, 0.5)',
+    shadowColor: '#F44336',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  dislikeText: {
+    color: '#F44336',
+    fontWeight: '700',
+    fontSize: 18,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
+  },
 };
 
 export default CardSwiper;
