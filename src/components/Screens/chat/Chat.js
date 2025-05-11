@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// Chat.js
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -7,72 +8,70 @@ import {
   TouchableOpacity, 
   TextInput, 
   ScrollView, 
-  Image
+  Image,
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { UserDataContext } from '../../context/UserDataContext';
 import BottomNavBar from '../../common/BottomNavBar';
-import person1 from '../../../../assets/Alex.jpg';
-import person2 from '../../../../assets/Angry_Avater.jpg';
-import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
-import person4 from '../../../../assets/group_photo.jpg';
+
 const Chat = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [chats, setChats] = useState([
-    {
-      id: 1,
-      name: 'Alex Johnson',
-      lastMessage: 'Hey, are we still on for the tournament?',
-      time: '2h ago',
-      unread: true,
-      avatar: person1,
-      online: true
-    },
-    {
-      id: 2,
-      name: 'Sarah Miller',
-      lastMessage: 'I found a great strategy for the new map',
-      time: '5h ago',
-      unread: false,
-      avatar: person2,
-      online: false
-    },
-    {
-      id: 3,
-      name: 'Team Alpha',
-      lastMessage: 'Michael: Let me know when you guys are online',
-      time: '1d ago',
-      unread: true,
-      avatar: person3,
-      online: true
-    },
-    {
-      id: 4,
-      name: 'David Wilson',
-      lastMessage: 'Thanks for the tips!',
-      time: '2d ago',
-      unread: false,
-      avatar: person4,
-      online: false
-    },
+  const { matches, refreshMatches, unseenMatches } = useContext(UserDataContext);
+  const [localChats, setLocalChats] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  ]);
+  // Format timestamp from backend
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000); // Difference in seconds
+    
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+    return `${date.toLocaleDateString()}`;
+  };
 
-  const filteredChats = chats.filter(chat =>
+  // Refresh chat list
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshMatches();
+    } catch (error) {
+      console.error('Refresh error:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Update local chats when matches change
+  useEffect(() => {
+    const formattedChats = matches.map(match => ({
+      id: match._id,
+      userId: match.userId,
+      name: match.gamingName,
+      lastMessage: match.lastMessage || 'Start the conversation!',
+      time: formatTime(match.lastMessageAt || match.matchedAt),
+      avatar: match.avatar ? { uri: match.avatar } : require('../../../../assets/default-avatar.png'),
+      unread: unseenMatches > 0 // Simple unread indicator
+    }));
+    setLocalChats(formattedChats);
+  }, [matches, unseenMatches]);
+
+  const filteredChats = localChats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleChatPress = (chat) => {
     navigation.navigate('ChatInterface', { 
-      chatId: chat.id,
+      matchId: chat.id,
+      userId: chat.userId,
       userName: chat.name,
       userAvatar: chat.avatar,
-      online: chat.online
     });
-  };
-
-  const handleCreateGroup = () => {
-    // Navigate to group creation screen
-    navigation.navigate('CreateGroup');
   };
 
   return (
@@ -83,12 +82,19 @@ const Chat = ({ navigation }) => {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity 
-          style={styles.newGroupButton}
-          onPress={handleCreateGroup}
-        >
-          <Ionicons name="people-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          {unseenMatches > 0 && (
+            <View style={styles.unseenBadge}>
+              <Text style={styles.unseenText}>{unseenMatches}</Text>
+            </View>
+          )}
+          <TouchableOpacity 
+            style={styles.newGroupButton}
+            onPress={() => navigation.navigate('CreateGroup')}
+          >
+            <Ionicons name="people-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Search Bar */}
@@ -96,7 +102,7 @@ const Chat = ({ navigation }) => {
         <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search for friends..."
+          placeholder="Search matches..."
           placeholderTextColor="#888"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -104,35 +110,54 @@ const Chat = ({ navigation }) => {
       </View>
 
       {/* Chat List */}
-      <ScrollView style={styles.chatList}>
-        {filteredChats.map((chat) => (
-          <TouchableOpacity 
-            key={chat.id} 
-            style={styles.chatItem}
-            onPress={() => handleChatPress(chat)}
-          >
-            <View style={styles.avatarContainer}>
-              <Image source={ chat.avatar } style={styles.avatar} />
-              {chat.online && <View style={styles.onlineIndicator} />}
-            </View>
-            <View style={styles.chatContent}>
-              <View style={styles.chatHeader}>
-                <Text style={styles.chatName}>{chat.name}</Text>
-                <Text style={styles.chatTime}>{chat.time}</Text>
+      <ScrollView 
+        style={styles.chatList}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor="#fff"
+          />
+        }
+      >
+        {filteredChats.length > 0 ? (
+          filteredChats.map((chat) => (
+            <TouchableOpacity 
+              key={chat.id} 
+              style={styles.chatItem}
+              onPress={() => handleChatPress(chat)}
+            >
+              <View style={styles.avatarContainer}>
+                <Image 
+                  source={chat.avatar} 
+                  style={styles.avatar}
+                  defaultSource={require('../../../../assets/default-avatar.png')}
+                />
+                {/* Online status would need additional backend support */}
+                {/* {chat.online && <View style={styles.onlineIndicator} />} */}
               </View>
-              <Text 
-                style={[
-                  styles.chatMessage,
-                  chat.unread && styles.unreadMessage
-                ]}
-                numberOfLines={1}
-              >
-                {chat.lastMessage}
-              </Text>
-            </View>
-            {chat.unread && <View style={styles.unreadBadge} />}
-          </TouchableOpacity>
-        ))}
+              <View style={styles.chatContent}>
+                <View style={styles.chatHeader}>
+                  <Text style={styles.chatName}>{chat.name}</Text>
+                  <Text style={styles.chatTime}>{chat.time}</Text>
+                </View>
+                <Text 
+                  style={[styles.chatMessage, chat.unread && styles.unreadMessage]}
+                  numberOfLines={1}
+                >
+                  {chat.lastMessage}
+                </Text>
+              </View>
+              {chat.unread && <View style={styles.unreadBadge} />}
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="chatbubbles-outline" size={60} color="#444" />
+            <Text style={styles.emptyText}>No matches yet</Text>
+            <Text style={styles.emptySubText}>Connect with other gamers to start chatting!</Text>
+          </View>
+        )}
       </ScrollView>
 
       <BottomNavBar />
@@ -160,6 +185,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#fff',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  unseenBadge: {
+    backgroundColor: '#4a80f0',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 10,
+  },
+  unseenText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   newGroupButton: {
     padding: 5,
@@ -244,6 +285,28 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#4a80f0',
     marginLeft: 10,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+  },
+  emptyText: {
+    color: '#fff',
+    fontSize: 18,
+    marginTop: 20,
+  },
+  emptySubText: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0f0f1a',
   },
 });
 

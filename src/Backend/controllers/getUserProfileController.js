@@ -1,6 +1,10 @@
 const userProfileModel = require("../models/userProfileModel");
 const User = require("../models/userModel");
 const UserInteraction = require("../models/userInteractionModel"); // Add this line
+const Match = require("../models/matchModel");
+const UserProfile = require("../models/userProfileModel");
+
+
 
 const getUserProfileController = async (req, res) => {
   try {
@@ -63,4 +67,64 @@ const getUserProfileController = async (req, res) => {
   }
 };
 
-module.exports = getUserProfileController;
+
+
+
+const getChatListController = async (req, res) => {
+  try {
+    const currentUserId = req.auth._id;
+
+    // Fetch active matches sorted by last message time
+    const matches = await Match.find({
+      $or: [{ user1: currentUserId }, { user2: currentUserId }],
+      isActive: true
+    })
+      .populate('user1', 'username')
+      .populate('user2', 'username')
+      .sort({ lastMessageAt: -1 }); // Sort by recent activity
+
+    // Extract and deduplicate user IDs (exclude current user)
+    const userIds = matches.flatMap(match => [
+      match.user1._id,
+      match.user2._id
+    ]);
+    const uniqueUserIds = [...new Set(userIds)].filter(id => !id.equals(currentUserId));
+
+    // Fetch profiles for matched users
+    const profiles = await UserProfile.find({ user: { $in: uniqueUserIds } });
+    const profileMap = new Map(profiles.map(p => [p.user.toString(), p]));
+
+    // Build chat list
+    const chatList = matches.map(match => {
+      const isCurrentUser1 = match.user1._id.equals(currentUserId);
+      const otherUser = isCurrentUser1 ? match.user2 : match.user1;
+      const profile = profileMap.get(otherUser._id.toString());
+
+      return {
+        matchId: match._id,
+        userId: otherUser._id,
+        username: otherUser.username,
+        gamingName: profile?.gamingName || otherUser.username,
+        avatar: profile?.avatar || '',
+        lastMessage: match.lastMessage,
+        lastMessageAt: match.lastMessageAt,
+        matchedAt: match.matchedAt
+      };
+    });
+
+    res.status(200).json({ success: true, data: chatList });
+  } catch (error) {
+    console.error('Error fetching chat list:', error.message, error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch chat list',
+      error: process.env.NODE_ENV === 'development' ? error.message : null
+    });
+  }
+};
+
+
+
+
+module.exports = { getUserProfileController
+  , getChatListController };

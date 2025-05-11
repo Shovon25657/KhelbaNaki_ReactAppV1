@@ -21,7 +21,8 @@ const {
   getMatchesController,
   getPotentialMatchesController
 } = require("../controllers/userAboutController");
-const getUserProfileController = require("../controllers/getUserProfileController");
+const { getUserProfileController, getChatListController } = require("../controllers/getUserProfileController");
+
 
 //router object
 const router = express.Router();
@@ -59,6 +60,7 @@ router.post("/like-user", requireSingIn, likeUserController);
 router.post("/dislike-user", requireSingIn, dislikeUserController);
 router.get("/matches", requireSingIn, getMatchesController);
 router.get("/potential-matches", requireSingIn, getPotentialMatchesController);
+router.get("/chat-list", requireSingIn, getChatListController);
 
 
 

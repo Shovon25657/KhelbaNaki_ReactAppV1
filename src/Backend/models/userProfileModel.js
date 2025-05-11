@@ -7,8 +7,6 @@ const userProfileSchema = new mongoose.Schema({
   },
   age: {
     type: Number, // Changed from String to Number for better validation and querying
-    min: [13, 'Age must be at least 13'],
-    max: [120, 'Age must be reasonable'],
     default: null
   },
   avatar: {

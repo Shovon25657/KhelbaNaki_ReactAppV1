@@ -18,12 +18,12 @@ const UserDataProvider = ({ children }) => {
   const [allUsersError, setAllUsersError] = useState(null);
   const [error, setError] = useState(null);
   
-  // New state for interactions
+  // Interaction states
   const [matches, setMatches] = useState([]);
   const [interactions, setInteractions] = useState([]);
   const [unseenMatches, setUnseenMatches] = useState(0);
 
-  // Existing function to get user data
+  // Existing data fetching
   const getUserData = async () => {
     setLoading(true);
     setError(null);
@@ -34,57 +34,49 @@ const UserDataProvider = ({ children }) => {
       const { token } = JSON.parse(authData);
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Existing data fetching logic
-      const profileDataRes = await axios.get("/userabout/get-profile-data", { headers });
-      if (profileDataRes.data?.success) setUserProfileData(profileDataRes.data.userProfileData);
+      const responses = await Promise.all([
+        axios.get("/userabout/get-profile-data", { headers }),
+        axios.get("/userabout/get-about-data", { headers }),
+        axios.get("/userabout/get-user-looking-for-data", { headers }),
+        axios.get("/userabout/get-user-gamesplayed-data", { headers })
+      ]);
 
-      const aboutRes = await axios.get("/userabout/get-about-data", { headers });
-      if (aboutRes.data?.success) setAboutData(aboutRes.data.aboutData);
-
-      const userProfileRes = await axios.get("/userabout/get-profile-data", { headers });
-      if (userProfileRes.data?.success) setUserProfile(userProfileRes.data.userProfile);
-
-      const userLookingForRes = await axios.get("/userabout/get-user-looking-for-data", { headers });
-      if (userLookingForRes.data?.success) setUserLookingForData(userLookingForRes.data.userLookingForData);
-
-      const userGamesPlayedRes = await axios.get("/userabout/get-user-gamesplayed-data", { headers });
-      if (userGamesPlayedRes.data?.success) setUserGamesPlayedData(userGamesPlayedRes.data.gamesPlayed);
+      if (responses[0].data?.success) setUserProfileData(responses[0].data.userProfileData);
+      if (responses[1].data?.success) setAboutData(responses[1].data.aboutData);
+      if (responses[2].data?.success) setUserLookingForData(responses[2].data.userLookingForData);
+      if (responses[3].data?.success) setUserGamesPlayedData(responses[3].data.gamesPlayed);
 
     } catch (error) {
       console.error('Main error in getUserData:', error);
-      setError(error.message || 'An error occurred while fetching user data');
+      setError(error.message || 'Failed to fetch user data');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fixed refreshAllUsers function
-  const refreshAllUsers = async () => {
-    setAllUsersLoading(true);
-    setAllUsersError(null);
-    
+  // User matching system functions
+  const refreshMatches = async () => {
     try {
       const authData = await AsyncStorage.getItem('@auth');
-      if (!authData) throw new Error('No authentication data');
+      if (!authData) return;
       
       const { token } = JSON.parse(authData);
       const headers = { Authorization: `Bearer ${token}` };
 
-      const response = await axios.get("/userabout/get-all-users", { headers });
-      
+      const response = await axios.get("/userabout/chat-list", { headers });
       if (response.data?.success) {
-        setAllUsers(response.data.data);
-      } else {
-        throw new Error(response.data?.message || 'Failed to fetch users');
+        setMatches(response.data.data);
+        // Update unseen matches count (requires backend support)
+        const newMatches = response.data.data.filter(match => 
+          !matches.some(existingMatch => existingMatch._id === match._id)
+        );
+        setUnseenMatches(prev => prev + newMatches.length);
       }
     } catch (error) {
-      setAllUsersError(error.message);
-    } finally {
-      setAllUsersLoading(false);
+      console.error('Match refresh error:', error);
     }
   };
 
-  // Like user function
   const likeUser = async (targetUserId) => {
     try {
       const authData = await AsyncStorage.getItem('@auth');
@@ -112,7 +104,6 @@ const UserDataProvider = ({ children }) => {
     }
   };
 
-  // Dislike user function
   const dislikeUser = async (targetUserId) => {
     try {
       const authData = await AsyncStorage.getItem('@auth');
@@ -132,20 +123,29 @@ const UserDataProvider = ({ children }) => {
     }
   };
 
-  // Refresh matches
-  const refreshMatches = async () => {
+  // User list management
+  const refreshAllUsers = async () => {
+    setAllUsersLoading(true);
+    setAllUsersError(null);
+    
     try {
       const authData = await AsyncStorage.getItem('@auth');
+      if (!authData) throw new Error('No authentication data');
+      
       const { token } = JSON.parse(authData);
       const headers = { Authorization: `Bearer ${token}` };
 
-      const response = await axios.get("/userabout/matches", { headers });
+      const response = await axios.get("/userabout/get-all-users", { headers });
+      
       if (response.data?.success) {
-        setMatches(response.data.matches);
-        setUnseenMatches(response.data.matches.filter(m => !m.seen).length);
+        setAllUsers(response.data.data);
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch users');
       }
     } catch (error) {
-      console.error('Match refresh error:', error);
+      setAllUsersError(error.message);
+    } finally {
+      setAllUsersLoading(false);
     }
   };
 
@@ -167,16 +167,16 @@ const UserDataProvider = ({ children }) => {
       userProfile,
       setUserProfile,
 
-      // User games played data
+      // Games played data
       userGamesPlayedData,
       setUserGamesPlayedData,
       
-      // All users data
+      // User list
       allUsers,
       allUsersLoading,
       allUsersError,
-      refreshAllUsers, // This was missing
-      
+      refreshAllUsers,
+
       // Matching system
       matches,
       interactions,
@@ -184,7 +184,7 @@ const UserDataProvider = ({ children }) => {
       likeUser,
       dislikeUser,
       refreshMatches,
-      
+
       // Common states
       loading,
       error,
