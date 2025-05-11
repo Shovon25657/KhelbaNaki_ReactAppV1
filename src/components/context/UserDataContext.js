@@ -1,11 +1,12 @@
+// UserDataContext.js
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 const UserDataContext = createContext();
 
 const UserDataProvider = ({ children }) => {
+  // Existing state
   const [loading, setLoading] = useState(false);
   const [userProfileData, setUserProfileData] = useState(null);
   const [aboutData, setAboutData] = useState(null);
@@ -17,94 +18,38 @@ const UserDataProvider = ({ children }) => {
   const [allUsersError, setAllUsersError] = useState(null);
   const [error, setError] = useState(null);
   
+  // New state for interactions
+  const [matches, setMatches] = useState([]);
+  const [interactions, setInteractions] = useState([]);
+  const [unseenMatches, setUnseenMatches] = useState(0);
 
-  // Fetch current user data
+  // Existing function to get user data
   const getUserData = async () => {
     setLoading(true);
-    setError(null); // Reset error state before new request
-    
+    setError(null);
     try {
       const authData = await AsyncStorage.getItem('@auth');
-      if (!authData) {
-        console.log('No auth data found in AsyncStorage');
-        setLoading(false);
-        return;
-      }
+      if (!authData) return;
       
       const { token } = JSON.parse(authData);
-      if (!token) {
-        console.log('No token found in auth data');
-        setLoading(false);
-        return;
-      }
-      
       const headers = { Authorization: `Bearer ${token}` };
-      
-      try {
-        // Fetch profile data
-        const profileDataRes = await axios.get("/userabout/get-profile-data", { headers });
-        console.log('Profile data response:', profileDataRes.data);
-        if (profileDataRes.data?.success) {
-          setUserProfileData(profileDataRes.data.userProfileData);
-        } else {
-          console.log('Profile data fetch unsuccessful:', profileDataRes.data);
-        }
-      } catch (err) {
-        console.error('Error fetching profile data:', err);
-      }
-      
-      try {
-        // Fetch about data
-        const aboutRes = await axios.get("/userabout/get-about-data", { headers });
-        console.log('About data response:', aboutRes.data);
-        if (aboutRes.data?.success) {
-          setAboutData(aboutRes.data.aboutData);
-        } else {
-          console.log('About data fetch unsuccessful:', aboutRes.data);
-        }
-      } catch (err) {
-        console.error('Error fetching about data:', err);
-      }
-      
-      try {
-        // Fetch user profile
-        const userProfileRes = await axios.get("/userabout/get-profile-data", { headers });
-        console.log('User profile response:', userProfileRes.data);
-        if (userProfileRes.data?.success) {
-          setUserProfile(userProfileRes.data.userProfile);
-        } else {
-          console.log('User profile fetch unsuccessful:', userProfileRes.data);
-        }
-      } catch (err) {
-        console.error('Error fetching user profile:', err);
-      }
-      
-      try {
-        // Fetch looking for data
-        const userLookingForRes = await axios.get("/userabout/get-user-looking-for-data", { headers });
-        console.log('Looking for data response:', userLookingForRes.data);
-        if (userLookingForRes.data?.success) {
-          setUserLookingForData(userLookingForRes.data.userLookingForData);
-        } else {
-          console.log('Looking for data fetch unsuccessful:', userLookingForRes.data);
-        }
-      } catch (err) {
-        console.error('Error fetching looking for data:', err);
-      }
-      
-      try {
-        // Fetch games played data
-        const userGamesPlayedRes = await axios.get("/userabout/get-user-gamesplayed-data", { headers });
-        console.log('Games played data response:', userGamesPlayedRes.data);
-        if (userGamesPlayedRes.data?.success) {
-          setUserGamesPlayedData(userGamesPlayedRes.data.gamesPlayed);
-        } else {
-          console.log('Games played data fetch unsuccessful:', userGamesPlayedRes.data);
-        }
-      } catch (err) {
-        console.error('Error fetching games played data:', err);
-      }
-      
+
+      // Existing data fetching logic
+      const profileDataRes = await axios.get("/userabout/get-profile-data", { headers });
+      if (profileDataRes.data?.success) setUserProfileData(profileDataRes.data.userProfileData);
+
+      const aboutRes = await axios.get("/userabout/get-about-data", { headers });
+      if (aboutRes.data?.success) setAboutData(aboutRes.data.aboutData);
+
+      const userProfileRes = await axios.get("/userabout/get-profile-data", { headers });
+      if (userProfileRes.data?.success) setUserProfile(userProfileRes.data.userProfile);
+
+      const userLookingForRes = await axios.get("/userabout/get-user-looking-for-data", { headers });
+      if (userLookingForRes.data?.success) setUserLookingForData(userLookingForRes.data.userLookingForData);
+
+      const userGamesPlayedRes = await axios.get("/userabout/get-user-gamesplayed-data", { headers });
+      if (userGamesPlayedRes.data?.success) setUserGamesPlayedData(userGamesPlayedRes.data.gamesPlayed);
+
     } catch (error) {
       console.error('Main error in getUserData:', error);
       setError(error.message || 'An error occurred while fetching user data');
@@ -113,9 +58,9 @@ const UserDataProvider = ({ children }) => {
     }
   };
 
-  // Fetch all users (for discovery/matching)
-  const getAllUsers = async () => {
-   // setAllUsersLoading(true);
+  // Fixed refreshAllUsers function
+  const refreshAllUsers = async () => {
+    setAllUsersLoading(true);
     setAllUsersError(null);
     
     try {
@@ -124,7 +69,7 @@ const UserDataProvider = ({ children }) => {
       
       const { token } = JSON.parse(authData);
       const headers = { Authorization: `Bearer ${token}` };
-      
+
       const response = await axios.get("/userabout/get-all-users", { headers });
       
       if (response.data?.success) {
@@ -139,11 +84,70 @@ const UserDataProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    getUserData();
-    getAllUsers(); // Fetch all users when component mounts
-    
-  }, []);
+  // Like user function
+  const likeUser = async (targetUserId) => {
+    try {
+      const authData = await AsyncStorage.getItem('@auth');
+      const { token } = JSON.parse(authData);
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const response = await axios.post("/userabout/like-user", 
+        { targetUserId }, 
+        { headers }
+      );
+
+      if (response.data?.success) {
+        setInteractions(prev => [...prev, { user: targetUserId, action: 'like' }]);
+        
+        if (response.data.match) {
+          setMatches(prev => [...prev, response.data.match]);
+          setUnseenMatches(prev => prev + 1);
+          return { isMatch: true, match: response.data.match };
+        }
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Like error:', error);
+      throw error;
+    }
+  };
+
+  // Dislike user function
+  const dislikeUser = async (targetUserId) => {
+    try {
+      const authData = await AsyncStorage.getItem('@auth');
+      const { token } = JSON.parse(authData);
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.post("/userabout/dislike-user", 
+        { targetUserId }, 
+        { headers }
+      );
+
+      setInteractions(prev => [...prev, { user: targetUserId, action: 'dislike' }]);
+      return { success: true };
+    } catch (error) {
+      console.error('Dislike error:', error);
+      throw error;
+    }
+  };
+
+  // Refresh matches
+  const refreshMatches = async () => {
+    try {
+      const authData = await AsyncStorage.getItem('@auth');
+      const { token } = JSON.parse(authData);
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const response = await axios.get("/userabout/matches", { headers });
+      if (response.data?.success) {
+        setMatches(response.data.matches);
+        setUnseenMatches(response.data.matches.filter(m => !m.seen).length);
+      }
+    } catch (error) {
+      console.error('Match refresh error:', error);
+    }
+  };
 
   return (
     <UserDataContext.Provider value={{
@@ -167,18 +171,24 @@ const UserDataProvider = ({ children }) => {
       userGamesPlayedData,
       setUserGamesPlayedData,
       
-      // All users data (for discovery/matching)
+      // All users data
       allUsers,
       allUsersLoading,
       allUsersError,
-      refreshAllUsers: getAllUsers,
+      refreshAllUsers, // This was missing
+      
+      // Matching system
+      matches,
+      interactions,
+      unseenMatches,
+      likeUser,
+      dislikeUser,
+      refreshMatches,
       
       // Common states
       loading,
       error,
       refreshData: getUserData
-
-
     }}>
       {children}
     </UserDataContext.Provider>
@@ -186,4 +196,3 @@ const UserDataProvider = ({ children }) => {
 };
 
 export { UserDataContext, UserDataProvider };
-

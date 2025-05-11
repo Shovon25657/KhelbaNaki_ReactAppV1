@@ -40,10 +40,15 @@ const HomeScreen = () => {
     allUsersLoading,
     allUsersError,
     refreshAllUsers,
-    userProfile
+    userProfile,
+    likeUser,
+    dislikeUser,
+    matches,
+    unseenMatches,
+    refreshMatches
   } = useContext(UserDataContext);
   
-  const navigation = useNavigation();
+   const navigation = useNavigation();
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,6 +62,7 @@ const HomeScreen = () => {
   const dislikedProfiles = useRef([]);
   const queueUpdateTimeout = useRef(null);
 
+ // Existing transformUserData function remains the same
   const transformUserData = useCallback((user) => {
     if (!user) return null;
     
@@ -148,22 +154,45 @@ const HomeScreen = () => {
     }, [refreshAllUsers, nextCardScale, allUsersLoading, hasInitialized])
   );
 
-  const handleLike = useCallback(() => {
+  // Function to handle like action
+  const handleLike = useCallback(async () => {
     if (profileQueue[0] && !isTransitioning) {
-      console.log('Liked:', profileQueue[0]?.gamingName);
-      setIsTransitioning(true);
-      handleSwipeComplete();
+      try {
+        const result = await likeUser(profileQueue[0].id);
+        
+        if (result?.isMatch) {
+          Alert.alert(
+            '🎉 Match!',
+            `You matched with ${profileQueue[0].gamingName}!`,
+            [{ text: 'OK', onPress: () => refreshMatches() }]
+          );
+        }
+        
+        console.log('Liked:', profileQueue[0]?.gamingName);
+        setIsTransitioning(true);
+        handleSwipeComplete();
+      } catch (error) {
+        console.error('Like error:', error);
+        Alert.alert('Error', error.response?.data?.message || 'Failed to like user');
+      }
     }
-  }, [profileQueue, isTransitioning]);
+  }, [profileQueue, isTransitioning, handleSwipeComplete, likeUser]);
 
-  const handleDislike = useCallback(() => {
-    if (profileQueue[0] && !isTransitioning) {
+  // Function to handle dislike action
+const handleDislike = useCallback(async () => {
+  if (profileQueue[0] && !isTransitioning) {
+    try {
+      await dislikeUser(profileQueue[0].id);
       console.log('Disliked:', profileQueue[0]?.gamingName);
-      dislikedProfiles.current.push(profileQueue[0]);
+      dislikedProfiles.current.push(profileQueue[0]); // Add this back
       setIsTransitioning(true);
       handleSwipeComplete();
+    } catch (error) {
+      console.error('Dislike error:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to dislike user');
     }
-  }, [profileQueue, isTransitioning]);
+  }
+}, [profileQueue, isTransitioning, handleSwipeComplete, dislikeUser]);
 
   const handleSwipeComplete = useCallback(() => {
     setProfileQueue(prev => prev.slice(1));
@@ -288,7 +317,7 @@ const HomeScreen = () => {
     { icon: 'settings', label: 'SETTINGS', onPress: () => navigation.navigate('Settings') }
   ];
 
-  return (
+    return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
       <View style={styles.mainContainer}>
@@ -296,6 +325,7 @@ const HomeScreen = () => {
           title="HOME"
           onMenuPress={() => setShowSideMenu(true)}
           onActionPress={() => navigation.navigate('EditPackage')}
+          badgeCount={unseenMatches} // Added match badge
         />
         
         <View style={styles.cardContainer}>

@@ -686,13 +686,13 @@ const dislikeUserController = async (req, res) => {
       });
     }
 
-    // Remove any existing match if it exists
-    await Match.findOneAndRemove({
-      $or: [
-        { user1: userId, user2: targetUserId },
-        { user1: targetUserId, user2: userId }
-      ]
-    });
+    // // Remove any existing match if it exists
+    // await Match.findOneAndRemove({
+    //   $or: [
+    //     { user1: userId, user2: targetUserId },
+    //     { user1: targetUserId, user2: userId }
+    //   ]
+    // });
 
     res.status(200).json({
       success: true,

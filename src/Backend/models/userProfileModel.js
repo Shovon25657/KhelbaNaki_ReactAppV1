@@ -24,8 +24,6 @@ const userProfileSchema = new mongoose.Schema({
   // Remove the gamesPlayed array - we'll access through the userId in the games model
 }, { timestamps: true });
 
-// Add an index for faster lookups by userId
-userProfileSchema.index({ user: 1 });
 
 // Virtual property to access games
 userProfileSchema.virtual('gamesPlayed', {

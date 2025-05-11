@@ -9,14 +9,13 @@ const gameSchema = new mongoose.Schema({
   levelofGaming: { 
     type: String, 
     required: true,
-    enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
-    default: 'Intermediate'
+   
+    default: ''
   },
   frequency: { 
     type: String, 
     required: true,
-    enum: ['Rarely', 'Occasionally', 'Frequently', 'Always'],
-    default: 'Occasionally'
+    default: ''
   },
   // Add a field to allow sorting by preference
   preference: {
@@ -35,8 +34,7 @@ const userGamesPlayedSchema = new mongoose.Schema({
   gamesPlayed: [gameSchema]
 }, { timestamps: true });
 
-// Index for faster lookups
-userGamesPlayedSchema.index({ user: 1 });
+
 
 // Method to get top games
 userGamesPlayedSchema.methods.getTopGames = function(limit = 3) {
