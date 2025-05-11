@@ -8,20 +8,11 @@ const User = require("../models/userModel");
 const JWT = require("jsonwebtoken");
 var { expressjwt: jwt } = require("express-jwt");
 
-
 //Create About
 const createAboutController = async (req, res) => {
   try {
     const { educationQualification, location, smoking, drinks, gender, religion, occupation } = req.body;
-    //validate
-    // if ( !educationQualification || !location ||  !smoking || !drinks || !religion || !occupation ) {
-    //   return res.status(500).send({
-    //     sucess: false,
-    //     message: "Please Provide All Fields",
-    //   });
-    // }
-
-    // Simulate a database check for an existing Data
+    
     const existingAboutData = await userAboutModel.findOne({ user: req.auth._id });
 
     if (existingAboutData) {
@@ -30,8 +21,8 @@ const createAboutController = async (req, res) => {
         message: "Data already exists!",
       });
     }
+    
     const userAboutData = await userAboutModel({
-
       educationQualification,
       location,
       smoking,
@@ -41,23 +32,21 @@ const createAboutController = async (req, res) => {
       occupation,
       user: req.auth._id,
     }).save();
+    
     res.status(201).send({
       success: true,
       message: "UserAboutData Created Successfully",
       userAboutData,
     });
-    console.log(req);
   } catch (error) {
     console.log(error);
     res.status(500).send({
-      sucess: true,
-      message: "Error in Create Post APi",
+      success: false,
+      message: "Error in Create Post API",
       error,
     });
   }
 };
-
-
 
 //Get AboutData
 const getAboutDataController = async (req, res) => {
@@ -84,17 +73,14 @@ const getAboutDataController = async (req, res) => {
       error: error.message,
     });
   }
-}
+};
 
 //Update About
 const updateAboutDataController = async (req, res) => {
   try {
     const { educationQualification, location, smoking, drinks, gender, religion, occupation } = req.body;
-    // Find profile by user ID (not params.id for security)
     const aboutData = await userAboutModel.findOne({ user: req.auth._id });
 
-
-    // Validate at least one field is being updated
     if (!educationQualification && !location && !smoking && !drinks && !gender && !religion && !occupation) {
       return res.status(500).send({
         success: false,
@@ -102,8 +88,6 @@ const updateAboutDataController = async (req, res) => {
       });
     }
 
-
-    // Check if profile exists
     if (!aboutData) {
       return res.status(404).send({
         success: false,
@@ -111,7 +95,6 @@ const updateAboutDataController = async (req, res) => {
       });
     }
 
-    // Update only the provided fields
     const updatedFields = {};
     if (educationQualification !== undefined) updatedFields.educationQualification = educationQualification;
     if (location !== undefined) updatedFields.location = location;
@@ -120,8 +103,6 @@ const updateAboutDataController = async (req, res) => {
     if (gender !== undefined) updatedFields.gender = gender;
     if (religion !== undefined) updatedFields.religion = religion;
     if (occupation !== undefined) updatedFields.occupation = occupation;
-
-
 
     const updatedAboutData = await userAboutModel.findOneAndUpdate(
       { user: req.auth._id },
@@ -133,7 +114,6 @@ const updateAboutDataController = async (req, res) => {
         gender: updatedFields.gender || aboutData?.gender,
         religion: updatedFields.religion || aboutData?.religion,
         occupation: updatedFields.occupation || aboutData?.occupation,
-        // Add other fields as needed
       },
       { new: true, runValidators: true }
     );
@@ -148,32 +128,15 @@ const updateAboutDataController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in updating AboutData",
-      error: error.message, // Send only the error message in production
+      error: error.message,
     });
   }
 };
-
-
-
-
-
-
-
-
 
 //Create Profile
 const createprofileController = async (req, res) => {
   try {
     const { bio, age, gamingName } = req.body;
-    //validate
-    // if (!bio || !age || !gamingName ) {
-    //   return res.status(500).send({
-    //     sucess: false,
-    //     message: "Please Provide All Fields",
-    //   });
-    // }
-
-    // Simulate a database check for an existing Data
     const existingProfileData = await userProfileModel.findOne({ user: req.auth._id });
 
     if (existingProfileData) {
@@ -189,24 +152,21 @@ const createprofileController = async (req, res) => {
       age,
       user: req.auth._id
     }).save();
+    
     res.status(201).send({
       success: true,
       message: "ProfileData Created Successfully",
       userProfileData,
     });
-    console.log(req);
   } catch (error) {
     console.log(error);
     res.status(500).send({
-      sucess: true,
-      message: "Error in Create Post APi",
+      success: false,
+      message: "Error in Create Post API",
       error,
     });
   }
 };
-
-
-
 
 //Get ProfileData
 const getProfileDataController = async (req, res) => {
@@ -235,18 +195,12 @@ const getProfileDataController = async (req, res) => {
   }
 };
 
-
-
-
 //UPDATE PROFILE
 const updateprofileController = async (req, res) => {
   try {
     const { bio, age, gamingName } = req.body;
-    // Find profile by user ID (not params.id for security)
     const userProfile = await userProfileModel.findOne({ user: req.auth._id });
 
-
-    // Validate at least one field is being updated
     if (!bio && !age && !gamingName) {
       return res.status(500).send({
         success: false,
@@ -254,8 +208,6 @@ const updateprofileController = async (req, res) => {
       });
     }
 
-
-    // Check if profile exists
     if (!userProfile) {
       return res.status(404).send({
         success: false,
@@ -263,7 +215,6 @@ const updateprofileController = async (req, res) => {
       });
     }
 
-    // Update only the provided fields
     const updatedFields = {};
     if (bio !== undefined) updatedFields.bio = bio;
     if (age !== undefined) updatedFields.age = age;
@@ -289,19 +240,15 @@ const updateprofileController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in updating profile",
-      error: error.message, // Send only the error message in production
+      error: error.message,
     });
   }
 };
-
-
 
 //Create lookingFor
 const createUserLookingForDataController = async (req, res) => {
   try {
     const { availability, playMode, playStyle } = req.body;
-
-    // Simulate a database check for an existing Data
     const existingUserLookingForData = await userLookingForModel.findOne({ user: req.auth._id });
 
     if (existingUserLookingForData) {
@@ -309,31 +256,29 @@ const createUserLookingForDataController = async (req, res) => {
         success: false,
         message: "Data already exists!",
       });
-
     }
+    
     const userLookingForData = await userLookingForModel({
-
       availability,
       playMode,
       playStyle,
       user: req.auth._id,
     }).save();
+    
     res.status(201).send({
       success: true,
       message: "Looking For Data Created Successfully",
       userLookingForData,
     });
-    console.log(req);
   } catch (error) {
     console.log(error);
     res.status(500).send({
-      sucess: true,
-      message: "Error in Create Post APi",
+      success: false,
+      message: "Error in Create Post API",
       error,
     });
   }
 };
-
 
 //Get LookingForData
 const getUserLookingForDataController = async (req, res) => {
@@ -362,17 +307,12 @@ const getUserLookingForDataController = async (req, res) => {
   }
 };
 
-
-
 //Update LookingFor
 const updateUserLookingForDataController = async (req, res) => {
   try {
     const { availability, playMode, playStyle } = req.body;
-    // Find profile by user ID (not params.id for security)
     const userLookingForData = await userLookingForModel.findOne({ user: req.auth._id });
 
-
-    // Validate at least one field is being updated
     if (!availability && !playMode && !playStyle) {
       return res.status(500).send({
         success: false,
@@ -380,8 +320,6 @@ const updateUserLookingForDataController = async (req, res) => {
       });
     }
 
-
-    // Check if profile exists
     if (!userLookingForData) {
       return res.status(404).send({
         success: false,
@@ -389,7 +327,6 @@ const updateUserLookingForDataController = async (req, res) => {
       });
     }
 
-    // Update only the provided fields
     const updatedFields = {};
     if (availability !== undefined) updatedFields.availability = availability;
     if (playMode !== undefined) updatedFields.playMode = playMode;
@@ -415,19 +352,16 @@ const updateUserLookingForDataController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in updating Looking For Data",
-      error: error.message, // Send only the error message in production
+      error: error.message,
     });
   }
 };
 
-
-
-
-// In userAboutController.js
+// Create User Games Played
 const createUserGamesPlayedController = async (req, res) => {
   try {
     const { gamesPlayed } = req.body;
-    const userId = req.auth._id; // Changed from req.user.id to req.auth._id
+    const userId = req.auth._id;
 
     if (!gamesPlayed || !Array.isArray(gamesPlayed)) {
       return res.status(400).json({
@@ -436,7 +370,6 @@ const createUserGamesPlayedController = async (req, res) => {
       });
     }
 
-    // Find existing user games or create new entry
     let userGames = await userGamesPlayedModel.findOne({ user: userId });
 
     if (!userGames) {
@@ -445,7 +378,6 @@ const createUserGamesPlayedController = async (req, res) => {
         gamesPlayed: gamesPlayed
       });
     } else {
-      // Check for duplicates and merge games
       gamesPlayed.forEach(game => {
         const isDuplicate = userGames.gamesPlayed.some(
           g => g.playedGameName.toLowerCase() === game.playedGameName.toLowerCase()
@@ -498,16 +430,12 @@ const getUserGamesPlayedController = async (req, res) => {
       error: error.message,
     });
   }
-}
-
-
+};
 
 // Delete Game from Games Played
 const deleteGameController = async (req, res) => {
   try {
     const { gameId } = req.params;
-
-    // Find the user's games data
     const userGamesData = await userGamesPlayedModel.findOne({ user: req.auth._id });
 
     if (!userGamesData) {
@@ -517,13 +445,11 @@ const deleteGameController = async (req, res) => {
       });
     }
 
-    // Filter out the game to be deleted
     const initialCount = userGamesData.gamesPlayed.length;
     userGamesData.gamesPlayed = userGamesData.gamesPlayed.filter(
       game => game._id.toString() !== gameId
     );
 
-    // Check if game was actually removed
     if (userGamesData.gamesPlayed.length === initialCount) {
       return res.status(404).json({
         success: false,
@@ -531,7 +457,6 @@ const deleteGameController = async (req, res) => {
       });
     }
 
-    // Save the updated document
     await userGamesData.save();
 
     res.status(200).json({
@@ -550,15 +475,12 @@ const deleteGameController = async (req, res) => {
   }
 };
 
-
-
 // Like a user
 const likeUserController = async (req, res) => {
   try {
     const { targetUserId } = req.body;
     const userId = req.auth._id;
 
-    // Validate input
     if (!targetUserId) {
       return res.status(400).json({
         success: false,
@@ -566,7 +488,6 @@ const likeUserController = async (req, res) => {
       });
     }
 
-    // Check if user is trying to like themselves
     if (userId.toString() === targetUserId.toString()) {
       return res.status(400).json({
         success: false,
@@ -574,7 +495,6 @@ const likeUserController = async (req, res) => {
       });
     }
 
-    // Check if target user exists
     const targetUser = await User.findById(targetUserId);
     if (!targetUser) {
       return res.status(404).json({
@@ -583,7 +503,6 @@ const likeUserController = async (req, res) => {
       });
     }
 
-    // Check if interaction already exists
     const existingInteraction = await UserInteraction.findOne({
       user: userId,
       targetUser: targetUserId
@@ -596,14 +515,12 @@ const likeUserController = async (req, res) => {
       });
     }
 
-    // Create the like
     await UserInteraction.create({
       user: userId,
       targetUser: targetUserId,
       action: 'like'
     });
 
-    // Check if the other user has also liked this user (mutual like)
     const mutualLike = await UserInteraction.findOne({
       user: targetUserId,
       targetUser: userId,
@@ -611,7 +528,6 @@ const likeUserController = async (req, res) => {
     });
 
     if (mutualLike) {
-      // Create a match
       const newMatch = await Match.create({
         user1: userId,
         user2: targetUserId
@@ -645,7 +561,6 @@ const dislikeUserController = async (req, res) => {
     const { targetUserId } = req.body;
     const userId = req.auth._id;
 
-    // Validate input
     if (!targetUserId) {
       return res.status(400).json({
         success: false,
@@ -653,7 +568,6 @@ const dislikeUserController = async (req, res) => {
       });
     }
 
-    // Check if user is trying to dislike themselves
     if (userId.toString() === targetUserId.toString()) {
       return res.status(400).json({
         success: false,
@@ -661,7 +575,6 @@ const dislikeUserController = async (req, res) => {
       });
     }
 
-    // Check if interaction already exists
     const existingInteraction = await UserInteraction.findOne({
       user: userId,
       targetUser: targetUserId
@@ -674,7 +587,6 @@ const dislikeUserController = async (req, res) => {
       });
     }
 
-    // Create or update the interaction
     if (existingInteraction) {
       existingInteraction.action = 'dislike';
       await existingInteraction.save();
@@ -685,14 +597,6 @@ const dislikeUserController = async (req, res) => {
         action: 'dislike'
       });
     }
-
-    // // Remove any existing match if it exists
-    // await Match.findOneAndRemove({
-    //   $or: [
-    //     { user1: userId, user2: targetUserId },
-    //     { user1: targetUserId, user2: userId }
-    //   ]
-    // });
 
     res.status(200).json({
       success: true,
@@ -714,7 +618,6 @@ const getMatchesController = async (req, res) => {
   try {
     const userId = req.auth._id;
 
-    // Find all matches where the user is involved
     const matches = await Match.find({
       $or: [{ user1: userId }, { user2: userId }],
       isActive: true
@@ -723,7 +626,6 @@ const getMatchesController = async (req, res) => {
     .populate('user2', 'username')
     .sort({ createdAt: -1 });
 
-    // Format the matches to show the other user's info
     const formattedMatches = matches.map(match => {
       const otherUser = match.user1._id.toString() === userId.toString() ? match.user2 : match.user1;
       return {
@@ -756,20 +658,16 @@ const getPotentialMatchesController = async (req, res) => {
   try {
     const userId = req.auth._id;
 
-    // Get all users the current user has interacted with (liked or disliked)
     const interactions = await UserInteraction.find({ user: userId });
     const interactedUserIds = interactions.map(i => i.targetUser);
-
-    // Add current user to the list to exclude themselves
     interactedUserIds.push(userId);
 
-    // Find users who haven't been interacted with
     const potentialMatches = await User.find({
       _id: { $nin: interactedUserIds },
-      role: 'gamer' // Optional: only match with gamers if you have other roles
+      role: 'gamer'
     })
     .select('username')
-    .limit(20); // Limit the number of potential matches returned
+    .limit(20);
 
     res.status(200).json({
       success: true,
@@ -785,251 +683,6 @@ const getPotentialMatchesController = async (req, res) => {
     });
   }
 };
-
-
-
-    // Validate input
-    if (!targetUserId) {
-      return res.status(400).json({
-        success: false,
-        message: "Target user ID is required"
-      });
-    }
-
-    // Check if user is trying to like themselves
-    if (userId.toString() === targetUserId.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot like yourself"
-      });
-    }
-
-    // Check if target user exists
-    const targetUser = await User.findById(targetUserId);
-    if (!targetUser) {
-      return res.status(404).json({
-        success: false,
-        message: "Target user not found"
-      });
-    }
-
-    // Check if interaction already exists
-    const existingInteraction = await UserInteraction.findOne({
-      user: userId,
-      targetUser: targetUserId
-    });
-
-    if (existingInteraction) {
-      return res.status(400).json({
-        success: false,
-        message: `You have already ${existingInteraction.action}ed this user`
-      });
-    }
-
-    // Create the like
-    await UserInteraction.create({
-      user: userId,
-      targetUser: targetUserId,
-      action: 'like'
-    });
-
-    // Check if the other user has also liked this user (mutual like)
-    const mutualLike = await UserInteraction.findOne({
-      user: targetUserId,
-      targetUser: userId,
-      action: 'like'
-    });
-
-    if (mutualLike) {
-      // Create a match
-      const newMatch = await Match.create({
-        user1: userId,
-        user2: targetUserId
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "It's a match!",
-        match: newMatch
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Like recorded successfully"
-    });
-
-  } catch (error) {
-    console.error("Error in likeUserController:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error processing like",
-      error: error.message
-    });
-  }
-};
-
-// Dislike a user
-const dislikeUserController = async (req, res) => {
-  try {
-    const { targetUserId } = req.body;
-    const userId = req.auth._id;
-
-    // Validate input
-    if (!targetUserId) {
-      return res.status(400).json({
-        success: false,
-        message: "Target user ID is required"
-      });
-    }
-
-    // Check if user is trying to dislike themselves
-    if (userId.toString() === targetUserId.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot dislike yourself"
-      });
-    }
-
-    // Check if interaction already exists
-    const existingInteraction = await UserInteraction.findOne({
-      user: userId,
-      targetUser: targetUserId
-    });
-
-    if (existingInteraction && existingInteraction.action === 'dislike') {
-      return res.status(400).json({
-        success: false,
-        message: "You have already disliked this user"
-      });
-    }
-
-    // Create or update the interaction
-    if (existingInteraction) {
-      existingInteraction.action = 'dislike';
-      await existingInteraction.save();
-    } else {
-      await UserInteraction.create({
-        user: userId,
-        targetUser: targetUserId,
-        action: 'dislike'
-      });
-    }
-
-    // Remove any existing match if it exists
-    await Match.findOneAndRemove({
-      $or: [
-        { user1: userId, user2: targetUserId },
-        { user1: targetUserId, user2: userId }
-      ]
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Dislike recorded successfully"
-    });
-
-  } catch (error) {
-    console.error("Error in dislikeUserController:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error processing dislike",
-      error: error.message
-    });
-  }
-};
-
-// Get all matches for a user
-const getMatchesController = async (req, res) => {
-  try {
-    const userId = req.auth._id;
-
-    // Find all matches where the user is involved
-    const matches = await Match.find({
-      $or: [{ user1: userId }, { user2: userId }],
-      isActive: true
-    })
-    .populate('user1', 'username')
-    .populate('user2', 'username')
-    .sort({ createdAt: -1 });
-
-    // Format the matches to show the other user's info
-    const formattedMatches = matches.map(match => {
-      const otherUser = match.user1._id.toString() === userId.toString() ? match.user2 : match.user1;
-      return {
-        matchId: match._id,
-        user: {
-          id: otherUser._id,
-          username: otherUser.username
-        },
-        matchedAt: match.createdAt
-      };
-    });
-
-    res.status(200).json({
-      success: true,
-      matches: formattedMatches
-    });
-
-  } catch (error) {
-    console.error("Error in getMatchesController:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving matches",
-      error: error.message
-    });
-  }
-};
-
-// Get potential matches (users you haven't interacted with)
-const getPotentialMatchesController = async (req, res) => {
-  try {
-    const userId = req.auth._id;
-
-    // Get all users the current user has interacted with (liked or disliked)
-    const interactions = await UserInteraction.find({ user: userId });
-    const interactedUserIds = interactions.map(i => i.targetUser);
-
-    // Add current user to the list to exclude themselves
-    interactedUserIds.push(userId);
-
-    // Find users who haven't been interacted with
-    const potentialMatches = await User.find({
-      _id: { $nin: interactedUserIds },
-      role: 'gamer' // Optional: only match with gamers if you have other roles
-    })
-    .select('username')
-    .limit(20); // Limit the number of potential matches returned
-
-    res.status(200).json({
-      success: true,
-      potentialMatches
-    });
-
-  } catch (error) {
-    console.error("Error in getPotentialMatchesController:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving potential matches",
-      error: error.message
-    });
-  }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 module.exports = {
   createAboutController,
