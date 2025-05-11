@@ -9,6 +9,10 @@ const userProfileSchema = new mongoose.Schema({
     type: Number, // Changed from String to Number for better validation and querying
     default: null
   },
+  bio: {
+    type: String,
+    default: ""
+  },
   avatar: {
     type: String,
     default: ""

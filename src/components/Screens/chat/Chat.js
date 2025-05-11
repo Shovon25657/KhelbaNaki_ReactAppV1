@@ -21,6 +21,21 @@ const Chat = ({ navigation }) => {
   const [localChats, setLocalChats] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Fetch matches on component mount
+  useEffect(() => {
+    const fetchInitialMatches = async () => {
+      setIsRefreshing(true);
+      try {
+        await refreshMatches();
+      } catch (error) {
+        console.error('Initial matches fetch error:', error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+    fetchInitialMatches();
+  }, []);
+
   // Format timestamp from backend
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
