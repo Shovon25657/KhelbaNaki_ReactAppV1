@@ -89,6 +89,7 @@ const HomeScreen = () => {
   const updateProfileQueue = useCallback(() => {
     if (allUsersLoading || !allUsers || isFetchingNext || isTransitioning || isQueueExhausted) return;
     
+
     setIsFetchingNext(true);
     
     try {
@@ -309,7 +310,7 @@ const HomeScreen = () => {
       );
     }
 
-    return currentProfile ? <ProfileCard profile={currentProfile}or /> : null;
+    return currentProfile ? <ProfileCard profile={currentProfile} /> : null;
   };
 
   const renderNextCard = () => {
@@ -383,7 +384,7 @@ const HomeScreen = () => {
         onConfirm={async () => {
           await AsyncStorage.removeItem('@auth');
           setState({ ...state, user: null, token: '' });
-          navigation.navigate('Welcome');
+          navigation.replace('Welcome'); // Changed from navigate to replace
           setShowLogoutModal(false);
         }}
         onCancel={() => setShowLogoutModal(false)}
