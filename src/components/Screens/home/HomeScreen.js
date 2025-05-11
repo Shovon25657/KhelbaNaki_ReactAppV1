@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useCallback } from 'react';
+import React, { useContext, useState, useRef, useCallback, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -9,9 +9,12 @@ import {
   TouchableOpacity,
   Text,
   Vibration,
-  Platform
+  Platform,
+  Image,
+  ActivityIndicator
 } from 'react-native';
 import { AuthContext } from '../../context/authContext';
+import { UserDataContext } from '../../context/UserDataContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -20,231 +23,358 @@ import BottomNavBar from '../../common/BottomNavBar';
 import person1 from '../../../../assets/Alex.jpg';
 import person2 from '../../../../assets/Angry_Avater.jpg';
 import person3 from '../../../../assets/cartoon-character-with-handbag-sunglasses.jpg';
-
 import CardSwiper from '../../Screens/home/common/CardSwiper';
-import ProfileCard from '../../Screens/home/common/ProfileCard';
 import ActionButtons from '../../Screens/home/common/ActionButtons';
 import SlideInMenu from '../../Screens/home/common/SlideInMenu';
 import ConfirmationModal from '../../Screens/home/common/ConfirmationModal';
 import Header from '../../Screens/home/common/Header';
-import Luminaries from '../../Screens/home/Luminaries';
 
 const { width, height } = Dimensions.get('window');
 
+const defaultImages = [person1, person2, person3];
+
 const HomeScreen = () => {
   const [state, setState] = useContext(AuthContext);
-  const navigation = useNavigation();
+  const { 
+    allUsers,
+    allUsersLoading,
+    allUsersError,
+    refreshAllUsers,
+    userProfile,
+    likeUser,
+    dislikeUser,
+    matches,
+    unseenMatches,
+    refreshMatches
+  } = useContext(UserDataContext);
+  
+   const navigation = useNavigation();
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  
-  const [profiles] = useState([
-    {
-      id: 1,
-      name: 'xXProGamerXx',
-      age: 28,
-      games: ['Fortnite', 'Valorant', 'Apex Legends'],
-      image: person1
-    },
-    {
-      id: 2,
-      name: 'PixelQueen',
-      age: 24,
-      games: ['League of Legends', 'Overwatch', 'Dota 2'],
-      image: person2
-    },
-    {
-      id: 3,
-      name: 'HeadshotHunter',
-      age: 26,
-      games: ['Call of Duty', 'PUBG', 'CS:GO'],
-      image: person3
-    },
-    {
-      id: 4,
-      name: 'NoobSlayer',
-      age: 25,
-      games: ['Rocket League', 'FIFA', 'NBA 2K'],
-      image: person1
-    },
-  ]);
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const [isTransitioning, setIsTransitioning] = useState(false);
   const swipeRef = useRef(null);
+  const [profileQueue, setProfileQueue] = useState([]);
+  const [isFetchingNext, setIsFetchingNext] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const processedUserIds = useRef(new Set());
+  const dislikedProfiles = useRef([]);
+  const queueUpdateTimeout = useRef(null);
+
+ // Existing transformUserData function remains the same
+  const transformUserData = useCallback((user) => {
+    if (!user) return null;
+    
+    let games = [];
+    if (user.games && Array.isArray(user.games)) {
+      games = user.games.filter(g => g).map(g => g || 'Unknown Game');
+    } else if (user.gamesPlayed?.gamesPlayed && Array.isArray(user.gamesPlayed.gamesPlayed)) {
+      games = user.gamesPlayed.gamesPlayed
+        .filter(g => g)
+        .map(g => g.playedGameName || 'Unknown Game');
+    }
+
+    const randomDefaultImage = defaultImages[Math.floor(Math.random() * defaultImages.length)];
+
+    return {
+      id: user.id || user._id,
+      gamingName: user.gamingName || user.username || 'Anonymous',
+      age: user.age || 'Not specified',
+      games: games,
+      image: user.avatar ? { uri: user.avatar } : randomDefaultImage
+    };
+  }, []);
+
+  const updateProfileQueue = useCallback(() => {
+    if (allUsersLoading || !allUsers || !allUsers.length || isFetchingNext || isTransitioning) return;
+    
+    setIsFetchingNext(true);
+    
+    try {
+      const currentUserId = userProfile?.id || userProfile?._id;
+      const availableUsers = allUsers.filter(user => {
+        const userId = user.id || user._id;
+        return userId !== currentUserId && !processedUserIds.current.has(userId);
+      });
+      
+      const currentQueueSize = profileQueue.length;
+      const neededProfiles = Math.max(0, 3 - currentQueueSize);
+      
+      if (neededProfiles > 0 && availableUsers.length > 0) {
+        const newUsers = availableUsers.slice(0, neededProfiles);
+        
+        const newProfiles = newUsers.map(user => {
+          const userId = user.id || user._id;
+          processedUserIds.current.add(userId);
+          return transformUserData(user);
+        }).filter(profile => profile !== null);
+        
+        setProfileQueue(prev => [...prev, ...newProfiles]);
+      } else if (neededProfiles > 0 && availableUsers.length === 0 && dislikedProfiles.current.length > 0) {
+        setProfileQueue(prev => [...prev, ...dislikedProfiles.current]);
+        dislikedProfiles.current = [];
+      }
+    } catch (error) {
+      console.error('Error updating profile queue:', error);
+    } finally {
+      setIsFetchingNext(false);
+    }
+  }, [allUsers, allUsersLoading, isFetchingNext, profileQueue.length, transformUserData, userProfile, isTransitioning]);
+
+  useEffect(() => {
+    if (!hasInitialized && !allUsersLoading && allUsers?.length > 0) {
+      setProfileQueue([]);
+      processedUserIds.current.clear();
+      dislikedProfiles.current = [];
+      setHasInitialized(true);
+      updateProfileQueue();
+    }
+  }, [allUsers, allUsersLoading, hasInitialized, updateProfileQueue]);
+
+  useEffect(() => {
+    if (hasInitialized && profileQueue.length < 2 && !isFetchingNext && !allUsersLoading && !isTransitioning) {
+      if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
+      queueUpdateTimeout.current = setTimeout(() => {
+        updateProfileQueue();
+      }, 500);
+    }
+    return () => {
+      if (queueUpdateTimeout.current) clearTimeout(queueUpdateTimeout.current);
+    };
+  }, [hasInitialized, profileQueue.length, updateProfileQueue, isFetchingNext, allUsersLoading, isTransitioning]);
 
   useFocusEffect(
     useCallback(() => {
+      if (!allUsersLoading && !hasInitialized) {
+        refreshAllUsers();
+      }
       nextCardScale.setValue(0.9);
       return () => {};
-    }, [])
+    }, [refreshAllUsers, nextCardScale, allUsersLoading, hasInitialized])
   );
 
-  const handleLike = () => {
-    console.log('Liked:', profiles[currentIndex].name);
-  };
+  // Function to handle like action
+  const handleLike = useCallback(async () => {
+    if (profileQueue[0] && !isTransitioning) {
+      try {
+        const result = await likeUser(profileQueue[0].id);
+        
+        if (result?.isMatch) {
+          Alert.alert(
+            '🎉 Match!',
+            `You matched with ${profileQueue[0].gamingName}!`,
+            [{ text: 'OK', onPress: () => refreshMatches() }]
+          );
+        }
+        
+        console.log('Liked:', profileQueue[0]?.gamingName);
+        setIsTransitioning(true);
+        handleSwipeComplete();
+      } catch (error) {
+        console.error('Like error:', error);
+        Alert.alert('Error', error.response?.data?.message || 'Failed to like user');
+      }
+    }
+  }, [profileQueue, isTransitioning, handleSwipeComplete, likeUser]);
 
-  const handleDislike = () => {
-    console.log('Disliked:', profiles[currentIndex].name);
-  };
+  // Function to handle dislike action
+const handleDislike = useCallback(async () => {
+  if (profileQueue[0] && !isTransitioning) {
+    try {
+      await dislikeUser(profileQueue[0].id);
+      console.log('Disliked:', profileQueue[0]?.gamingName);
+      dislikedProfiles.current.push(profileQueue[0]); // Add this back
+      setIsTransitioning(true);
+      handleSwipeComplete();
+    } catch (error) {
+      console.error('Dislike error:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to dislike user');
+    }
+  }
+}, [profileQueue, isTransitioning, handleSwipeComplete, dislikeUser]);
 
-  const handleSwipeComplete = () => {
-    setCurrentIndex(prev => (prev < profiles.length - 1 ? prev + 1 : 0));
-  };
+  const handleSwipeComplete = useCallback(() => {
+    setProfileQueue(prev => prev.slice(1));
+    setCurrentIndex(prev => prev + 1);
+  }, []);
 
-  const handleButtonSwipe = (direction) => {
-    if (isTransitioning) return;
+  const handleButtonSwipe = useCallback((direction) => {
+    if (isTransitioning || !profileQueue[0]) return;
     
     setIsTransitioning(true);
+    
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       Vibration.vibrate(50);
     }
     
-    // Trigger swipe animation programmatically
     if (swipeRef.current) {
-      swipeRef.current.triggerSwipe(direction);
+      swipeRef.current.triggerSwipe(direction); // Fixed typo: SwipeRef → swipeRef
     }
-  };
+  }, [isTransitioning, profileQueue]);
 
-  const handleLogout = () => {
-    setShowLogoutModal(true);
-    setShowSideMenu(false);
-  };
+  const handleRefresh = useCallback(() => {
+    setProfileQueue([]);
+    processedUserIds.current.clear();
+    dislikedProfiles.current = [];
+    setHasInitialized(false);
+    setCurrentIndex(0);
+    setIsTransitioning(false);
+    refreshAllUsers();
+  }, [refreshAllUsers]);
 
-  const navigateToLuminaries = () => {
-    setShowSideMenu(false);
-    navigation.navigate('Luminaries');
-  };
+  const ProfileCard = ({ profile }) => (
+    <View style={styles.profileCardContainer}>
+      <Image 
+        source={profile.image} 
+        style={styles.profileImage} 
+        resizeMode="cover"
+        defaultSource={person1}
+      />
+      <View style={styles.profileInfoContainer}>
+        <Text style={styles.profileName}>
+          {profile.gamingName}, {profile.age}
+        </Text>
+        {profile.games && profile.games.length > 0 ? (
+          <View style={styles.gamesContainer}>
+            <Text style={styles.gamesTitle}>TOP GAMES:</Text>
+            {profile.games.slice(0, 3).map((game, index) => (
+              <Text key={`${profile.id}-${index}`} style={styles.gameText}>
+                • {game}
+              </Text>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.noGamesText}>No games listed</Text>
+        )}
+      </View>
+    </View>
+  );
 
-  const confirmLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('@auth');
-      setState({ ...state, user: null, token: '' });
-      navigation.navigate('Welcome');
-      setShowLogoutModal(false);
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
-  const navigateToProfile = (profile) => {
-    navigation.navigate('Profile', { profile: profile || profiles[currentIndex] });
-  };
-
-  const navigateToPrivacyPolicy = () => {
-    setShowSideMenu(false);
-    navigation.navigate('Privacy');
-  };
-
-  const renderNextProfile = () => {
-    const nextIndex = currentIndex < profiles.length - 1 ? currentIndex + 1 : 0;
-    const nextProfile = profiles[nextIndex];
+  const renderProfileCard = () => {
+    const currentProfile = profileQueue[0];
     
+    if (allUsersLoading && profileQueue.length === 0 && !isFetchingNext) {
+      return (
+        <View style={[styles.card, styles.centerContent]}>
+          <ActivityIndicator size="large" color="#01e1ff" />
+          <Text style={styles.loadingText}>Loading users...</Text>
+        </View>
+      );
+    }
+
+    if (allUsersError) {
+      return (
+        <View style={[styles.card, styles.centerContent]}>
+          <Icon name="error-outline" size={40} color="#ff3b30" />
+          <Text style={styles.errorText}>Failed to load users</Text>
+          <Text style={styles.errorSubText}>
+            {allUsersError.toString()}
+          </Text>
+          <TouchableOpacity 
+            style={styles.resetButton} 
+            onPress={handleRefresh}
+          >
+            <Text style={styles.resetButtonText}>TRY AGAIN</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (!currentProfile) {
+      return (
+        <View style={[styles.card, styles.centerContent]}>
+          <Icon2 name="user-x" size={50} color="#01e1ff" />
+          <Text style={styles.noProfilesText}>No users available</Text>
+          <TouchableOpacity 
+            style={styles.refreshButton} 
+            onPress={handleRefresh}
+          >
+            <Icon name="refresh" size={20} color="white" />
+            <Text style={styles.refreshButtonText}>REFRESH</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return <ProfileCard profile={currentProfile} />;
+  };
+
+  const renderNextCard = () => {
+    const nextProfile = profileQueue[1];
+    
+    if (!nextProfile) return null;
+
     return (
       <Animated.View style={[styles.card, styles.nextCard, { transform: [{ scale: nextCardScale }] }]}>
-        <ProfileCard 
-          profile={nextProfile} 
-          onPress={navigateToProfile} 
-          showBadges={false}
-        />
+        <ProfileCard profile={nextProfile} />
       </Animated.View>
     );
   };
 
-  const renderProfileCard = () => {
-    return (
-      <View style={styles.card}>
-        <ProfileCard 
-          profile={profiles[currentIndex]} 
-          onPress={navigateToProfile}
-        />
-      </View>
-    );
-  };
-
   const menuItems = [
-    {
-      icon: 'account-circle',
-      label: 'ACCOUNT',
-      onPress: () => {
-        setShowSideMenu(false);
-        navigation.navigate('Profile');
-      }
-    },
-    {
-      icon: 'settings',
-      label: 'SETTINGS',
-      onPress: () => {
-        setShowSideMenu(false);
-        navigation.navigate('Settings');
-      }
-    }
+    { icon: 'account-circle', label: 'ACCOUNT', onPress: () => navigation.navigate('Profile') },
+    { icon: 'settings', label: 'SETTINGS', onPress: () => navigation.navigate('Settings') }
   ];
 
-  return (
+    return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
       <View style={styles.mainContainer}>
-        <View style={styles.container}>
-          <Header 
-            title="HOME"
-            onMenuPress={() => setShowSideMenu(true)}
-            onActionPress={() => navigation.navigate('EditPackage')}
-          />
-          
-          <View style={styles.cardContainer}>
-            {profiles.length > 0 ? (
-              <>
-                {renderNextProfile()}
-                <CardSwiper
-                  ref={swipeRef}
-                  onSwipeLeft={handleDislike}
-                  onSwipeRight={handleLike}
-                  onSwipeComplete={handleSwipeComplete}
-                  currentIndex={currentIndex}
-                  nextCardScale={nextCardScale}
-                  onAnimationComplete={() => setIsTransitioning(false)}
-                >
-                  {renderProfileCard()}
-                </CardSwiper>
-              </>
-            ) : (
-              <View style={styles.noProfiles}>
-                <Text style={styles.noProfilesText}>No more profiles to show</Text>
-                <TouchableOpacity 
-                  style={styles.resetButton}
-                  onPress={() => setCurrentIndex(0)}
-                >
-                  <Text style={styles.resetButtonText}>RESET</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-          
-          <ActionButtons 
-            onLike={() => handleButtonSwipe(1)}
-            onDislike={() => handleButtonSwipe(-1)}
-            isTransitioning={isTransitioning}
-          />
+        <Header 
+          title="HOME"
+          onMenuPress={() => setShowSideMenu(true)}
+          onActionPress={() => navigation.navigate('EditPackage')}
+          badgeCount={unseenMatches} // Added match badge
+        />
+        
+        <View style={styles.cardContainer}>
+          {renderNextCard()}
+          <CardSwiper
+            ref={swipeRef}
+            onSwipeLeft={handleDislike}
+            onSwipeRight={handleLike}
+            onSwipeComplete={handleSwipeComplete}
+            currentIndex={currentIndex}
+            nextCardScale={nextCardScale}
+            onAnimationComplete={() => setIsTransitioning(false)}
+          >
+            <View style={styles.card}>
+              {renderProfileCard()}
+            </View>
+          </CardSwiper>
         </View>
         
-        <SlideInMenu
-          visible={showSideMenu}
-          onClose={() => setShowSideMenu(false)}
-          menuItems={menuItems}
-          onLogout={handleLogout}
-          onPrivacyPolicy={navigateToPrivacyPolicy}
-          onLuminaries={navigateToLuminaries} 
-        />
-
-        <ConfirmationModal
-          visible={showLogoutModal}
-          title="CONFIRM LOGOUT"
-          message="Are you sure you want to logout?"
-          onConfirm={confirmLogout}
-          onCancel={() => setShowLogoutModal(false)}
+        <ActionButtons 
+          onLike={() => handleButtonSwipe(1)}
+          onDislike={() => handleButtonSwipe(-1)}
+          isTransitioning={isTransitioning}
+          disabled={!profileQueue[0] || allUsersLoading || allUsersError}
         />
       </View>
+
+      <SlideInMenu
+        visible={showSideMenu}
+        onClose={() => setShowSideMenu(false)}
+        menuItems={menuItems}
+        onLogout={() => setShowLogoutModal(true)}
+        onPrivacyPolicy={() => navigation.navigate('Privacy')}
+        onLuminaries={() => navigation.navigate('Luminaries')}
+      />
+
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="CONFIRM LOGOUT"
+        message="Are you sure you want to logout?"
+        onConfirm={async () => {
+          await AsyncStorage.removeItem('@auth');
+          setState({ ...state, user: null, token: '' });
+          navigation.navigate('Welcome');
+          setShowLogoutModal(false);
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
+      
       <BottomNavBar />
     </SafeAreaView>
   );
@@ -259,15 +389,11 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: 0,
   },
-  container: {
-    flex: 1,
-  },
   cardContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: '2%',
-    marginTop: '2%',
+    marginVertical: '2%',
   },
   card: {
     width: width * 0.85,
@@ -283,38 +409,105 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(86, 57, 246, 0.28)',
   },
+  profileCardContainer: {
+    width: '100%',
+    height: '100%',
+  },
+  profileImage: {
+    width: '100%',
+    height: '70%',
+  },
+  profileInfoContainer: {
+    padding: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    height: '30%',
+    justifyContent: 'center',
+  },
+  profileName: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  gamesContainer: {
+    marginTop: 5,
+  },
+  gamesTitle: {
+    color: '#01e1ff',
+    fontWeight: 'bold',
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  gameText: {
+    color: 'white',
+    fontSize: 14,
+    marginLeft: 5,
+  },
+  noGamesText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontStyle: 'italic',
+  },
   nextCard: {
     position: 'absolute',
     opacity: 0.85,
-    borderColor: 'rgba(86, 57, 246, 0.28)',
   },
-  noProfiles: {
+  centerContent: {
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#0f3460',
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: '#FFD700',
+  },
+  loadingText: {
+    color: '#01e1ff',
+    fontSize: 18,
+    marginTop: 10,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: '#ff3b30',
+    fontSize: 18,
+    marginVertical: 10,
+    fontWeight: 'bold',
+  },
+  errorSubText: {
+    color: 'rgba(255, 59, 48, 0.7)',
+    fontSize: 14,
+    marginBottom: 15,
+    textAlign: 'center',
   },
   noProfilesText: {
-    color: '#FFD700',
+    color: '#01e1ff',
     fontSize: 18,
-    marginBottom: 20,
+    marginVertical: 10,
     fontWeight: 'bold',
   },
   resetButton: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 59, 48, 0.2)',
     padding: 12,
     borderRadius: 25,
-    width: 120,
+    width: 150,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#ff3b30',
+    marginTop: 10,
   },
   resetButtonText: {
-    color: '#FFD700',
+    color: '#ff3b30',
     fontWeight: 'bold',
-    fontSize: 16,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(1, 225, 255, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgb(1, 225, 255)',
+  },
+  refreshButtonText: {
+    color: 'rgb(1, 225, 255)',
+    marginLeft: 10,
+    fontWeight: 'bold',
   },
 });
 

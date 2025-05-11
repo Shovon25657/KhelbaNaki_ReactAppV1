@@ -90,7 +90,7 @@ const Luminaries = ({ navigation }) => {
   };
 
   const handleEmailPress = () => {
-    Linking.openURL('mailto:Contact.Luminaries@gmail.com');
+    Linking.openURL('mailto:khelbanakiinfo@gmail.com');
   };
 
   return (
@@ -206,7 +206,7 @@ const Luminaries = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A192F',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   scrollContainer: {
     padding: 20,
@@ -225,18 +225,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   card: {
-    backgroundColor: 'rgba(10, 25, 47, 0.8)',
+    backgroundColor: 'rgba(10, 25, 47)',
     borderRadius: 15,
     padding: 15,
     marginBottom: 25,
-    flexDirection: 'row',
+    flexDirection: 'colume',
+    alignItems: 'center',
+    
     borderWidth: 1,
     borderColor: 'rgba(100, 255, 218, 0.2)',
-    shadowColor: '#64FFDA',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+   
   },
   imageContainer: {
     width: 90,
@@ -255,28 +253,39 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems:'center',
+    textAlign:'center'
   },
   name: {
     color: '#E6F1FF',
     fontSize: 18,
     fontWeight: 'bold',
+     alignItems:'center',
+    textAlign:'center',
     marginBottom: 5,
   },
   roleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
+     alignItems:'center',
+    textAlign:'center'
   },
   role: {
     color: '#4CAF50',
     fontSize: 14,
     marginLeft: 5,
     fontStyle: 'italic',
+     alignItems:'center',
+    textAlign:'center'
   },
   description: {
     color: '#CCD6F6',
     fontSize: 14,
     lineHeight: 20,
+     alignItems:'center',
+    textAlign:'center'
   },
   emailContainer: {
     marginTop: 20,

@@ -142,7 +142,7 @@ const MyLibrary = () => {
       ]}
       onPress={() => handleVideoSelect(item)}
     >
-      <MaterialIcons name="play-circle-outline" size={24} color="#FFD700" />
+      <MaterialIcons name="play-circle-outline" size={24} color="rgb(1, 225, 255)" />
       <Text style={styles.videoTitle} numberOfLines={1}>{item.title}</Text>
     </TouchableOpacity>
   );
@@ -155,14 +155,14 @@ const MyLibrary = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <Feather name="arrow-left" size={24} color="#FFD700" />
+            <Feather name="arrow-left" size={24} color="rgb(1, 225, 255)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{selectedCourse.title}</Text>
           <TouchableOpacity 
             onPress={() => setIsChatModalVisible(true)}
             style={styles.chatButton}
           >
-            <Ionicons name="chatbubble-ellipses" size={24} color="#FFD700" />
+            <Ionicons name="chatbubble-ellipses" size={24} color="rgb(1, 225, 255)" />
           </TouchableOpacity>
         </View>
 
@@ -231,7 +231,7 @@ const MyLibrary = () => {
                 onPress={() => setIsChatModalVisible(false)}
                 style={styles.modalBackButton}
               >
-                <Feather name="arrow-left" size={24} color="#FFD700" />
+                <Feather name="arrow-left" size={24} color="rgb(1, 225, 255)" />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Chat with {selectedCourse.instructor}</Text>
             </View>
@@ -268,7 +268,7 @@ const MyLibrary = () => {
                 style={styles.sendButton}
                 onPress={handleSendMessage}
               >
-                <Feather name="send" size={24} color="#FFD700" />
+                <Feather name="send" size={24} color="rgb(1, 225, 255)" />
               </TouchableOpacity>
             </View>
           </SafeAreaView>
@@ -284,7 +284,7 @@ const MyLibrary = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#FFD700" />
+          <Feather name="arrow-left" size={24} color="rgb(1, 225, 255)" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Library</Text>
         <View style={styles.placeholderButton} />
@@ -304,7 +304,7 @@ const MyLibrary = () => {
             />
           ) : (
             <View style={styles.emptyContainer}>
-              <Feather name="book" size={48} color="#FFD700" />
+              <Feather name="book" size={48} color="rgb(1, 225, 255)" />
               <Text style={styles.emptyText}>You haven't purchased any courses yet</Text>
               <TouchableOpacity 
                 style={styles.browseButton}
@@ -323,17 +323,16 @@ const MyLibrary = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1b',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#1a1a2e',
+    alignItems: 'center',
+    padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a3a',
+    borderBottomColor: '#0f3460',
+    backgroundColor: 'rgb(14, 3, 52)',
   },
   backButton: {
     padding: 5,
@@ -344,7 +343,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#fff',
     flex: 1,
     textAlign: 'center',
     marginHorizontal: 10,
@@ -359,7 +358,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     marginBottom: 16,
   },
   courseList: {
@@ -397,7 +396,7 @@ const styles = StyleSheet.create({
   coursePrice: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     marginBottom: 6,
   },
   courseMeta: {
@@ -440,7 +439,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   browseButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
     borderRadius: 8,
     padding: 12,
     width: '80%',
@@ -494,7 +493,7 @@ const styles = StyleSheet.create({
   },
   selectedVideoItem: {
     backgroundColor: '#2a2a3a',
-    borderColor: '#FFD700',
+    borderColor: 'rgb(1, 225, 255)',
   },
   videoTitle: {
     fontSize: 14,
@@ -515,12 +514,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FFD700',
+    backgroundColor: 'rgb(1, 225, 255)',
     borderRadius: 4,
   },
   progressText: {
     fontSize: 14,
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     textAlign: 'center',
   },
   // Chat Modal Styles
@@ -541,7 +540,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: 'rgb(1, 225, 255)',
     flex: 1,
   },
   chatContainer: {

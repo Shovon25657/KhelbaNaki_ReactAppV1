@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import EmptyField from './Emptyfield';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const FormCard = ({ 
   currentStep,
@@ -10,7 +11,8 @@ const FormCard = ({
   handleNext,
   handlePrev,
   isLastStep,
-  isLoading
+  isLoading,
+  togglePasswordVisibility
 }) => {
   return (
     <View style={styles.card}>
@@ -19,14 +21,29 @@ const FormCard = ({
       </Text>
 
       {fields[currentStep].inputs.map((input, index) => (
-        <EmptyField
-          key={index}
-          placeholder={input.placeholder}
-          value={formData[input.name]}
-          onChangeText={(text) => handleChange(input.name, text)}
-          keyboardType={input.keyboardType}
-          secureTextEntry={input.secureTextEntry}
-        />
+        <View key={index} style={styles.inputContainer}>
+          <EmptyField
+            placeholder={input.placeholder}
+            value={formData[input.name]}
+            onChangeText={(text) => handleChange(input.name, text)}
+            keyboardType={input.keyboardType}
+            secureTextEntry={input.secureTextEntry}
+            style={input.showPasswordToggle ? styles.passwordInput : null}
+          />
+          
+          {input.name === 'confirmPassword' && formData[input.name].length > 0 && (
+            <TouchableOpacity 
+              style={styles.eyeIcon}
+              onPress={() => togglePasswordVisibility(input.name)}
+            >
+              <Icon 
+                name={input.showPasswordValue ? 'eye-off' : 'eye'} 
+                size={24} 
+                color="#999" 
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       ))}
 
       <View style={styles.buttonContainer}>
@@ -60,11 +77,9 @@ const FormCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(184, 184, 184, 0.06)',
+    backgroundColor: 'transparent',
     padding: 20,
     borderRadius: 10,
-    borderColor: 'rgba(47, 91, 214, 0.49)',
-    borderWidth: 0.5,
     width: '100%',
     marginVertical: 10,
   },
@@ -73,6 +88,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 15,
     fontSize: 16,
+  },
+  inputContainer: {
+    position: 'relative',
+    marginBottom: 10,
+  },
+  passwordInput: {
+    paddingRight: 40,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 10,
+    top: '50%',
+    transform: [{ translateY: -19 }],
+    zIndex: 1,
   },
   buttonContainer: {
     flexDirection: 'row',
