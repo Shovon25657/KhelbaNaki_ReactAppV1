@@ -54,35 +54,35 @@ const CustomAlert = ({
           icon: icon || 'check-circle', 
           color: '#01e1ff',
           containerBg: 'rgba(1, 225, 255, 0.1)',
-          borderColor: 'rgba(1, 225, 255, 0.5)'
+          borderColor: 'rgb(1, 225, 255)'
         };
       case 'error':
         return { 
           icon: icon || 'error-outline', 
           color: '#ff3b30',
           containerBg: 'rgba(255, 59, 48, 0.1)',
-          borderColor: 'rgba(255, 59, 48, 0.5)'
+          borderColor: 'rgb(255, 58, 48)'
         };
       case 'warning':
         return { 
           icon: icon || 'warning', 
           color: '#ffcc00',
           containerBg: 'rgba(255, 204, 0, 0.1)',
-          borderColor: 'rgba(255, 204, 0, 0.5)'
+          borderColor: 'rgb(255, 204, 0)'
         };
       case 'match':
         return { 
           icon: icon || 'favorite', 
           color: '#ff3b80',
           containerBg: 'rgba(255, 59, 128, 0.1)',
-          borderColor: 'rgba(255, 59, 128, 0.5)'
+          borderColor: 'rgb(255, 59, 128)'
         };
       default:
         return { 
           icon: icon || 'info', 
           color: '#01e1ff',
           containerBg: 'rgba(1, 225, 255, 0.1)',
-          borderColor: 'rgba(1, 225, 255, 0.5)'
+          borderColor: 'rgb(1, 225, 255)'
         };
     }
   };
@@ -169,7 +169,7 @@ const CustomAlert = ({
 const styles = StyleSheet.create({
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgb(0, 0, 0)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 15,
     backgroundColor: 'rgb(4, 1, 21)',
-    borderWidth: 1,
+    borderWidth: .5,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#01e1ff',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   buttonMargin: {
     marginLeft: 10,

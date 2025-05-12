@@ -27,7 +27,7 @@ import ActionButtons from '../../Screens/home/common/ActionButtons';
 import SlideInMenu from '../../Screens/home/common/SlideInMenu';
 import ConfirmationModal from '../../Screens/home/common/ConfirmationModal';
 import Header from '../../Screens/home/common/Header';
-import CustomAlert from '../../common/Alart'; // Import CustomAlert
+import TopAlert from '../../common/Alart'; // Import CustomAlert
 
 const { width, height } = Dimensions.get('window');
 
@@ -395,7 +395,7 @@ const HomeScreen = () => {
       />
 
       {/* Replace ConfirmationModal with CustomAlert for logout */}
-      <CustomAlert
+      <TopAlert
         visible={showLogoutModal}
         title="CONFIRM LOGOUT"
         message="Are you sure you want to logout?"
@@ -416,7 +416,7 @@ const HomeScreen = () => {
       />
       
       {/* Match Alert */}
-      <CustomAlert
+      <TopAlert
         visible={matchAlertVisible}
         title="IT'S A MATCH! 🎮"
         message={`You matched with ${matchedUser?.gamingName || ''}! You can now chat and game together.`}
@@ -445,7 +445,7 @@ const HomeScreen = () => {
       />
 
       {/* Error Alert */}
-      <CustomAlert
+      <TopAlert
         visible={errorAlertVisible}
         title="ERROR"
         message={errorMessage}
@@ -462,7 +462,7 @@ const HomeScreen = () => {
       />
 
       {/* Refresh Alert */}
-      <CustomAlert
+      <TopAlert
         visible={refreshAlertVisible}
         title="REFRESHING"
         message="Looking for new gaming buddies..."
