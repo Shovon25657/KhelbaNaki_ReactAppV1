@@ -9,7 +9,8 @@ import {
   ScrollView, 
   Image,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserDataContext } from '../../context/UserDataContext';
@@ -17,6 +18,8 @@ import BottomNavBar from '../../common/BottomNavBar';
 
 const Chat = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { 
     matches, 
     refreshMatches, 
@@ -25,20 +28,36 @@ const Chat = ({ navigation }) => {
     currentUserId 
   } = useContext(UserDataContext);
   const [localChats, setLocalChats] = useState([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchInitialMatches = async () => {
-      setIsRefreshing(true);
-      try {
-        await refreshMatches();
-      } catch (error) {
-        console.error('Initial matches fetch error:', error);
-      } finally {
+  const fetchMatches = async (isInitial = false) => {
+    try {
+      if (isInitial) {
+        setIsInitialLoading(true);
+      } else if (!isInitial && !isRefreshing) {
+        // Only set isRefreshing for user-initiated refreshes
+        setIsRefreshing(true);
+      }
+      await refreshMatches();
+    } catch (error) {
+      console.error('Matches fetch error:', error);
+      Alert.alert('Error', 'Failed to load matches');
+    } finally {
+      if (isInitial) {
+        setIsInitialLoading(false);
+      }
+      if (isRefreshing) {
         setIsRefreshing(false);
       }
-    };
-    fetchInitialMatches();
+    }
+  };
+
+  useEffect(() => {
+    fetchMatches(true); // Initial fetch with subtle loading indicator
+
+    // Set up polling for background fetches
+    const interval = setInterval(() => fetchMatches(false), 10000); // Every 10 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const formatTime = (timestamp) => {
@@ -54,14 +73,7 @@ const Chat = ({ navigation }) => {
   };
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refreshMatches();
-    } catch (error) {
-      console.error('Refresh error:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
+    await fetchMatches(false); // User-initiated refresh
   };
 
   useEffect(() => {
@@ -96,20 +108,12 @@ const Chat = ({ navigation }) => {
 
     navigation.navigate('ChatInterface', { 
       matchId: chat.id,
-      userId: chat.userId,
+      userId: match.userId,
       userName: chat.name,
       userAvatar: chat.avatar,
       currentUserId,
     });
   };
-
-  if (!matches) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#4a80f0" />
-      </View>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -154,6 +158,11 @@ const Chat = ({ navigation }) => {
           />
         }
       >
+        {isInitialLoading && (
+          <View style={styles.subtleLoadingContainer}>
+            <ActivityIndicator size="small" color="#4a80f0" />
+          </View>
+        )}
         {filteredChats.length > 0 ? (
           filteredChats.map((chat) => (
             <TouchableOpacity 
@@ -340,11 +349,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 10,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  subtleLoadingContainer: {
+    padding: 10,
     alignItems: 'center',
-    backgroundColor: '#0f0f1a',
   },
 });
 
