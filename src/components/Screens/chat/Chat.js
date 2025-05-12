@@ -68,13 +68,13 @@ const Chat = ({ navigation }) => {
     console.log('Matches:', matches);
     if (matches && matches.length > 0) {
       const formattedChats = matches.map((match, index) => ({
-        id: match._id || `temp-${index}`,
+        id: match.matchId || `temp-${index}`,
         userId: match.userId,
         name: match.gamingName || `User ${index}`,
         lastMessage: match.lastMessage || 'Start the conversation!',
         time: formatTime(match.lastMessageAt || match.matchedAt),
         avatar: match.avatar ? { uri: match.avatar } : require('../../../../assets/default-avatar.png'),
-        unread: unseenMatches > 0
+        unread: match.lastMessageAt && new Date(match.lastMessageAt) > new Date(match.matchedAt)
       }));
       setLocalChats(formattedChats);
     } else {

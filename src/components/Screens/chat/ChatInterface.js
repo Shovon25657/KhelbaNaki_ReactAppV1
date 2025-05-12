@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,86 +14,111 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { UserDataContext } from '../../context/UserDataContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthContext } from '../../context/authContext';
-import { UserDataContext } from '../../context/UserDataContext';
 
 const ChatInterface = ({ route, navigation }) => {
   const { matchId, userId, userName, userAvatar, currentUserId } = route.params;
-  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [authState] = useContext(AuthContext);
-  const { refreshMatches } = useContext(UserDataContext);
+  const [isSending, setIsSending] = useState(false);
+  const { 
+    messages, 
+    fetchMessages, 
+    markMessagesAsRead, 
+    refreshMatches 
+  } = useContext(UserDataContext);
+  const scrollViewRef = useRef();
+
+  const getAuthHeaders = async () => {
+    const authData = await AsyncStorage.getItem('@auth');
+    if (!authData) return null;
+    const { token } = JSON.parse(authData);
+    return { Authorization: `Bearer ${token}` };
+  };
 
   const formatMessage = (message) => {
     return {
       _id: message._id,
       text: message.content,
-      createdAt: new Date(message.createdAt),
+      createdAt: new Date(message.timestamp),
       user: {
-        _id: message.sender,
-        name: message.sender === currentUserId ? 'You' : userName,
-        avatar: message.sender === currentUserId ? null : userAvatar,
+        _id: message.sender._id || message.sender,
+        name: message.sender._id === currentUserId ? 'You' : userName,
+        avatar: message.sender._id === currentUserId ? null : userAvatar,
       },
+      read: message.read || false
     };
   };
 
-  const fetchMessages = async () => {
+  const loadMessages = async () => {
     try {
       setIsLoading(true);
-      const authData = await AsyncStorage.getItem('@auth');
-      const { token } = JSON.parse(authData);
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const response = await axios.get(`/userabout/messages/${matchId}`, { headers });
+      await fetchMessages(matchId);
       
-      if (response.data?.success) {
-        const formattedMessages = response.data.messages.map(message => formatMessage(message));
-        setMessages(formattedMessages);
+      // Mark messages as read for messages not sent by the current user
+      const currentMessages = messages[matchId] || [];
+      if (currentMessages.some(msg => !msg.read && msg.sender._id !== currentUserId)) {
+        await markMessagesAsRead(matchId);
       }
+
+      // Scroll to the bottom after loading messages
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      Alert.alert('Error', 'Failed to fetch messages');
+      console.error('Error loading messages:', error);
+      Alert.alert('Error', 'Failed to load messages');
     } finally {
       setIsLoading(false);
     }
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || isSending) return;
 
     try {
-      const authData = await AsyncStorage.getItem('@auth');
-      const { token } = JSON.parse(authData);
-      const headers = { Authorization: `Bearer ${token}` };
+      setIsSending(true);
+      const headers = await getAuthHeaders();
+      if (!headers) {
+        Alert.alert('Error', 'Authentication required');
+        return;
+      }
 
       const messageData = {
         content: newMessage,
         matchId,
-        receiver: userId,
+        receiverId: userId,
       };
 
       const response = await axios.post('/userabout/send-message', messageData, { headers });
 
       if (response.data?.success) {
-        const newMsg = formatMessage(response.data.message);
-        setMessages(prev => [...prev, newMsg]);
         setNewMessage('');
-        refreshMatches(); // Refresh matches to update last message
+        await refreshMatches();
+        await loadMessages(); // Refresh messages after sending
+        
+        // Scroll to bottom after sending message
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      } else {
+        Alert.alert('Error', 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'Failed to send message');
+    } finally {
+      setIsSending(false);
     }
   };
 
   useEffect(() => {
-    fetchMessages();
+    loadMessages();
     
     // Set up polling for new messages
-    const interval = setInterval(fetchMessages, 5000);
+    const interval = setInterval(loadMessages, 5000);
     
     return () => clearInterval(interval);
   }, [matchId]);
@@ -131,9 +156,19 @@ const ChatInterface = ({ route, navigation }) => {
           isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble
         ]}>
           <Text style={styles.messageText}>{item.text}</Text>
-          <Text style={styles.messageTime}>
-            {item.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </Text>
+          <View style={styles.messageFooter}>
+            <Text style={styles.messageTime}>
+              {item.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+            {isCurrentUser && (
+              <Ionicons 
+                name={item.read ? "checkmark-done" : "checkmark"} 
+                size={16} 
+                color={item.read ? "#4a80f0" : "#aaa"} 
+                style={styles.readIcon}
+              />
+            )}
+          </View>
         </View>
       </View>
     );
@@ -147,6 +182,8 @@ const ChatInterface = ({ route, navigation }) => {
     );
   }
 
+  const chatMessages = (messages[matchId] || []).map(formatMessage);
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -156,14 +193,21 @@ const ChatInterface = ({ route, navigation }) => {
       >
         <ScrollView
           contentContainerStyle={styles.messagesContainer}
-          ref={ref => this.scrollView = ref}
-          onContentSizeChange={() => this.scrollView.scrollToEnd({ animated: true })}
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {messages.map((message, index) => (
-            <View key={`message-${index}`}>
-              {renderMessage({ item: message })}
+          {chatMessages.length > 0 ? (
+            chatMessages.map((message, index) => (
+              <View key={`message-${message._id || index}`}>
+                {renderMessage({ item: message })}
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No messages yet</Text>
+              <Text style={styles.emptySubText}>Start the conversation!</Text>
             </View>
-          ))}
+          )}
         </ScrollView>
 
         <View style={styles.inputContainer}>
@@ -174,9 +218,18 @@ const ChatInterface = ({ route, navigation }) => {
             value={newMessage}
             onChangeText={setNewMessage}
             multiline
+            editable={!isSending}
           />
-          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-            <Ionicons name="send" size={24} color="#fff" />
+          <TouchableOpacity 
+            style={styles.sendButton} 
+            onPress={sendMessage}
+            disabled={isSending}
+          >
+            {isSending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="send" size={24} color="#fff" />
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -237,11 +290,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  messageFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 5,
+  },
   messageTime: {
     color: '#aaa',
     fontSize: 12,
-    marginTop: 5,
-    textAlign: 'right',
+    marginRight: 5,
+  },
+  readIcon: {
+    marginLeft: 5,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -273,6 +334,22 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+  },
+  emptyText: {
+    color: '#fff',
+    fontSize: 18,
+    marginTop: 20,
+  },
+  emptySubText: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 10,
   },
 });
 

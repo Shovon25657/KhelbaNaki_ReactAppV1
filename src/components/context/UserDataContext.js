@@ -1,4 +1,3 @@
-// UserDataContext.js
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const UserDataContext = createContext();
 
 const UserDataProvider = ({ children }) => {
-  // Existing state
   const [loading, setLoading] = useState(false);
   const [userProfileData, setUserProfileData] = useState(null);
   const [aboutData, setAboutData] = useState(null);
@@ -17,22 +15,25 @@ const UserDataProvider = ({ children }) => {
   const [allUsersLoading, setAllUsersLoading] = useState(false);
   const [allUsersError, setAllUsersError] = useState(null);
   const [error, setError] = useState(null);
-  
-  // Interaction states
   const [matches, setMatches] = useState([]);
   const [interactions, setInteractions] = useState([]);
   const [unseenMatches, setUnseenMatches] = useState(0);
+  const [messages, setMessages] = useState({}); // Store messages by matchId
+
+  const getAuthHeaders = async () => {
+    const authData = await AsyncStorage.getItem('@auth');
+    if (!authData) return null;
+    const { token } = JSON.parse(authData);
+    return { Authorization: `Bearer ${token}` };
+  };
 
   // Existing data fetching
   const getUserData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const authData = await AsyncStorage.getItem('@auth');
-      if (!authData) return;
-      
-      const { token } = JSON.parse(authData);
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = await getAuthHeaders();
+      if (!headers) return;
 
       const responses = await Promise.all([
         axios.get("/userabout/get-profile-data", { headers }),
@@ -54,37 +55,77 @@ const UserDataProvider = ({ children }) => {
     }
   };
 
-  // User matching system functions
-const refreshMatches = async () => {
-  try {
-    const authData = await AsyncStorage.getItem('@auth');
-    if (!authData) {
-      console.log('No auth data found');
-      return;
-    }
-    
-    const { token } = JSON.parse(authData);
-    const headers = { Authorization: `Bearer ${token}` };
+  // Message related functions
+  const fetchMessages = async (matchId) => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return [];
 
-    const response = await axios.get("/userabout/chat-list", { headers });
-    console.log('Chat list response:', response.data);
-    if (response.data?.success) {
-      setMatches(response.data.data);
-      const newMatches = response.data.data.filter(match => 
-        !matches.some(existingMatch => existingMatch._id === match._id)
-      );
-      setUnseenMatches(prev => prev + newMatches.length);
+      const response = await axios.get(`/userabout/messages/${matchId}`, { headers });
+      
+      if (response.data?.success) {
+        setMessages(prev => ({
+          ...prev,
+          [matchId]: response.data.messages.map(msg => ({
+            ...msg,
+            read: msg.read || msg.sender._id === msg.receiver // Ensure read status is accurate
+          }))
+        }));
+        return response.data.messages;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
     }
-  } catch (error) {
-    console.error('Match refresh error:', error);
-  }
-};
+  };
+
+  const markMessagesAsRead = async (matchId) => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return false;
+
+      const response = await axios.post('/userabout/messages/read', { matchId }, { headers });
+      if (response.data?.success) {
+        // Update local messages state to reflect read status
+        setMessages(prev => ({
+          ...prev,
+          [matchId]: prev[matchId]?.map(msg => ({
+            ...msg,
+            read: true
+          })) || []
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      return false;
+    }
+  };
+
+  const refreshMatches = async () => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+
+      const response = await axios.get("/userabout/chat-list", { headers });
+      if (response.data?.success) {
+        setMatches(response.data.data);
+        const newMatches = response.data.data.filter(match => 
+          !matches.some(existingMatch => existingMatch._id === match._id)
+        );
+        setUnseenMatches(prev => prev + newMatches.length);
+      }
+    } catch (error) {
+      console.error('Match refresh error:', error);
+    }
+  };
 
   const likeUser = async (targetUserId) => {
     try {
-      const authData = await AsyncStorage.getItem('@auth');
-      const { token } = JSON.parse(authData);
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = await getAuthHeaders();
+      if (!headers) return;
 
       const response = await axios.post("/userabout/like-user", 
         { targetUserId }, 
@@ -109,9 +150,8 @@ const refreshMatches = async () => {
 
   const dislikeUser = async (targetUserId) => {
     try {
-      const authData = await AsyncStorage.getItem('@auth');
-      const { token } = JSON.parse(authData);
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = await getAuthHeaders();
+      if (!headers) return;
 
       await axios.post("/userabout/dislike-user", 
         { targetUserId }, 
@@ -126,18 +166,14 @@ const refreshMatches = async () => {
     }
   };
 
-  // User list management
   const refreshAllUsers = async () => {
     setAllUsersLoading(true);
     setAllUsersError(null);
     
     try {
-      const authData = await AsyncStorage.getItem('@auth');
-      if (!authData) throw new Error('No authentication data');
+      const headers = await getAuthHeaders();
+      if (!headers) throw new Error('No authentication data');
       
-      const { token } = JSON.parse(authData);
-      const headers = { Authorization: `Bearer ${token}` };
-
       const response = await axios.get("/userabout/get-all-users", { headers });
       
       if (response.data?.success) {
@@ -184,9 +220,15 @@ const refreshMatches = async () => {
       matches,
       interactions,
       unseenMatches,
+      setUnseenMatches,
       likeUser,
       dislikeUser,
       refreshMatches,
+
+      // Messaging system
+      messages,
+      fetchMessages,
+      markMessagesAsRead,
 
       // Common states
       loading,
