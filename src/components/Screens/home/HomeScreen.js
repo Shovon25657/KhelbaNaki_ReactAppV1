@@ -1,4 +1,3 @@
-
 import React, { useContext, useState, useRef, useCallback, useEffect } from 'react';
 import { 
   View, 
@@ -11,8 +10,7 @@ import {
   Text,
   Vibration,
   Platform,
-  Image,
-  Alert
+  Image
 } from 'react-native';
 import { AuthContext } from '../../context/authContext';
 import { UserDataContext } from '../../context/UserDataContext';
@@ -29,6 +27,7 @@ import ActionButtons from '../../Screens/home/common/ActionButtons';
 import SlideInMenu from '../../Screens/home/common/SlideInMenu';
 import ConfirmationModal from '../../Screens/home/common/ConfirmationModal';
 import Header from '../../Screens/home/common/Header';
+import CustomAlert from '../../common/CustomAlert'; // Import CustomAlert
 
 const { width, height } = Dimensions.get('window');
 
@@ -63,6 +62,13 @@ const HomeScreen = () => {
   const processedUserIds = useRef(new Set());
   const dislikedProfiles = useRef([]);
   const queueUpdateTimeout = useRef(null);
+
+  // Custom Alert States
+  const [matchAlertVisible, setMatchAlertVisible] = useState(false);
+  const [matchedUser, setMatchedUser] = useState(null);
+  const [errorAlertVisible, setErrorAlertVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [refreshAlertVisible, setRefreshAlertVisible] = useState(false);
 
   const transformUserData = useCallback((user) => {
     if (!user) return null;
@@ -170,22 +176,23 @@ const HomeScreen = () => {
         const result = await likeUser(profileQueue[0].id);
         
         if (result?.isMatch) {
-          Alert.alert(
-            '🎉 Match!',
-            `You matched with ${profileQueue[0].gamingName}!`,
-            [{ text: 'OK', onPress: () => refreshMatches() }]
-          );
+          // Instead of Alert.alert, use our custom alert
+          setMatchedUser(profileQueue[0]);
+          setTimeout(() => {
+            setMatchAlertVisible(true);
+          }, 300); // Small delay to allow card animation to complete
         }
         
         console.log('Liked:', profileQueue[0]?.gamingName);
         handleSwipeComplete();
       } catch (error) {
         console.error('Like error:', error);
-        Alert.alert('Error', error.response?.data?.message || 'Failed to like user');
+        setErrorMessage(error.response?.data?.message || 'Failed to like user');
+        setErrorAlertVisible(true);
         setIsTransitioning(false);
       }
     }
-  }, [profileQueue, isTransitioning, handleSwipeComplete, likeUser, refreshMatches]);
+  }, [profileQueue, isTransitioning, likeUser]);
 
   const handleDislike = useCallback(async () => {
     if (profileQueue[0] && !isTransitioning) {
@@ -197,11 +204,12 @@ const HomeScreen = () => {
         handleSwipeComplete();
       } catch (error) {
         console.error('Dislike error:', error);
-        Alert.alert('Error', error.response?.data?.message || 'Failed to dislike user');
+        setErrorMessage(error.response?.data?.message || 'Failed to dislike user');
+        setErrorAlertVisible(true);
         setIsTransitioning(false);
       }
     }
-  }, [profileQueue, isTransitioning, handleSwipeComplete, dislikeUser]);
+  }, [profileQueue, isTransitioning, dislikeUser]);
 
   const handleSwipeComplete = useCallback(() => {
     setProfileQueue(prev => prev.slice(1));
@@ -217,7 +225,7 @@ const HomeScreen = () => {
     }
     
     if (swipeRef.current) {
-      swipeRef.current.triggerSwipe(direction); // Fixed typo: SwipeRef → swipeRef
+      swipeRef.current.triggerSwipe(direction);
     }
   }, [isTransitioning, profileQueue]);
 
@@ -229,6 +237,7 @@ const HomeScreen = () => {
     setCurrentIndex(0);
     setIsTransitioning(false);
     setIsQueueExhausted(false);
+    setRefreshAlertVisible(true);
     refreshAllUsers();
   }, [refreshAllUsers]);
 
@@ -333,6 +342,13 @@ const HomeScreen = () => {
     { icon: 'settings', label: 'SETTINGS', onPress: () => navigation.navigate('Settings') }
   ];
 
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('@auth');
+    setState({ ...state, user: null, token: '' });
+    navigation.replace('Welcome');
+    setShowLogoutModal(false);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
@@ -378,17 +394,88 @@ const HomeScreen = () => {
         onLuminaries={() => navigation.navigate('Luminaries')}
       />
 
-      <ConfirmationModal
+      {/* Replace ConfirmationModal with CustomAlert for logout */}
+      <CustomAlert
         visible={showLogoutModal}
         title="CONFIRM LOGOUT"
         message="Are you sure you want to logout?"
-        onConfirm={async () => {
-          await AsyncStorage.removeItem('@auth');
-          setState({ ...state, user: null, token: '' });
-          navigation.replace('Welcome'); // Changed from navigate to replace
-          setShowLogoutModal(false);
-        }}
-        onCancel={() => setShowLogoutModal(false)}
+        type="warning"
+        onClose={() => setShowLogoutModal(false)}
+        buttons={[
+          { 
+            text: 'CANCEL', 
+            onPress: () => setShowLogoutModal(false),
+            style: 'cancel'
+          },
+          { 
+            text: 'LOGOUT', 
+            onPress: handleLogout,
+            primary: true
+          }
+        ]}
+      />
+      
+      {/* Match Alert */}
+      <CustomAlert
+        visible={matchAlertVisible}
+        title="IT'S A MATCH! 🎮"
+        message={`You matched with ${matchedUser?.gamingName || ''}! You can now chat and game together.`}
+        type="match"
+        icon="favorite"
+        onClose={() => setMatchAlertVisible(false)}
+        buttons={[
+          { 
+            text: 'LATER', 
+            onPress: () => {
+              setMatchAlertVisible(false);
+              refreshMatches();
+            },
+            style: 'cancel'
+          },
+          { 
+            text: 'MESSAGE', 
+            onPress: () => {
+              setMatchAlertVisible(false);
+              refreshMatches();
+              navigation.navigate('Chat');
+            },
+            primary: true
+          }
+        ]}
+      />
+
+      {/* Error Alert */}
+      <CustomAlert
+        visible={errorAlertVisible}
+        title="ERROR"
+        message={errorMessage}
+        type="error"
+        icon="error-outline"
+        onClose={() => setErrorAlertVisible(false)}
+        buttons={[
+          { 
+            text: 'OK', 
+            onPress: () => setErrorAlertVisible(false),
+            primary: true
+          }
+        ]}
+      />
+
+      {/* Refresh Alert */}
+      <CustomAlert
+        visible={refreshAlertVisible}
+        title="REFRESHING"
+        message="Looking for new gaming buddies..."
+        type="success"
+        icon="refresh"
+        onClose={() => setRefreshAlertVisible(false)}
+        buttons={[
+          { 
+            text: 'OK', 
+            onPress: () => setRefreshAlertVisible(false),
+            primary: true
+          }
+        ]}
       />
       
       <BottomNavBar />
