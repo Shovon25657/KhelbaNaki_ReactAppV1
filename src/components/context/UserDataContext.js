@@ -55,27 +55,30 @@ const UserDataProvider = ({ children }) => {
   };
 
   // User matching system functions
-  const refreshMatches = async () => {
-    try {
-      const authData = await AsyncStorage.getItem('@auth');
-      if (!authData) return;
-      
-      const { token } = JSON.parse(authData);
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const response = await axios.get("/userabout/chat-list", { headers });
-      if (response.data?.success) {
-        setMatches(response.data.data);
-        // Update unseen matches count (requires backend support)
-        const newMatches = response.data.data.filter(match => 
-          !matches.some(existingMatch => existingMatch._id === match._id)
-        );
-        setUnseenMatches(prev => prev + newMatches.length);
-      }
-    } catch (error) {
-      console.error('Match refresh error:', error);
+const refreshMatches = async () => {
+  try {
+    const authData = await AsyncStorage.getItem('@auth');
+    if (!authData) {
+      console.log('No auth data found');
+      return;
     }
-  };
+    
+    const { token } = JSON.parse(authData);
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const response = await axios.get("/userabout/chat-list", { headers });
+    console.log('Chat list response:', response.data);
+    if (response.data?.success) {
+      setMatches(response.data.data);
+      const newMatches = response.data.data.filter(match => 
+        !matches.some(existingMatch => existingMatch._id === match._id)
+      );
+      setUnseenMatches(prev => prev + newMatches.length);
+    }
+  } catch (error) {
+    console.error('Match refresh error:', error);
+  }
+};
 
   const likeUser = async (targetUserId) => {
     try {

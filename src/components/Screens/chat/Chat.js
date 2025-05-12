@@ -17,11 +17,16 @@ import BottomNavBar from '../../common/BottomNavBar';
 
 const Chat = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { matches, refreshMatches, unseenMatches } = useContext(UserDataContext);
+  const { 
+    matches, 
+    refreshMatches, 
+    unseenMatches, 
+    setUnseenMatches, 
+    currentUserId 
+  } = useContext(UserDataContext);
   const [localChats, setLocalChats] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch matches on component mount
   useEffect(() => {
     const fetchInitialMatches = async () => {
       setIsRefreshing(true);
@@ -36,12 +41,11 @@ const Chat = ({ navigation }) => {
     fetchInitialMatches();
   }, []);
 
-  // Format timestamp from backend
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
     const now = new Date();
-    const diff = Math.floor((now - date) / 1000); // Difference in seconds
+    const diff = Math.floor((now - date) / 1000);
     
     if (diff < 60) return 'Just now';
     if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
@@ -49,7 +53,6 @@ const Chat = ({ navigation }) => {
     return `${date.toLocaleDateString()}`;
   };
 
-  // Refresh chat list
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -61,11 +64,11 @@ const Chat = ({ navigation }) => {
     }
   };
 
-  // Update local chats when matches change
   useEffect(() => {
+    console.log('Matches:', matches);
     if (matches && matches.length > 0) {
       const formattedChats = matches.map((match, index) => ({
-        id: match._id || `temp-${index}`, // Fallback for missing _id
+        id: match._id || `temp-${index}`,
         userId: match.userId,
         name: match.gamingName || `User ${index}`,
         lastMessage: match.lastMessage || 'Start the conversation!',
@@ -84,11 +87,19 @@ const Chat = ({ navigation }) => {
   );
 
   const handleChatPress = (chat) => {
+    setLocalChats(prev => prev.map(c => 
+      c.id === chat.id ? { ...c, unread: false } : c
+    ));
+    if (chat.unread && setUnseenMatches) {
+      setUnseenMatches(prev => Math.max(0, prev - 1));
+    }
+
     navigation.navigate('ChatInterface', { 
       matchId: chat.id,
       userId: chat.userId,
       userName: chat.name,
       userAvatar: chat.avatar,
+      currentUserId,
     });
   };
 
@@ -102,7 +113,6 @@ const Chat = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -123,7 +133,6 @@ const Chat = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Search Bar */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
         <TextInput
@@ -135,7 +144,6 @@ const Chat = ({ navigation }) => {
         />
       </View>
 
-      {/* Chat List */}
       <ScrollView 
         style={styles.chatList}
         refreshControl={
