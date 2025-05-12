@@ -19,18 +19,10 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatInterface = ({ route, navigation }) => {
-  const {
-    matchId = '',
-    userId = '',
-    userName = 'Unknown',
-    userAvatar = null,
-    currentUserId = ''
-  } = route.params || {};
-
+  const { matchId, userId, userName, userAvatar, currentUserId } = route.params;
   const [newMessage, setNewMessage] = useState('');
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Only for initial fetch
   const [isSending, setIsSending] = useState(false);
-  const [localMessages, setLocalMessages] = useState([]);
   const { 
     messages, 
     fetchMessages, 
@@ -38,17 +30,6 @@ const ChatInterface = ({ route, navigation }) => {
     refreshMatches 
   } = useContext(UserDataContext);
   const scrollViewRef = useRef();
-  const syncRef = useRef(null);
-  const lastMessageIdRef = useRef(null);
-
-  // Debounce function to limit sync frequency
-  const debounce = (func, wait) => {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), wait);
-    };
-  };
 
   const getAuthHeaders = async () => {
     const authData = await AsyncStorage.getItem('@auth');
@@ -72,49 +53,28 @@ const ChatInterface = ({ route, navigation }) => {
   };
 
   const loadMessages = async (isInitial = false) => {
-    if (!matchId) {
-      Alert.alert('Error', 'Invalid match ID');
-      return;
-    }
-
     try {
       if (isInitial) {
-        setIsInitialLoading(true);
+        setIsLoading(true);
       }
-
-      await fetchMessages(matchId, lastMessageIdRef.current);
-      const currentMessages = messages[matchId] || [];
+      await fetchMessages(matchId);
       
-      if (currentMessages.length > 0) {
-        lastMessageIdRef.current = currentMessages[currentMessages.length - 1]._id;
-      }
-
-      setLocalMessages(prev => {
-        const newMessages = currentMessages.map(formatMessage);
-        const messageIds = new Set(prev.map(msg => msg._id));
-        const uniqueNewMessages = newMessages.filter(msg => !messageIds.has(msg._id));
-        return [...prev, ...uniqueNewMessages].sort((a, b) => a.createdAt - b.createdAt);
-      });
-
+      // Mark messages as read for messages not sent by the current user
+      const currentMessages = messages[matchId] || [];
       if (currentMessages.some(msg => !msg.read && msg.sender._id !== currentUserId)) {
         await markMessagesAsRead(matchId);
-        setLocalMessages(prev => prev.map(msg => ({
-          ...msg,
-          read: msg.user._id !== currentUserId ? true : msg.read
-        })));
       }
 
+      // Scroll to the bottom after loading messages
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 50);
+      }, 100);
     } catch (error) {
       console.error('Error loading messages:', error);
-      if (isInitial) {
-        Alert.alert('Error', 'Failed to load messages');
-      }
+      Alert.alert('Error', 'Failed to load messages');
     } finally {
       if (isInitial) {
-        setIsInitialLoading(false);
+        setIsLoading(false);
       }
     }
   };
@@ -136,74 +96,50 @@ const ChatInterface = ({ route, navigation }) => {
         receiverId: userId,
       };
 
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage = {
-        _id: tempId,
-        text: newMessage,
-        createdAt: new Date(),
-        user: {
-          _id: currentUserId,
-          name: 'You',
-          avatar: null
-        },
-        read: false
-      };
-      
-      setLocalMessages(prev => [...prev, optimisticMessage]);
-      setNewMessage('');
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-
       const response = await axios.post('/userabout/send-message', messageData, { headers });
 
       if (response.data?.success) {
+        setNewMessage('');
         await refreshMatches();
-        setLocalMessages(prev => {
-          const index = prev.findIndex(msg => msg._id === tempId);
-          if (index !== -1 && response.data.message) {
-            prev[index] = formatMessage(response.data.message);
-          }
-          return [...prev];
-        });
+        await loadMessages(); // Refresh messages after sending
+        
+        // Scroll to bottom after sending message
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
       } else {
-        setLocalMessages(prev => prev.filter(msg => msg._id !== tempId));
         Alert.alert('Error', 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      setLocalMessages(prev => prev.filter(msg => msg._id !== tempId));
       Alert.alert('Error', 'Failed to send message');
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleCallPress = () => {
-    Alert.alert('Coming Soon', 'Voice call feature will be available soon!');
-  };
-
-  const handleVideoPress = () => {
-    Alert.alert('Coming Soon', 'Video call feature will be available soon!');
-  };
-
   useEffect(() => {
-    loadMessages(true);
-
-    syncRef.current = setInterval(() => {
-      debounce(loadMessages, 500)(false);
-    }, 100);
-
-    return () => {
-      if (syncRef.current) {
-        clearInterval(syncRef.current);
-      }
-    };
+    loadMessages(true); // Initial fetch with loading indicator
+    
+    // Set up polling for new messages
+    const interval = setInterval(() => loadMessages(false), 5000); // Background fetch
+    
+    return () => clearInterval(interval);
   }, [matchId]);
 
   useEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      title: userName,
+      headerRight: () => (
+        <TouchableOpacity onPress={() => navigation.navigate('UserProfile', { userId })}>
+          <Image 
+            source={userAvatar || require('../../../../assets/default-avatar.png')} 
+            style={{ width: 40, height: 40, borderRadius: 20 }}
+          />
+        </TouchableOpacity>
+      ),
     });
-  }, [navigation]);
+  }, [navigation, userName, userAvatar]);
 
   const renderMessage = ({ item }) => {
     const isCurrentUser = item.user._id === currentUserId;
@@ -242,31 +178,10 @@ const ChatInterface = ({ route, navigation }) => {
     );
   };
 
+  const chatMessages = (messages[matchId] || []).map(formatMessage);
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.headerUserInfo}
-          onPress={() => navigation.navigate('UserProfile', { userId })}
-        >
-          <Image 
-            source={userAvatar || require('../../../../assets/default-avatar.png')} 
-            style={styles.headerAvatar}
-          />
-          <Text style={styles.headerUserName}>{userName}</Text>
-        </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleCallPress} style={styles.headerIcon}>
-            <Ionicons name="call" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleVideoPress} style={styles.headerIcon}>
-            <Ionicons name="videocam" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -277,13 +192,13 @@ const ChatInterface = ({ route, navigation }) => {
           ref={scrollViewRef}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {isInitialLoading && (
+          {isLoading && (
             <View style={styles.subtleLoadingContainer}>
               <ActivityIndicator size="small" color="#4a80f0" />
             </View>
           )}
-          {localMessages.length > 0 ? (
-            localMessages.map((message, index) => (
+          {chatMessages.length > 0 ? (
+            chatMessages.map((message, index) => (
               <View key={`message-${message._id || index}`}>
                 {renderMessage({ item: message })}
               </View>
@@ -328,37 +243,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgb(14, 3, 52)',
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  headerUserInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  headerUserName: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  headerIcon: {
-    marginLeft: 15,
-  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -390,12 +274,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   currentUserBubble: {
-    backgroundColor: '#4a80f0',
-    borderBottomRightRadius: 4,
+    backgroundColor: 'rgb(14, 3, 52)',
+    borderBottomRightRadius: 2,
   },
   otherUserBubble: {
     backgroundColor: 'rgb(30, 30, 60)',
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 2,
   },
   messageText: {
     color: '#fff',
@@ -408,7 +292,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   messageTime: {
-    color: '#ccc',
+    color: '#aaa',
     fontSize: 12,
     marginRight: 5,
   },
@@ -439,7 +323,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   sendButton: {
-    backgroundColor: '#4a80f0',
+    backgroundColor: 'rgb(14, 3, 52)',
     borderRadius: 20,
     width: 40,
     height: 40,
