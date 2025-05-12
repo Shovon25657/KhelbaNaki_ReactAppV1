@@ -3,10 +3,10 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  SafeAreaView, 
-  TouchableOpacity, 
-  TextInput, 
-  ScrollView, 
+  SafeAreaView,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
   Image,
   ActivityIndicator,
   RefreshControl,
@@ -65,8 +65,8 @@ const Chat = ({ navigation }) => {
 
     // Background sync every 10 seconds
     syncRef.current = setInterval(() => {
-      throttle(fetchMatches, 10000)(false);
-    }, 10000);
+      throttle(fetchMatches, 1000)(false);
+    }, 1000);
 
     return () => {
       if (syncRef.current) {
