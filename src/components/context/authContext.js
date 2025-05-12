@@ -30,6 +30,7 @@ const AuthProvider = ({ children }) => {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   axios.defaults.baseURL =
     "https://kns-ebms.onrender.com/api/v1";
+    //"http://192.168.0.106:8080/api/v1";
 
   return (
     <AuthContext.Provider value={[state, setState]}>

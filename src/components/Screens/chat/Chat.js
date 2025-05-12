@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
-  SafeAreaView, 
-  TouchableOpacity, 
-  TextInput, 
-  ScrollView, 
+  SafeAreaView,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
   Image,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserDataContext } from '../../context/UserDataContext';
@@ -17,31 +18,68 @@ import BottomNavBar from '../../common/BottomNavBar';
 
 const Chat = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { matches, refreshMatches, unseenMatches } = useContext(UserDataContext);
-  const [localChats, setLocalChats] = useState([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { 
+    matches, 
+    refreshMatches, 
+    unseenMatches, 
+    setUnseenMatches, 
+    currentUserId 
+  } = useContext(UserDataContext);
+  const [localChats, setLocalChats] = useState([]);
+  const syncRef = useRef(null);
 
-  // Fetch matches on component mount
-  useEffect(() => {
-    const fetchInitialMatches = async () => {
-      setIsRefreshing(true);
-      try {
-        await refreshMatches();
-      } catch (error) {
-        console.error('Initial matches fetch error:', error);
-      } finally {
-        setIsRefreshing(false);
+  // Throttle function to limit sync frequency
+  const throttle = (func, limit) => {
+    let inThrottle;
+    return (...args) => {
+      if (!inThrottle) {
+        func(...args);
+        inThrottle = true;
+        setTimeout(() => (inThrottle = false), limit);
       }
     };
-    fetchInitialMatches();
+  };
+
+  const fetchMatches = async (isInitial = false) => {
+    try {
+      if (isInitial) {
+        setIsInitialLoading(true);
+      }
+      await refreshMatches();
+    } catch (error) {
+      console.error('Matches fetch error:', error);
+      if (isInitial) {
+        Alert.alert('Error', 'Failed to load matches');
+      }
+    } finally {
+      if (isInitial) {
+        setIsInitialLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchMatches(true);
+
+    // Background sync every 10 seconds
+    syncRef.current = setInterval(() => {
+      throttle(fetchMatches, 1000)(false);
+    }, 1000);
+
+    return () => {
+      if (syncRef.current) {
+        clearInterval(syncRef.current);
+      }
+    };
   }, []);
 
-  // Format timestamp from backend
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
     const now = new Date();
-    const diff = Math.floor((now - date) / 1000); // Difference in seconds
+    const diff = Math.floor((now - date) / 1000);
     
     if (diff < 60) return 'Just now';
     if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
@@ -49,10 +87,9 @@ const Chat = ({ navigation }) => {
     return `${date.toLocaleDateString()}`;
   };
 
-  // Refresh chat list
   const handleRefresh = async () => {
-    setIsRefreshing(true);
     try {
+      setIsRefreshing(true);
       await refreshMatches();
     } catch (error) {
       console.error('Refresh error:', error);
@@ -61,48 +98,54 @@ const Chat = ({ navigation }) => {
     }
   };
 
-  // Update local chats when matches change
   useEffect(() => {
     if (matches && matches.length > 0) {
       const formattedChats = matches.map((match, index) => ({
-        id: match._id || `temp-${index}`, // Fallback for missing _id
+        id: match.matchId || `temp-${index}`,
         userId: match.userId,
         name: match.gamingName || `User ${index}`,
         lastMessage: match.lastMessage || 'Start the conversation!',
         time: formatTime(match.lastMessageAt || match.matchedAt),
         avatar: match.avatar ? { uri: match.avatar } : require('../../../../assets/default-avatar.png'),
-        unread: unseenMatches > 0
+        unread: match.lastMessageAt && 
+                new Date(match.lastMessageAt) > new Date(match.matchedAt) && 
+                !match.read
       }));
       setLocalChats(formattedChats);
     } else {
       setLocalChats([]);
     }
-  }, [matches, unseenMatches]);
+  }, [matches]);
 
   const filteredChats = localChats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleChatPress = (chat) => {
-    navigation.navigate('ChatInterface', { 
-      matchId: chat.id,
-      userId: chat.userId,
-      userName: chat.name,
-      userAvatar: chat.avatar,
-    });
-  };
+  const handleChatPress = async (chat) => {
+    try {
+      // Optimistic update
+      setLocalChats(prev => prev.map(c => 
+        c.id === chat.id ? { ...c, unread: false } : c
+      ));
+      
+      if (chat.unread && setUnseenMatches) {
+        setUnseenMatches(prev => Math.max(0, prev - 1));
+      }
 
-  if (!matches) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#4a80f0" />
-      </View>
-    );
-  }
+      navigation.navigate('ChatInterface', { 
+        matchId: chat.id,
+        userId: chat.userId,
+        userName: chat.name,
+        userAvatar: chat.avatar,
+        currentUserId,
+      });
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -123,7 +166,6 @@ const Chat = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Search Bar */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
         <TextInput
@@ -135,7 +177,6 @@ const Chat = ({ navigation }) => {
         />
       </View>
 
-      {/* Chat List */}
       <ScrollView 
         style={styles.chatList}
         refreshControl={
@@ -146,6 +187,11 @@ const Chat = ({ navigation }) => {
           />
         }
       >
+        {isInitialLoading && (
+          <View style={styles.subtleLoadingContainer}>
+            <ActivityIndicator size="small" color="#4a80f0" />
+          </View>
+        )}
         {filteredChats.length > 0 ? (
           filteredChats.map((chat) => (
             <TouchableOpacity 
@@ -332,11 +378,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 10,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  subtleLoadingContainer: {
+    padding: 10,
     alignItems: 'center',
-    backgroundColor: '#0f0f1a',
   },
 });
 

@@ -1,859 +1,261 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  TouchableOpacity, 
-  TextInput, 
-  ScrollView, 
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
   Image,
+  Alert,
   KeyboardAvoidingView,
   Platform,
-  Modal,
-  TouchableWithoutFeedback,
-  ImageBackground,
-  Dimensions,
-  Alert,
-  Animated,
-  Easing,
-  Keyboard
+  ActivityIndicator
 } from 'react-native';
-import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
-
-const { width, height } = Dimensions.get('window');
-
-const emojis = [
-  '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
-  '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
-  '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
-  '🥳', '😏', '😒', '😞', '😔', '😟', '🙁', '☹️', '😣'
-];
-
-const quickMessages = [
-  { text: "Let's play!", color: "rgb(1, 225, 255)", icon: "game-controller" },
-  { text: "Good game!", color: "rgb(120, 1, 255)", icon: "trophy" },
-  { text: "Rematch?", color: "rgb(1, 225, 255)", icon: "refresh" },
-  { text: "I'm ready", color: "rgb(120, 1, 255)", icon: "checkmark" },
-  { text: "Nice move!", color: "rgb(1, 225, 255)", icon: "thumbs-up" },
-  { text: "Oops!", color: "rgb(120, 1, 255)", icon: "alert" },
-  { text: "Well played", color: "rgb(1, 225, 255)", icon: "happy" },
-  { text: "Too easy!", color: "rgb(120, 1, 255)", icon: "flash" },
-];
-
-const confirmationColors = [
-  { cancel: "rgb(14, 3, 52)", action: "rgb(120, 1, 255)" },
-  { cancel: "rgb(14, 3, 52)", action: "rgb(1, 225, 255)" },
-  { cancel: "rgb(14, 3, 52)", action: "rgb(120, 1, 255)" },
-  { cancel: "rgb(14, 3, 52)", action: "rgb(1, 225, 255)" },
-];
+import { Ionicons } from '@expo/vector-icons';
+import { UserDataContext } from '../../context/UserDataContext';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatInterface = ({ route, navigation }) => {
-  const { userName, userAvatar, online, userId } = route.params;
-  const [messages, setMessages] = useState([
-    { 
-      id: 1, 
-      text: 'Hey there!', 
-      sent: false, 
-      time: '10:30 AM', 
-      type: 'text',
-      senderId: 123
-    },
-    { 
-      id: 2, 
-      text: 'Hi! How are you?', 
-      sent: true, 
-      time: '10:32 AM', 
-      type: 'text',
-      senderId: 456
-    },
-    { 
-      id: 3, 
-      text: 'Check out this strategy!', 
-      sent: false, 
-      time: '10:33 AM', 
-      type: 'image', 
-      uri: 'https://via.placeholder.com/300',
-      senderId: 123
-    },
-    { 
-      id: 4, 
-      text: 'Sounds great!', 
-      sent: true, 
-      time: '10:35 AM', 
-      type: 'text',
-      senderId: 456
-    },
-    { 
-      id: 5, 
-      text: 'Tournament_Details.pdf', 
-      sent: false, 
-      time: '10:36 AM', 
-      type: 'file', 
-      fileName: 'Tournament_Details.pdf',
-      senderId: 123
-    },
-  ]);
-  
+  const { matchId, userId, userName, userAvatar, currentUserId } = route.params;
   const [newMessage, setNewMessage] = useState('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showMediaOptions, setShowMediaOptions] = useState(false);
-  const [showImagePreview, setShowImagePreview] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showQuickMessages, setShowQuickMessages] = useState(false);
-  const [previewImage, setPreviewImage] = useState('');
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationType, setConfirmationType] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const { 
+    messages, 
+    fetchMessages, 
+    markMessagesAsRead, 
+    refreshMatches 
+  } = useContext(UserDataContext);
   const scrollViewRef = useRef();
-  
-  // Animation values
-  const mediaOptionsSlide = useRef(new Animated.Value(0)).current;
-  const mediaOptionsOpacity = useRef(new Animated.Value(0)).current;
-  const menuSlide = useRef(new Animated.Value(0)).current;
-  const menuOpacity = useRef(new Animated.Value(0)).current;
-  const quickMessagesSlide = useRef(new Animated.Value(0)).current;
-  const quickMessagesOpacity = useRef(new Animated.Value(0)).current;
-  const quickMessagesScale = useRef(new Animated.Value(0.5)).current;
-  const confirmationSlide = useRef(new Animated.Value(0)).current;
-  const confirmationOpacity = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const getAuthHeaders = async () => {
+    const authData = await AsyncStorage.getItem('@auth');
+    if (!authData) return null;
+    const { token } = JSON.parse(authData);
+    return { Authorization: `Bearer ${token}` };
+  };
 
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-        setShowMenu(false);
-        setShowMediaOptions(false);
-        setShowQuickMessages(false);
-        setShowConfirmation(false);
-        scrollToBottom();
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setKeyboardHeight(0);
-      }
-    );
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+  const formatMessage = (message) => {
+    return {
+      _id: message._id,
+      text: message.content,
+      createdAt: new Date(message.timestamp),
+      user: {
+        _id: message.sender._id || message.sender,
+        name: message.sender._id === currentUserId ? 'You' : userName,
+        avatar: message.sender._id === currentUserId ? null : userAvatar,
+      },
+      read: message.read || false
     };
-  }, []);
-
-  useEffect(() => {
-    if (showMediaOptions) {
-      Animated.parallel([
-        Animated.timing(mediaOptionsSlide, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.back(1)),
-          useNativeDriver: true
-        }),
-        Animated.timing(mediaOptionsOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(mediaOptionsSlide, {
-          toValue: 0,
-          duration: 250,
-          easing: Easing.in(Easing.back(1)),
-          useNativeDriver: true
-        }),
-        Animated.timing(mediaOptionsOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    }
-  }, [showMediaOptions]);
-
-  useEffect(() => {
-    if (showMenu) {
-      Animated.parallel([
-        Animated.timing(menuSlide, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.back(1)),
-          useNativeDriver: true
-        }),
-        Animated.timing(menuOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(menuSlide, {
-          toValue: 0,
-          duration: 250,
-          easing: Easing.in(Easing.back(1)),
-          useNativeDriver: true
-        }),
-        Animated.timing(menuOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    }
-  }, [showMenu]);
-
-  useEffect(() => {
-    if (showQuickMessages) {
-      Animated.parallel([
-        Animated.spring(quickMessagesScale, {
-          toValue: 1,
-          friction: 4,
-          useNativeDriver: true
-        }),
-        Animated.timing(quickMessagesOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.spring(quickMessagesScale, {
-          toValue: 0.5,
-          friction: 4,
-          useNativeDriver: true
-        }),
-        Animated.timing(quickMessagesOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    }
-  }, [showQuickMessages]);
-
-  useEffect(() => {
-    if (showConfirmation) {
-      Animated.parallel([
-        Animated.timing(confirmationSlide, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.back(1)),
-          useNativeDriver: true
-        }),
-        Animated.timing(confirmationOpacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(confirmationSlide, {
-          toValue: 0,
-          duration: 250,
-          easing: Easing.in(Easing.back(1)),
-          useNativeDriver: true
-        }),
-        Animated.timing(confirmationOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start();
-    }
-  }, [showConfirmation]);
-
-  const scrollToBottom = () => {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToEnd({ animated: true });
-    }
   };
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() === '') return;
-    
-    const newMsg = {
-      id: messages.length + 1,
-      text: newMessage,
-      sent: true,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: 'text',
-      senderId: userId
-    };
-    
-    setMessages([...messages, newMsg]);
-    setNewMessage('');
-    setShowEmojiPicker(false);
-    setShowQuickMessages(false);
-    
-    setTimeout(() => {
-      const replyMsg = {
-        id: messages.length + 2,
-        text: 'Thanks for your message!',
-        sent: false,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: 'text',
-        senderId: 123
-      };
-      setMessages(prev => [...prev, replyMsg]);
-    }, 1000);
-  };
-
-  const sendQuickMessage = (message) => {
-    const newMsg = {
-      id: messages.length + 1,
-      text: message,
-      sent: true,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: 'text',
-      senderId: userId
-    };
-    
-    setMessages([...messages, newMsg]);
-    setShowQuickMessages(false);
-    
-    setTimeout(() => {
-      const replyMsg = {
-        id: messages.length + 2,
-        text: 'Got it!',
-        sent: false,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: 'text',
-        senderId: 123
-      };
-      setMessages(prev => [...prev, replyMsg]);
-    }, 1000);
-  };
-
-  const handleEmojiSelect = (emoji) => {
-    setNewMessage(prev => prev + emoji);
-  };
-
-  const toggleMediaOptions = () => {
-    setShowMediaOptions(!showMediaOptions);
-    setShowEmojiPicker(false);
-    setShowMenu(false);
-    setShowQuickMessages(false);
-    setShowConfirmation(false);
-    Keyboard.dismiss();
-  };
-
-  const toggleMenu = () => {
-    setShowMenu(!showMenu);
-    setShowMediaOptions(false);
-    setShowEmojiPicker(false);
-    setShowQuickMessages(false);
-    setShowConfirmation(false);
-    Keyboard.dismiss();
-  };
-
-  const toggleQuickMessages = () => {
-    setShowQuickMessages(!showQuickMessages);
-    setShowMediaOptions(false);
-    setShowEmojiPicker(false);
-    setShowMenu(false);
-    setShowConfirmation(false);
-    Keyboard.dismiss();
-  };
-
-  const handleOutsidePress = () => {
-    setShowMenu(false);
-    setShowMediaOptions(false);
-    setShowEmojiPicker(false);
-    setShowQuickMessages(false);
-  };
-
-  const pickImage = async () => {
-    setShowMediaOptions(false);
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const newMsg = {
-        id: messages.length + 1,
-        text: '',
-        sent: true,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: 'image',
-        uri: result.assets[0].uri,
-        senderId: userId
-      };
-      setMessages([...messages, newMsg]);
-    }
-  };
-
-  const takePhoto = async () => {
-    setShowMediaOptions(false);
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const newMsg = {
-        id: messages.length + 1,
-        text: '',
-        sent: true,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: 'image',
-        uri: result.assets[0].uri,
-        senderId: userId
-      };
-      setMessages([...messages, newMsg]);
-    }
-  };
-
-  const sendFile = async () => {
-    setShowMediaOptions(false);
+  const loadMessages = async (isInitial = false) => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-      });
-      
-      if (result.type === 'success') {
-        const newMsg = {
-          id: messages.length + 1,
-          text: result.name,
-          sent: true,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          type: 'file',
-          fileName: result.name,
-          senderId: userId
-        };
-        setMessages([...messages, newMsg]);
+      if (isInitial) {
+        setIsLoading(true);
       }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to pick document');
+      await fetchMessages(matchId);
+      
+      const currentMessages = messages[matchId] || [];
+      if (currentMessages.some(msg => !msg.read && msg.sender._id !== currentUserId)) {
+        await markMessagesAsRead(matchId);
+      }
+
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      Alert.alert('Error', 'Failed to load messages');
+    } finally {
+      if (isInitial) {
+        setIsLoading(false);
+      }
     }
   };
 
-  const makeCall = () => {
-    Alert.alert('Call', `Calling ${userName}...`);
+  const sendMessage = async () => {
+    if (!newMessage.trim() || isSending) return;
+
+    try {
+      setIsSending(true);
+      const headers = await getAuthHeaders();
+      if (!headers) {
+        Alert.alert('Error', 'Authentication required');
+        return;
+      }
+
+      const messageData = {
+        content: newMessage,
+        matchId,
+        receiverId: userId,
+      };
+
+      const response = await axios.post('/userabout/send-message', messageData, { headers });
+
+      if (response.data?.success) {
+        setNewMessage('');
+        await refreshMatches();
+        await loadMessages();
+        
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      } else {
+        Alert.alert('Error', 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message');
+    } finally {
+      setIsSending(false);
+    }
   };
 
-  const makeVideoCall = () => {
-    Alert.alert('Video Call', `Starting video call with ${userName}...`);
+  const handleCallPress = () => {
+    Alert.alert('Coming Soon', 'Voice call feature will be added soon!');
   };
 
-  const navigateToProfile = (senderId) => {
-    navigation.navigate('Profile', { 
-      userId: senderId,
-      isCurrentUser: senderId === userId
+  const handleVideoPress = () => {
+    Alert.alert('Coming Soon', 'Video call feature will be added soon!');
+  };
+
+  useEffect(() => {
+    loadMessages(true);
+    const interval = setInterval(() => loadMessages(false), 5000);
+    return () => clearInterval(interval);
+  }, [matchId]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
     });
-  };
+  }, [navigation]);
 
-  const handleUnmatch = () => {
-    setShowMenu(false);
-    setConfirmationType('unmatch');
-    setShowConfirmation(true);
-  };
+  const renderMessage = ({ item }) => {
+    const isCurrentUser = item.user._id === currentUserId;
 
-  const handleDeleteConversation = () => {
-    setShowMenu(false);
-    setConfirmationType('delete');
-    setShowConfirmation(true);
-  };
-
-  const confirmAction = () => {
-    setShowConfirmation(false);
-    if (confirmationType === 'unmatch' || confirmationType === 'delete') {
-      navigation.goBack();
-    }
-  };
-
-  const cancelAction = () => {
-    setShowConfirmation(false);
-  };
-
-  const renderMessage = (message) => {
-    const isCurrentUser = message.senderId === userId;
-    
     return (
-      <View style={[
-        styles.messageContainer,
-        isCurrentUser ? styles.myMessageContainer : styles.theirMessageContainer
-      ]}>
+      <View
+        style={[
+          styles.messageContainer,
+          isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage,
+        ]}
+      >
         {!isCurrentUser && (
-          <TouchableOpacity onPress={() => navigateToProfile(message.senderId)}>
-            <Image 
-              source={userAvatar } 
-              style={styles.messageAvatar}
-            />
-          </TouchableOpacity>
+          <Image
+            source={item.user.avatar || require('../../../../assets/default-avatar.png')}
+            style={styles.avatar}
+          />
         )}
-        <View style={[
-          styles.messageContent,
-          isCurrentUser ? styles.myMessageContent : styles.theirMessageContent
-        ]}>
-          {message.type === 'image' ? (
-            <TouchableOpacity onPress={() => {
-              setPreviewImage(message.uri);
-              setShowImagePreview(true);
-            }}>
-              <Image 
-                source={ message.uri } 
-                style={styles.messageImage}
+        <View
+          style={[
+            styles.messageBubble,
+            isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
+          ]}
+        >
+          <Text style={styles.messageText}>{item.text}</Text>
+          <View style={styles.messageFooter}>
+            <Text style={styles.messageTime}>
+              {item.createdAt.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+            {isCurrentUser && (
+              <Ionicons
+                name={item.read ? 'checkmark-done' : 'checkmark'}
+                size={16}
+                color={item.read ? '#4a80f0' : '#aaa'}
+                style={styles.readIcon}
               />
-              <Text style={styles.messageTime}>{message.time}</Text>
-            </TouchableOpacity>
-          ) : message.type === 'file' ? (
-            <View style={styles.fileContainer}>
-              <MaterialIcons name="insert-drive-file" size={32} color="#fff" />
-              <Text style={styles.fileName}>{message.fileName}</Text>
-              <Text style={styles.messageTime}>{message.time}</Text>
-            </View>
-          ) : (
-            <View>
-              <Text style={styles.messageText}>{message.text}</Text>
-              <Text style={styles.messageTime}>{message.time}</Text>
-            </View>
-          )}
+            )}
+          </View>
         </View>
       </View>
     );
   };
 
-  // Animation styles
-  const mediaOptionsAnimatedStyle = {
-    transform: [{
-      translateY: mediaOptionsSlide.interpolate({
-        inputRange: [0, 1],
-        outputRange: [100, 0]
-      })
-    }],
-    opacity: mediaOptionsOpacity
-  };
-
-  const menuAnimatedStyle = {
-    transform: [{
-      translateY: menuSlide.interpolate({
-        inputRange: [0, 1],
-        outputRange: [-100, 0]
-      })
-    }],
-    opacity: menuOpacity
-  };
-
-  const quickMessagesAnimatedStyle = {
-    transform: [{
-      scale: quickMessagesScale
-    }],
-    opacity: quickMessagesOpacity
-  };
-
-  const confirmationAnimatedStyle = {
-    transform: [{
-      scale: confirmationSlide.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.8, 1]
-      })
-    }],
-    opacity: confirmationOpacity
-  };
-
-  // Random color selection for confirmation dialog
-  const colorSet = confirmationColors[Math.floor(Math.random() * confirmationColors.length)];
+  const chatMessages = (messages[matchId] || []).map(formatMessage);
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableWithoutFeedback onPress={handleOutsidePress}>
-        <View style={{ flex: 1 }}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.headerProfile}
-              onPress={() => navigateToProfile(userId)}
-            >
-              <Image source={userAvatar } style={styles.headerAvatar} />
-              <View style={styles.headerUserInfo}>
-                <Text style={styles.headerUserName}>{userName}</Text>
-                <Text style={[styles.headerUserStatus, { color: online ? 'rgb(1, 225, 255)' : '#888' }]}>
-                  {online ? 'Online' : 'Offline'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.actionButton} onPress={makeCall}>
-                <Ionicons name="call-outline" size={24} color="rgb(1, 225, 255)" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={makeVideoCall}>
-                <Ionicons name="videocam-outline" size={24} color="rgb(1, 225, 255)" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={toggleMenu}>
-                <FontAwesome name="ellipsis-v" size={20} color="rgb(1, 225, 255)" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Menu Options */}
-          {showMenu && (
-            <Animated.View 
-              style={[
-                styles.menuOptionsContainer,
-                menuAnimatedStyle,
-              ]}
-            >
-              <TouchableOpacity 
-                style={styles.menuOption}
-                onPress={handleUnmatch}
-              >
-                <Ionicons name="person-remove" size={20} color="rgb(1, 225, 255)" style={styles.menuOptionIcon} />
-                <Text style={styles.menuOptionText}>Unmatch this Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.menuOption}
-                onPress={handleDeleteConversation}
-              >
-                <Ionicons name="trash" size={20} color="rgb(1, 225, 255)" style={styles.menuOptionIcon} />
-                <Text style={styles.menuOptionText}>Delete Conversation</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          )}
-
-          {/* Confirmation Dialog Modal */}
-          {showConfirmation && (
-            <Modal transparent={true} visible={showConfirmation} animationType="fade">
-              <TouchableWithoutFeedback onPress={cancelAction}>
-                <View style={styles.confirmationOverlay}>
-                  <TouchableWithoutFeedback>
-                    <Animated.View style={[styles.confirmationContainer, confirmationAnimatedStyle]}>
-                      <Text style={styles.confirmationTitle}>
-                        {confirmationType === 'unmatch' 
-                          ? `Unmatch with ${userName}?` 
-                          : `Delete conversation with ${userName}?`
-                        }
-                      </Text>
-                      <Text style={styles.confirmationText}>
-                        {confirmationType === 'unmatch'
-                          ? "This action can't be undone and you won't be able to match with this user again."
-                          : "This will permanently delete your conversation history with this user."
-                        }
-                      </Text>
-                      <View style={styles.confirmationButtonsGrid}>
-                        <TouchableOpacity 
-                          style={[styles.confirmationButton, { backgroundColor: colorSet.cancel }]}
-                          onPress={cancelAction}
-                        >
-                          <Text style={styles.confirmationButtonText}>Cancel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                          style={[styles.confirmationButton, { backgroundColor: colorSet.action }]}
-                          onPress={confirmAction}
-                        >
-                          <Text style={styles.confirmationButtonText}>
-                            {confirmationType === 'unmatch' ? 'Unmatch' : 'Delete'}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </Animated.View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </TouchableWithoutFeedback>
-            </Modal>
-          )}
-
-          {/* Messages */}
-          <KeyboardAvoidingView
-            behavior={'height'}
-            style={styles.keyboardAvoidingView}
-            keyboardVerticalOffset={0}
-          >
-            <ScrollView 
-              ref={scrollViewRef}
-              style={styles.messagesContainer}
-              contentContainerStyle={styles.messagesContent}
-              onContentSizeChange={scrollToBottom}
-              keyboardDismissMode="interactive"
-            >
-              {messages.map((message) => (
-                <View key={message.id}>
-                  {renderMessage(message)}
-                </View>
-              ))}
-            </ScrollView>
-
-            {/* Message Input */}
-            <View style={[styles.inputContainer, { paddingBottom: keyboardHeight }]}>
-              <View style={styles.inputLeftButtons}>
-                <TouchableOpacity 
-                  style={styles.attachmentButton}
-                  onPress={toggleMediaOptions}
-                >
-                  <Ionicons 
-                    name="add" 
-                    size={28} 
-                    color={showMediaOptions ? 'rgb(1, 225, 255)' : '#888'} 
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.quickMessageButton}
-                  onPress={toggleQuickMessages}
-                >
-                  <Ionicons 
-                    name="flash" 
-                    size={24} 
-                    color={showQuickMessages ? 'rgb(1, 225, 255)' : '#888'} 
-                  />
-                </TouchableOpacity>
-              </View>
-              <TextInput
-                style={styles.messageInput}
-                placeholder="Type a message..."
-                placeholderTextColor="#888"
-                value={newMessage}
-                onChangeText={setNewMessage}
-                multiline
-              />
-              <TouchableOpacity 
-                style={styles.emojiButton}
-                onPress={() => {
-                  setShowEmojiPicker(!showEmojiPicker);
-                  setShowMediaOptions(false);
-                  setShowMenu(false);
-                  setShowQuickMessages(false);
-                  setShowConfirmation(false);
-                }}
-              >
-                <Ionicons 
-                  name="happy-outline" 
-                  size={24} 
-                  color={showEmojiPicker ? 'rgb(1, 225, 255)' : '#888'} 
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.sendButton}
-                onPress={handleSendMessage}
-                disabled={newMessage.trim() === ''}
-              >
-                <Ionicons 
-                  name="send" 
-                  size={24} 
-                  color={newMessage.trim() === '' ? '#888' : 'rgb(1, 225, 255)'} 
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Media Options */}
-            {showMediaOptions && (
-              <Animated.View 
-                style={[
-                  styles.mediaOptionsContainer,
-                  mediaOptionsAnimatedStyle,
-                  { bottom: keyboardHeight }
-                ]}
-              >
-                <View style={styles.mediaOptionsContent}>
-                  <TouchableOpacity style={styles.mediaOption} onPress={pickImage}>
-                    <View style={styles.mediaOptionIcon}>
-                      <Ionicons name="image" size={28} color="rgb(1, 225, 255)" />
-                    </View>
-                    <Text style={styles.mediaOptionText}>Photo Library</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.mediaOption} onPress={takePhoto}>
-                    <View style={styles.mediaOptionIcon}>
-                      <Ionicons name="camera" size={28} color="rgb(1, 225, 255)" />
-                    </View>
-                    <Text style={styles.mediaOptionText}>Camera</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.mediaOption} onPress={sendFile}>
-                    <View style={styles.mediaOptionIcon}>
-                      <MaterialIcons name="insert-drive-file" size={28} color="rgb(1, 225, 255)" />
-                    </View>
-                    <Text style={styles.mediaOptionText}>Document</Text>
-                  </TouchableOpacity>
-                </View>
-              </Animated.View>
-            )}
-
-            {/* Quick Messages */}
-            {showQuickMessages && (
-              <Animated.View 
-                style={[
-                  styles.quickMessagesContainer,
-                  quickMessagesAnimatedStyle,
-                  { bottom: keyboardHeight+60 }
-                ]}
-              >
-                <View style={styles.quickMessagesGrid}>
-                  {quickMessages.map((msg, index) => (
-                    <TouchableOpacity 
-                      key={index} 
-                      style={[styles.quickMessageButton, { backgroundColor: msg.color }]}
-                      onPress={() => sendQuickMessage(msg.text)}
-                    >
-                      <Ionicons name={msg.icon} size={20} color="#fff" style={styles.quickMessageIcon} />
-                      <Text style={styles.quickMessageText}>{msg.text}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </Animated.View>
-            )}
-
-            {/* Emoji Picker */}
-            {showEmojiPicker && (
-              <View style={[styles.emojiPickerContainer, { bottom: keyboardHeight + 60 }]}>
-                <ScrollView 
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.emojiPickerContent}
-                >
-                  {emojis.map((emoji, index) => (
-                    <TouchableOpacity 
-                      key={index} 
-                      style={styles.emojiButton}
-                      onPress={() => {
-                        handleEmojiSelect(emoji);
-                        setShowEmojiPicker(false);
-                      }}
-                    >
-                      <Text style={styles.emoji}>{emoji}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Image Preview Modal */}
-            <Modal
-              transparent={true}
-              visible={showImagePreview}
-              onRequestClose={() => setShowImagePreview(false)}
-            >
-              <TouchableWithoutFeedback onPress={() => setShowImagePreview(false)}>
-                <ImageBackground 
-                  source={ previewImage } 
-                  style={styles.imagePreviewContainer}
-                  resizeMode="contain"
-                >
-                  <View style={styles.imagePreviewClose}>
-                    <Ionicons name="close" size={30} color="#fff" />
-                  </View>
-                </ImageBackground>
-              </TouchableWithoutFeedback>
-            </Modal>
-          </KeyboardAvoidingView>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Image 
+            source={userAvatar || require('../../../../assets/default-avatar.png')} 
+            style={styles.headerAvatar}
+          />
+          <Text style={styles.headerTitle}>{userName}</Text>
         </View>
-      </TouchableWithoutFeedback>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={handleCallPress}>
+            <Ionicons name="call" size={24} color="#fff" style={styles.icon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleVideoPress}>
+            <Ionicons name="videocam" size={24} color="#fff" style={styles.icon} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={90}
+      >
+        <ScrollView
+          contentContainerStyle={styles.messagesContainer}
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        >
+          {isLoading && (
+            <View style={styles.subtleLoadingContainer}>
+              <ActivityIndicator size="small" color="#4a80f0" />
+            </View>
+          )}
+          {chatMessages.length > 0 ? (
+            chatMessages.map((message, index) => (
+              <View key={`message-${message._id || index}`}>
+                {renderMessage({ item: message })}
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No messages yet</Text>
+              <Text style={styles.emptySubText}>Start the conversation!</Text>
+            </View>
+          )}
+        </ScrollView>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type a message..."
+            placeholderTextColor="#888"
+            value={newMessage}
+            onChangeText={setNewMessage}
+            multiline
+            editable={!isSending}
+          />
+          <TouchableOpacity 
+            style={styles.sendButton} 
+            onPress={sendMessage}
+            disabled={isSending}
+          >
+            {isSending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="send" size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -863,327 +265,147 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: 'rgb(14, 3, 52)',
-    backgroundColor: 'rgb(14, 3, 52)',
+    backgroundColor: 'rgb(1, 12, 20)',
   },
-  backButton: {
-    marginRight: 10,
-  },
-  headerProfile: {
+  headerCenter: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  headerUserInfo: {
-    flex: 1,
-  },
-  headerUserName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  headerUserStatus: {
-    fontSize: 12,
-    color: '#888',
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  actionButton: {
-    padding: 8,
     marginLeft: 10,
   },
-  menuOptionsContainer: {
-    position: 'absolute',
-    top: 70,
-    right: 15,
-    backgroundColor: 'rgb(1, 12, 20)',
-    borderRadius: 10,
-    paddingVertical: 5,
-    zIndex: 100,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    borderWidth: 1,
-    borderColor: 'rgb(14, 3, 52)',
-  },
-  menuOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  menuOptionIcon: {
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     marginRight: 10,
   },
-  menuOptionText: {
+  headerTitle: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerIcons: {
+    flexDirection: 'row',
+  },
+  icon: {
+    marginLeft: 15,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   messagesContainer: {
-    flex: 1,
-    paddingHorizontal: 15,
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  messagesContent: {
-    paddingBottom: '2%',
+    padding: 15,
+    paddingBottom: 80,
   },
   messageContainer: {
     flexDirection: 'row',
-    marginVertical: 8,
+    marginBottom: 15,
     alignItems: 'flex-end',
+    paddingHorizontal: 10,
   },
-  myMessageContainer: {
+  currentUserMessage: {
     justifyContent: 'flex-end',
   },
-  theirMessageContainer: {
+  otherUserMessage: {
     justifyContent: 'flex-start',
   },
-  messageAvatar: {
+  avatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
     marginRight: 8,
   },
-  messageContent: {
-    maxWidth: '80%',
-    padding: 12,
-    borderRadius: 16,
+  messageBubble: {
+    maxWidth: '75%',
+    padding: 10,
+    borderRadius: 18,
+    backgroundColor: '#fff',
   },
-  myMessageContent: {
-    backgroundColor: 'rgb(120, 1, 255)',
-    borderBottomRightRadius: 0,
+  currentUserBubble: {
+    backgroundColor: '#4a80f0',
+    borderBottomRightRadius: 6,
+    marginLeft: 10,
   },
-  theirMessageContent: {
-    backgroundColor: 'rgb(14, 3, 52)',
-    borderBottomLeftRadius: 2,
+  otherUserBubble: {
+    backgroundColor: '#333',
+    borderBottomLeftRadius: 6,
+    marginRight: 10,
   },
   messageText: {
     color: '#fff',
     fontSize: 16,
-  },
-  messageTime: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 10,
-    marginTop: 5,
-    alignSelf: 'flex-end',
-  },
-  messageImage: {
-    width: 200,
-    height: 150,
-    borderRadius: 10,
-  },
-  fileContainer: {
-    alignItems: 'center',
-  },
-  fileName: {
-    color: '#fff',
-    fontSize: 14,
-    marginTop: 5,
-    marginBottom: 10,
-  },
-  mediaOptionsContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgb(1, 12, 20)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgb(14, 3, 52)',
-  },
-  mediaOptionsContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  mediaOption: {
-    alignItems: 'center',
-    width: 80,
-  },
-  mediaOptionIcon: {
-    backgroundColor: 'rgb(14, 3, 52)',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  mediaOptionText: {
-    color: '#fff',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  quickMessagesContainer: {
-    position: 'absolute',
-    left: 15,
-    right: 15,
-    backgroundColor: 'rgb(1, 12, 20)',
-    borderRadius: 20,
-    padding: 15,
-    zIndex: 10,
-    borderWidth: 1,
-    borderColor: 'rgb(14, 3, 52)',
-  },
-  quickMessagesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  quickMessageButton: {
-    width: '48%',
-    padding: 12,
-    borderRadius: 50,
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickMessageIcon: {
-    marginRight: 8,
-  },
-  quickMessageText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  confirmationOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  confirmationContainer: {
-    backgroundColor: 'rgb(1, 12, 20)',
-    borderRadius: 20,
-    padding: 25,
-    width: '85%',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgb(14, 3, 52)',
-  },
-  confirmationTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  confirmationText: {
-    color: '#aaa',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 20,
     lineHeight: 20,
   },
-  confirmationButtonsGrid: {
+  messageFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  confirmationButton: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    marginHorizontal: 5,
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 4,
   },
-  confirmationButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  messageTime: {
+    color: '#ccc',
+    fontSize: 11,
+    marginRight: 5,
   },
-  imagePreviewContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imagePreviewClose: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    padding: 10,
-  },
-  emojiPickerContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 50,
-    backgroundColor: 'rgb(1, 12, 20)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgb(14, 3, 52)',
-  },
-  emojiPickerContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  emojiButton: {
-    padding: 8,
-  },
-  emoji: {
-    fontSize: 24,
+  readIcon: {
+    marginLeft: 5,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: 'rgb(14, 3, 52)',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgb(1, 12, 20)',
-  },
-  inputLeftButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  attachmentButton: {
-    padding: 8,
-    marginRight: 5,
-  },
-  quickMessageButton: {
-    padding: 8,
-  },
-  messageInput: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 120,
+    borderTopColor: 'rgb(14, 3, 52)',
     backgroundColor: 'rgb(1, 12, 20)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: 'rgb(14, 3, 52)',
+    color: '#fff',
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    color: '#fff',
-    fontSize: 16,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: 'rgb(14, 3, 52)',
-  },
-  emojiButton: {
-    padding: 6,
+    maxHeight: 100,
+    marginRight: 10,
   },
   sendButton: {
-    padding: 8,
-    marginLeft: 5,
+    backgroundColor: '#4a80f0',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+  },
+  emptyText: {
+    color: '#fff',
+    fontSize: 18,
+    marginTop: 20,
+  },
+  emptySubText: {
+    color: '#aaa',
+    fontSize: 14,
+    marginTop: 10,
+  },
+  subtleLoadingContainer: {
+    padding: 10,
+    alignItems: 'center',
   },
 });
 
