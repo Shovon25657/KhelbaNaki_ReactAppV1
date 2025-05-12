@@ -19,7 +19,6 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatInterface = ({ route, navigation }) => {
-  // Destructure params with fallbacks
   const {
     matchId = '',
     userId = '',
@@ -28,14 +27,10 @@ const ChatInterface = ({ route, navigation }) => {
     currentUserId = ''
   } = route.params || {};
 
-  // Debug log to inspect params
-  useEffect(() => {
-    console.log('ChatInterface route.params:', route.params);
-  }, []);
-
   const [newMessage, setNewMessage] = useState('');
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [localMessages, setLocalMessages] = useState([]);
   const { 
     messages, 
     fetchMessages, 
@@ -43,6 +38,19 @@ const ChatInterface = ({ route, navigation }) => {
     refreshMatches 
   } = useContext(UserDataContext);
   const scrollViewRef = useRef();
+  const syncRef = useRef(null);
+
+  // Throttle function to limit sync frequency
+  const throttle = (func, limit) => {
+    let inThrottle;
+    return (...args) => {
+      if (!inThrottle) {
+        func(...args);
+        inThrottle = true;
+        setTimeout(() => (inThrottle = false), limit);
+      }
+    };
+  };
 
   const getAuthHeaders = async () => {
     const authData = await AsyncStorage.getItem('@auth');
@@ -78,8 +86,16 @@ const ChatInterface = ({ route, navigation }) => {
       await fetchMessages(matchId);
       
       const currentMessages = messages[matchId] || [];
+      setLocalMessages(currentMessages.map(formatMessage));
+
+      // Mark messages as read if they're not from current user
       if (currentMessages.some(msg => !msg.read && msg.sender._id !== currentUserId)) {
         await markMessagesAsRead(matchId);
+        // Optimistically update local messages
+        setLocalMessages(prev => prev.map(msg => ({
+          ...msg,
+          read: true
+        })));
       }
 
       setTimeout(() => {
@@ -87,7 +103,9 @@ const ChatInterface = ({ route, navigation }) => {
       }, 100);
     } catch (error) {
       console.error('Error loading messages:', error);
-      Alert.alert('Error', 'Failed to load messages');
+      if (isInitial) {
+        Alert.alert('Error', 'Failed to load messages');
+      }
     } finally {
       if (isInitial) {
         setIsInitialLoading(false);
@@ -112,21 +130,39 @@ const ChatInterface = ({ route, navigation }) => {
         receiverId: userId,
       };
 
+      // Optimistic update
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage = {
+        _id: tempId,
+        text: newMessage,
+        createdAt: new Date(),
+        user: {
+          _id: currentUserId,
+          name: 'You',
+          avatar: null
+        },
+        read: false
+      };
+      
+      setLocalMessages(prev => [...prev, optimisticMessage]);
+      setNewMessage('');
+      
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+
       const response = await axios.post('/userabout/send-message', messageData, { headers });
 
       if (response.data?.success) {
-        setNewMessage('');
         await refreshMatches();
         await loadMessages();
-
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
       } else {
+        // Revert optimistic update on failure
+        setLocalMessages(prev => prev.filter(msg => msg._id !== tempId));
         Alert.alert('Error', 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Revert optimistic update
+      setLocalMessages(prev => prev.filter(msg => msg._id !== tempId));
       Alert.alert('Error', 'Failed to send message');
     } finally {
       setIsSending(false);
@@ -136,9 +172,16 @@ const ChatInterface = ({ route, navigation }) => {
   useEffect(() => {
     loadMessages(true);
     
-    const interval = setInterval(() => loadMessages(false), 5000);
+    // Background sync every 5 seconds
+    syncRef.current = setInterval(() => {
+      throttle(loadMessages, 5000)(false);
+    }, 5000);
     
-    return () => clearInterval(interval);
+    return () => {
+      if (syncRef.current) {
+        clearInterval(syncRef.current);
+      }
+    };
   }, [matchId]);
 
   useEffect(() => {
@@ -192,8 +235,6 @@ const ChatInterface = ({ route, navigation }) => {
     );
   };
 
-  const chatMessages = (messages[matchId] || []).map(formatMessage);
-
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -211,8 +252,8 @@ const ChatInterface = ({ route, navigation }) => {
               <ActivityIndicator size="small" color="#4a80f0" />
             </View>
           )}
-          {chatMessages.length > 0 ? (
-            chatMessages.map((message, index) => (
+          {localMessages.length > 0 ? (
+            localMessages.map((message, index) => (
               <View key={`message-${message._id || index}`}>
                 {renderMessage({ item: message })}
               </View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -28,24 +28,34 @@ const Chat = ({ navigation }) => {
     currentUserId 
   } = useContext(UserDataContext);
   const [localChats, setLocalChats] = useState([]);
+  const syncRef = useRef(null);
+
+  // Throttle function to limit sync frequency
+  const throttle = (func, limit) => {
+    let inThrottle;
+    return (...args) => {
+      if (!inThrottle) {
+        func(...args);
+        inThrottle = true;
+        setTimeout(() => (inThrottle = false), limit);
+      }
+    };
+  };
 
   const fetchMatches = async (isInitial = false) => {
     try {
       if (isInitial) {
         setIsInitialLoading(true);
-      } else if (!isInitial && !isRefreshing) {
-        setIsRefreshing(true);
       }
       await refreshMatches();
     } catch (error) {
       console.error('Matches fetch error:', error);
-      Alert.alert('Error', 'Failed to load matches');
+      if (isInitial) {
+        Alert.alert('Error', 'Failed to load matches');
+      }
     } finally {
       if (isInitial) {
         setIsInitialLoading(false);
-      }
-      if (isRefreshing) {
-        setIsRefreshing(false);
       }
     }
   };
@@ -53,9 +63,16 @@ const Chat = ({ navigation }) => {
   useEffect(() => {
     fetchMatches(true);
 
-    const interval = setInterval(() => fetchMatches(false), 10000);
+    // Background sync every 10 seconds
+    syncRef.current = setInterval(() => {
+      throttle(fetchMatches, 10000)(false);
+    }, 10000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (syncRef.current) {
+        clearInterval(syncRef.current);
+      }
+    };
   }, []);
 
   const formatTime = (timestamp) => {
@@ -71,11 +88,17 @@ const Chat = ({ navigation }) => {
   };
 
   const handleRefresh = async () => {
-    await fetchMatches(false);
+    try {
+      setIsRefreshing(true);
+      await refreshMatches();
+    } catch (error) {
+      console.error('Refresh error:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
-    console.log('Matches:', matches);
     if (matches && matches.length > 0) {
       const formattedChats = matches.map((match, index) => ({
         id: match.matchId || `temp-${index}`,
@@ -84,42 +107,41 @@ const Chat = ({ navigation }) => {
         lastMessage: match.lastMessage || 'Start the conversation!',
         time: formatTime(match.lastMessageAt || match.matchedAt),
         avatar: match.avatar ? { uri: match.avatar } : require('../../../../assets/default-avatar.png'),
-        unread: match.lastMessageAt && new Date(match.lastMessageAt) > new Date(match.matchedAt)
+        unread: match.lastMessageAt && 
+                new Date(match.lastMessageAt) > new Date(match.matchedAt) && 
+                !match.read
       }));
       setLocalChats(formattedChats);
     } else {
       setLocalChats([]);
     }
-  }, [matches, unseenMatches]);
+  }, [matches]);
 
   const filteredChats = localChats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleChatPress = (chat) => {
-    // Debug log to inspect navigation params
-    console.log('Navigating to ChatInterface with params:', {
-      matchId: chat.id,
-      userId: chat.userId,
-      userName: chat.name,
-      userAvatar: chat.avatar,
-      currentUserId,
-    });
+  const handleChatPress = async (chat) => {
+    try {
+      // Optimistic update
+      setLocalChats(prev => prev.map(c => 
+        c.id === chat.id ? { ...c, unread: false } : c
+      ));
+      
+      if (chat.unread && setUnseenMatches) {
+        setUnseenMatches(prev => Math.max(0, prev - 1));
+      }
 
-    setLocalChats(prev => prev.map(c => 
-      c.id === chat.id ? { ...c, unread: false } : c
-    ));
-    if (chat.unread && setUnseenMatches) {
-      setUnseenMatches(prev => Math.max(0, prev - 1));
+      navigation.navigate('ChatInterface', { 
+        matchId: chat.id,
+        userId: chat.userId,
+        userName: chat.name,
+        userAvatar: chat.avatar,
+        currentUserId,
+      });
+    } catch (error) {
+      console.error('Navigation error:', error);
     }
-
-    navigation.navigate('ChatInterface', { 
-      matchId: chat.id,
-      userId: chat.userId,
-      userName: chat.name,
-      userAvatar: chat.avatar,
-      currentUserId,
-    });
   };
 
   return (
