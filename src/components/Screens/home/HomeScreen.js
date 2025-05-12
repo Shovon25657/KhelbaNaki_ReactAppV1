@@ -27,7 +27,7 @@ import ActionButtons from '../../Screens/home/common/ActionButtons';
 import SlideInMenu from '../../Screens/home/common/SlideInMenu';
 import ConfirmationModal from '../../Screens/home/common/ConfirmationModal';
 import Header from '../../Screens/home/common/Header';
-import CustomAlert from '../../common/CustomAlert'; // Import CustomAlert
+import CustomAlert from '../../common/Alart'; // Import CustomAlert
 
 const { width, height } = Dimensions.get('window');
 
