@@ -34,7 +34,6 @@ const Chat = ({ navigation }) => {
       if (isInitial) {
         setIsInitialLoading(true);
       } else if (!isInitial && !isRefreshing) {
-        // Only set isRefreshing for user-initiated refreshes
         setIsRefreshing(true);
       }
       await refreshMatches();
@@ -52,10 +51,9 @@ const Chat = ({ navigation }) => {
   };
 
   useEffect(() => {
-    fetchMatches(true); // Initial fetch with subtle loading indicator
+    fetchMatches(true);
 
-    // Set up polling for background fetches
-    const interval = setInterval(() => fetchMatches(false), 10000); // Every 10 seconds
+    const interval = setInterval(() => fetchMatches(false), 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -73,7 +71,7 @@ const Chat = ({ navigation }) => {
   };
 
   const handleRefresh = async () => {
-    await fetchMatches(false); // User-initiated refresh
+    await fetchMatches(false);
   };
 
   useEffect(() => {
@@ -99,6 +97,15 @@ const Chat = ({ navigation }) => {
   );
 
   const handleChatPress = (chat) => {
+    // Debug log to inspect navigation params
+    console.log('Navigating to ChatInterface with params:', {
+      matchId: chat.id,
+      userId: chat.userId,
+      userName: chat.name,
+      userAvatar: chat.avatar,
+      currentUserId,
+    });
+
     setLocalChats(prev => prev.map(c => 
       c.id === chat.id ? { ...c, unread: false } : c
     ));
@@ -108,7 +115,7 @@ const Chat = ({ navigation }) => {
 
     navigation.navigate('ChatInterface', { 
       matchId: chat.id,
-      userId: match.userId,
+      userId: chat.userId,
       userName: chat.name,
       userAvatar: chat.avatar,
       currentUserId,

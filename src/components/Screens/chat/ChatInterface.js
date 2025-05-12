@@ -19,9 +19,22 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatInterface = ({ route, navigation }) => {
-  const { matchId, userId, userName, userAvatar, currentUserId } = route.params;
+  // Destructure params with fallbacks
+  const {
+    matchId = '',
+    userId = '',
+    userName = 'Unknown',
+    userAvatar = null,
+    currentUserId = ''
+  } = route.params || {};
+
+  // Debug log to inspect params
+  useEffect(() => {
+    console.log('ChatInterface route.params:', route.params);
+  }, []);
+
   const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Only for initial fetch
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const { 
     messages, 
@@ -53,19 +66,22 @@ const ChatInterface = ({ route, navigation }) => {
   };
 
   const loadMessages = async (isInitial = false) => {
+    if (!matchId) {
+      Alert.alert('Error', 'Invalid match ID');
+      return;
+    }
+
     try {
       if (isInitial) {
-        setIsLoading(true);
+        setIsInitialLoading(true);
       }
       await fetchMessages(matchId);
       
-      // Mark messages as read for messages not sent by the current user
       const currentMessages = messages[matchId] || [];
       if (currentMessages.some(msg => !msg.read && msg.sender._id !== currentUserId)) {
         await markMessagesAsRead(matchId);
       }
 
-      // Scroll to the bottom after loading messages
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -74,7 +90,7 @@ const ChatInterface = ({ route, navigation }) => {
       Alert.alert('Error', 'Failed to load messages');
     } finally {
       if (isInitial) {
-        setIsLoading(false);
+        setIsInitialLoading(false);
       }
     }
   };
@@ -101,9 +117,8 @@ const ChatInterface = ({ route, navigation }) => {
       if (response.data?.success) {
         setNewMessage('');
         await refreshMatches();
-        await loadMessages(); // Refresh messages after sending
-        
-        // Scroll to bottom after sending message
+        await loadMessages();
+
         setTimeout(() => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 100);
@@ -119,10 +134,9 @@ const ChatInterface = ({ route, navigation }) => {
   };
 
   useEffect(() => {
-    loadMessages(true); // Initial fetch with loading indicator
+    loadMessages(true);
     
-    // Set up polling for new messages
-    const interval = setInterval(() => loadMessages(false), 5000); // Background fetch
+    const interval = setInterval(() => loadMessages(false), 5000);
     
     return () => clearInterval(interval);
   }, [matchId]);
@@ -192,7 +206,7 @@ const ChatInterface = ({ route, navigation }) => {
           ref={scrollViewRef}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {isLoading && (
+          {isInitialLoading && (
             <View style={styles.subtleLoadingContainer}>
               <ActivityIndicator size="small" color="#4a80f0" />
             </View>
