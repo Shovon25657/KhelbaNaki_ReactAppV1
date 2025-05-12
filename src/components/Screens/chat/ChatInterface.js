@@ -137,35 +137,39 @@ const ChatInterface = ({ route, navigation }) => {
 
   const renderMessage = ({ item }) => {
     const isCurrentUser = item.user._id === currentUserId;
-    
+
     return (
-      <View style={[
-        styles.messageContainer,
-        isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage
-      ]}>
+      <View
+        style={[
+          styles.messageContainer,
+          isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage,
+        ]}
+      >
         {!isCurrentUser && (
           <Image
             source={item.user.avatar || require('../../../../assets/default-avatar.png')}
             style={styles.avatar}
           />
         )}
-        <View style={[
-          styles.messageBubble,
-          isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble
-        ]}>
-          {!isCurrentUser && (
-            <Text style={styles.senderName}>{item.user.name}</Text>
-          )}
+        <View
+          style={[
+            styles.messageBubble,
+            isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
+          ]}
+        >
           <Text style={styles.messageText}>{item.text}</Text>
           <View style={styles.messageFooter}>
             <Text style={styles.messageTime}>
-              {item.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {item.createdAt.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </Text>
             {isCurrentUser && (
-              <Ionicons 
-                name={item.read ? "checkmark-done" : "checkmark"} 
-                size={16} 
-                color={item.read ? "#4a80f0" : "#aaa"} 
+              <Ionicons
+                name={item.read ? 'checkmark-done' : 'checkmark'}
+                size={16}
+                color={item.read ? '#4a80f0' : '#aaa'}
                 style={styles.readIcon}
               />
             )}
@@ -301,8 +305,9 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 15,
     alignItems: 'flex-end',
+    paddingHorizontal: 10,
   },
   currentUserMessage: {
     justifyContent: 'flex-end',
@@ -311,44 +316,41 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     marginRight: 8,
   },
   messageBubble: {
-    maxWidth: '70%',
-    padding: 12,
+    maxWidth: '75%',
+    padding: 10,
     borderRadius: 18,
-    marginBottom: 5,
+    backgroundColor: '#fff',
   },
   currentUserBubble: {
     backgroundColor: '#4a80f0',
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
+    marginLeft: 10,
   },
   otherUserBubble: {
-    backgroundColor: 'rgb(30, 30, 60)',
-    borderBottomLeftRadius: 4,
-  },
-  senderName: {
-    color: '#aaa',
-    fontSize: 12,
-    marginBottom: 4,
-    fontWeight: '600',
+    backgroundColor: '#333',
+    borderBottomLeftRadius: 6,
+    marginRight: 10,
   },
   messageText: {
     color: '#fff',
     fontSize: 16,
+    lineHeight: 20,
   },
   messageFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: 4,
   },
   messageTime: {
-    color: '#aaa',
-    fontSize: 12,
+    color: '#ccc',
+    fontSize: 11,
     marginRight: 5,
   },
   readIcon: {
