@@ -19,18 +19,10 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatInterface = ({ route, navigation }) => {
-  const {
-    matchId = '',
-    userId = '',
-    userName = 'Unknown',
-    userAvatar = null,
-    currentUserId = ''
-  } = route.params || {};
-
+  const { matchId, userId, userName, userAvatar, currentUserId } = route.params;
   const [newMessage, setNewMessage] = useState('');
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [localMessages, setLocalMessages] = useState([]);
   const { 
     messages, 
     fetchMessages, 
@@ -38,19 +30,6 @@ const ChatInterface = ({ route, navigation }) => {
     refreshMatches 
   } = useContext(UserDataContext);
   const scrollViewRef = useRef();
-  const syncRef = useRef(null);
-
-  // Throttle function to limit sync frequency
-  const throttle = (func, limit) => {
-    let inThrottle;
-    return (...args) => {
-      if (!inThrottle) {
-        func(...args);
-        inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
-      }
-    };
-  };
 
   const getAuthHeaders = async () => {
     const authData = await AsyncStorage.getItem('@auth');
@@ -74,28 +53,15 @@ const ChatInterface = ({ route, navigation }) => {
   };
 
   const loadMessages = async (isInitial = false) => {
-    if (!matchId) {
-      Alert.alert('Error', 'Invalid match ID');
-      return;
-    }
-
     try {
       if (isInitial) {
-        setIsInitialLoading(true);
+        setIsLoading(true);
       }
       await fetchMessages(matchId);
       
       const currentMessages = messages[matchId] || [];
-      setLocalMessages(currentMessages.map(formatMessage));
-
-      // Mark messages as read if they're not from current user
       if (currentMessages.some(msg => !msg.read && msg.sender._id !== currentUserId)) {
         await markMessagesAsRead(matchId);
-        // Optimistically update local messages
-        setLocalMessages(prev => prev.map(msg => ({
-          ...msg,
-          read: true
-        })));
       }
 
       setTimeout(() => {
@@ -103,12 +69,10 @@ const ChatInterface = ({ route, navigation }) => {
       }, 100);
     } catch (error) {
       console.error('Error loading messages:', error);
-      if (isInitial) {
-        Alert.alert('Error', 'Failed to load messages');
-      }
+      Alert.alert('Error', 'Failed to load messages');
     } finally {
       if (isInitial) {
-        setIsInitialLoading(false);
+        setIsLoading(false);
       }
     }
   };
@@ -130,73 +94,46 @@ const ChatInterface = ({ route, navigation }) => {
         receiverId: userId,
       };
 
-      // Optimistic update
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage = {
-        _id: tempId,
-        text: newMessage,
-        createdAt: new Date(),
-        user: {
-          _id: currentUserId,
-          name: 'You',
-          avatar: null
-        },
-        read: false
-      };
-      
-      setLocalMessages(prev => [...prev, optimisticMessage]);
-      setNewMessage('');
-      
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-
       const response = await axios.post('/userabout/send-message', messageData, { headers });
 
       if (response.data?.success) {
+        setNewMessage('');
         await refreshMatches();
         await loadMessages();
+        
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
       } else {
-        // Revert optimistic update on failure
-        setLocalMessages(prev => prev.filter(msg => msg._id !== tempId));
         Alert.alert('Error', 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      // Revert optimistic update
-      setLocalMessages(prev => prev.filter(msg => msg._id !== tempId));
       Alert.alert('Error', 'Failed to send message');
     } finally {
       setIsSending(false);
     }
   };
 
+  const handleCallPress = () => {
+    Alert.alert('Coming Soon', 'Voice call feature will be added soon!');
+  };
+
+  const handleVideoPress = () => {
+    Alert.alert('Coming Soon', 'Video call feature will be added soon!');
+  };
+
   useEffect(() => {
     loadMessages(true);
-    
-    // Background sync every 5 seconds
-    syncRef.current = setInterval(() => {
-      throttle(loadMessages, 5000)(false);
-    }, 5000);
-    
-    return () => {
-      if (syncRef.current) {
-        clearInterval(syncRef.current);
-      }
-    };
+    const interval = setInterval(() => loadMessages(false), 5000);
+    return () => clearInterval(interval);
   }, [matchId]);
 
   useEffect(() => {
     navigation.setOptions({
-      title: userName,
-      headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('UserProfile', { userId })}>
-          <Image 
-            source={userAvatar || require('../../../../assets/default-avatar.png')} 
-            style={{ width: 40, height: 40, borderRadius: 20 }}
-          />
-        </TouchableOpacity>
-      ),
+      headerShown: false,
     });
-  }, [navigation, userName, userAvatar]);
+  }, [navigation]);
 
   const renderMessage = ({ item }) => {
     const isCurrentUser = item.user._id === currentUserId;
@@ -216,6 +153,9 @@ const ChatInterface = ({ route, navigation }) => {
           styles.messageBubble,
           isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble
         ]}>
+          {!isCurrentUser && (
+            <Text style={styles.senderName}>{item.user.name}</Text>
+          )}
           <Text style={styles.messageText}>{item.text}</Text>
           <View style={styles.messageFooter}>
             <Text style={styles.messageTime}>
@@ -235,8 +175,31 @@ const ChatInterface = ({ route, navigation }) => {
     );
   };
 
+  const chatMessages = (messages[matchId] || []).map(formatMessage);
+
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Image 
+            source={userAvatar || require('../../../../assets/default-avatar.png')} 
+            style={styles.headerAvatar}
+          />
+          <Text style={styles.headerTitle}>{userName}</Text>
+        </View>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={handleCallPress}>
+            <Ionicons name="call" size={24} color="#fff" style={styles.icon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleVideoPress}>
+            <Ionicons name="videocam" size={24} color="#fff" style={styles.icon} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -247,13 +210,13 @@ const ChatInterface = ({ route, navigation }) => {
           ref={scrollViewRef}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {isInitialLoading && (
+          {isLoading && (
             <View style={styles.subtleLoadingContainer}>
               <ActivityIndicator size="small" color="#4a80f0" />
             </View>
           )}
-          {localMessages.length > 0 ? (
-            localMessages.map((message, index) => (
+          {chatMessages.length > 0 ? (
+            chatMessages.map((message, index) => (
               <View key={`message-${message._id || index}`}>
                 {renderMessage({ item: message })}
               </View>
@@ -298,6 +261,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgb(14, 3, 52)',
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
+  headerCenter: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerIcons: {
+    flexDirection: 'row',
+  },
+  icon: {
+    marginLeft: 15,
+  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -307,7 +301,7 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginBottom: 10,
     alignItems: 'flex-end',
   },
   currentUserMessage: {
@@ -329,12 +323,18 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   currentUserBubble: {
-    backgroundColor: 'rgb(14, 3, 52)',
-    borderBottomRightRadius: 2,
+    backgroundColor: '#4a80f0',
+    borderBottomRightRadius: 4,
   },
   otherUserBubble: {
     backgroundColor: 'rgb(30, 30, 60)',
-    borderBottomLeftRadius: 2,
+    borderBottomLeftRadius: 4,
+  },
+  senderName: {
+    color: '#aaa',
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: '600',
   },
   messageText: {
     color: '#fff',
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   sendButton: {
-    backgroundColor: 'rgb(14, 3, 52)',
+    backgroundColor: '#4a80f0',
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   emptySubText: {
-    color: '#888',
+    color: '#aaa',
     fontSize: 14,
     marginTop: 10,
   },
