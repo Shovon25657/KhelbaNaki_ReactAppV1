@@ -21,7 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ChatInterface = ({ route, navigation }) => {
   const { matchId, userId, userName, userAvatar, currentUserId } = route.params;
   const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Only for initial fetch
+  const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const { 
     messages, 
@@ -59,13 +59,11 @@ const ChatInterface = ({ route, navigation }) => {
       }
       await fetchMessages(matchId);
       
-      // Mark messages as read for messages not sent by the current user
       const currentMessages = messages[matchId] || [];
       if (currentMessages.some(msg => !msg.read && msg.sender._id !== currentUserId)) {
         await markMessagesAsRead(matchId);
       }
 
-      // Scroll to the bottom after loading messages
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -101,9 +99,8 @@ const ChatInterface = ({ route, navigation }) => {
       if (response.data?.success) {
         setNewMessage('');
         await refreshMatches();
-        await loadMessages(); // Refresh messages after sending
+        await loadMessages();
         
-        // Scroll to bottom after sending message
         setTimeout(() => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 100);
@@ -118,28 +115,25 @@ const ChatInterface = ({ route, navigation }) => {
     }
   };
 
+  const handleCallPress = () => {
+    Alert.alert('Coming Soon', 'Voice call feature will be added soon!');
+  };
+
+  const handleVideoPress = () => {
+    Alert.alert('Coming Soon', 'Video call feature will be added soon!');
+  };
+
   useEffect(() => {
-    loadMessages(true); // Initial fetch with loading indicator
-    
-    // Set up polling for new messages
-    const interval = setInterval(() => loadMessages(false), 5000); // Background fetch
-    
+    loadMessages(true);
+    const interval = setInterval(() => loadMessages(false), 5000);
     return () => clearInterval(interval);
   }, [matchId]);
 
   useEffect(() => {
     navigation.setOptions({
-      title: userName,
-      headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('UserProfile', { userId })}>
-          <Image 
-            source={userAvatar || require('../../../../assets/default-avatar.png')} 
-            style={{ width: 40, height: 40, borderRadius: 20 }}
-          />
-        </TouchableOpacity>
-      ),
+      headerShown: false,
     });
-  }, [navigation, userName, userAvatar]);
+  }, [navigation]);
 
   const renderMessage = ({ item }) => {
     const isCurrentUser = item.user._id === currentUserId;
@@ -159,6 +153,9 @@ const ChatInterface = ({ route, navigation }) => {
           styles.messageBubble,
           isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble
         ]}>
+          {!isCurrentUser && (
+            <Text style={styles.senderName}>{item.user.name}</Text>
+          )}
           <Text style={styles.messageText}>{item.text}</Text>
           <View style={styles.messageFooter}>
             <Text style={styles.messageTime}>
@@ -182,6 +179,27 @@ const ChatInterface = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Image 
+            source={userAvatar || require('../../../../assets/default-avatar.png')} 
+            style={styles.headerAvatar}
+          />
+          <Text style={styles.headerTitle}>{userName}</Text>
+        </View>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={handleCallPress}>
+            <Ionicons name="call" size={24} color="#fff" style={styles.icon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleVideoPress}>
+            <Ionicons name="videocam" size={24} color="#fff" style={styles.icon} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -243,6 +261,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(1, 12, 20)',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgb(14, 3, 52)',
+    backgroundColor: 'rgb(1, 12, 20)',
+  },
+  headerCenter: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerIcons: {
+    flexDirection: 'row',
+  },
+  icon: {
+    marginLeft: 15,
+  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -252,7 +301,7 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginBottom: 10,
     alignItems: 'flex-end',
   },
   currentUserMessage: {
@@ -274,12 +323,18 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   currentUserBubble: {
-    backgroundColor: 'rgb(14, 3, 52)',
-    borderBottomRightRadius: 2,
+    backgroundColor: '#4a80f0',
+    borderBottomRightRadius: 4,
   },
   otherUserBubble: {
     backgroundColor: 'rgb(30, 30, 60)',
-    borderBottomLeftRadius: 2,
+    borderBottomLeftRadius: 4,
+  },
+  senderName: {
+    color: '#aaa',
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: '600',
   },
   messageText: {
     color: '#fff',
@@ -323,7 +378,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   sendButton: {
-    backgroundColor: 'rgb(14, 3, 52)',
+    backgroundColor: '#4a80f0',
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -342,7 +397,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   emptySubText: {
-    color: '#888',
+    color: '#aaa',
     fontSize: 14,
     marginTop: 10,
   },
