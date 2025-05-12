@@ -21,7 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ChatInterface = ({ route, navigation }) => {
   const { matchId, userId, userName, userAvatar, currentUserId } = route.params;
   const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Only for initial fetch
   const [isSending, setIsSending] = useState(false);
   const { 
     messages, 
@@ -52,9 +52,11 @@ const ChatInterface = ({ route, navigation }) => {
     };
   };
 
-  const loadMessages = async () => {
+  const loadMessages = async (isInitial = false) => {
     try {
-      setIsLoading(true);
+      if (isInitial) {
+        setIsLoading(true);
+      }
       await fetchMessages(matchId);
       
       // Mark messages as read for messages not sent by the current user
@@ -71,7 +73,9 @@ const ChatInterface = ({ route, navigation }) => {
       console.error('Error loading messages:', error);
       Alert.alert('Error', 'Failed to load messages');
     } finally {
-      setIsLoading(false);
+      if (isInitial) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -115,10 +119,10 @@ const ChatInterface = ({ route, navigation }) => {
   };
 
   useEffect(() => {
-    loadMessages();
+    loadMessages(true); // Initial fetch with loading indicator
     
     // Set up polling for new messages
-    const interval = setInterval(loadMessages, 5000);
+    const interval = setInterval(() => loadMessages(false), 5000); // Background fetch
     
     return () => clearInterval(interval);
   }, [matchId]);
@@ -174,14 +178,6 @@ const ChatInterface = ({ route, navigation }) => {
     );
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4a80f0" />
-      </View>
-    );
-  }
-
   const chatMessages = (messages[matchId] || []).map(formatMessage);
 
   return (
@@ -196,6 +192,11 @@ const ChatInterface = ({ route, navigation }) => {
           ref={scrollViewRef}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
+          {isLoading && (
+            <View style={styles.subtleLoadingContainer}>
+              <ActivityIndicator size="small" color="#4a80f0" />
+            </View>
+          )}
           {chatMessages.length > 0 ? (
             chatMessages.map((message, index) => (
               <View key={`message-${message._id || index}`}>
@@ -240,12 +241,6 @@ const ChatInterface = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(1, 12, 20)',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgb(1, 12, 20)',
   },
   keyboardAvoidingView: {
@@ -350,6 +345,10 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginTop: 10,
+  },
+  subtleLoadingContainer: {
+    padding: 10,
+    alignItems: 'center',
   },
 });
 
